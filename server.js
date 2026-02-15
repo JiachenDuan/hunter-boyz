@@ -114,7 +114,8 @@ function rayHit(shooter, maxDist = 30) {
       if (!best || proj < best.proj) best = { target: p, proj };
     }
   }
-  return best?.target || null;
+  if (!best) return { target: null, endX: shooter.x + dirX * maxDist, endZ: shooter.z + dirZ * maxDist };
+  return { target: best.target, endX: shooter.x + dirX * best.proj, endZ: shooter.z + dirZ * best.proj };
 }
 
 wss.on('connection', (ws) => {
@@ -167,7 +168,9 @@ wss.on('connection', (ws) => {
         const t = nowMs();
         if (t - p.lastShotAt > 250) {
           p.lastShotAt = t;
-          const target = rayHit(p);
+          const hit = rayHit(p);
+          const target = hit.target;
+
           if (target) {
             target.hp -= 25;
             if (target.hp <= 0) {
@@ -175,6 +178,19 @@ wss.on('connection', (ws) => {
               respawn(target);
             }
           }
+
+          // Broadcast a lightweight visual event so clients can render a tracer.
+          broadcast({
+            t: 'shot',
+            from: p.id,
+            sx: p.x,
+            sy: p.y,
+            sz: p.z,
+            ex: hit.endX,
+            ey: p.y,
+            ez: hit.endZ,
+            hit: target ? target.id : null,
+          });
         }
       }
 
