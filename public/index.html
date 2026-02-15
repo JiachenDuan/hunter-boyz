@@ -311,40 +311,104 @@
     );
 
     // look pad: drag deltas
+    // Look controls:
+    // - Primary: right look pad
+    // - Fallback: drag anywhere on the right half of the screen
     (() => {
-      const el = document.getElementById('lookPad');
+      const pad = document.getElementById('lookPad');
       let active = false;
       let last = null;
       const sens = 2.2;
 
       const prevent = (e) => {
+        if (!e) return;
         e.preventDefault();
         e.stopPropagation();
       };
-      el.addEventListener('contextmenu', (e) => prevent(e));
 
-      el.addEventListener('pointerdown', (e) => {
-        prevent(e);
-        active = true;
-        el.setPointerCapture(e.pointerId);
-        last = { x: e.clientX, y: e.clientY };
-      }, { passive: false });
-
-      el.addEventListener('pointermove', (e) => {
-        if (!active) return;
-        prevent(e);
-        const dx = e.clientX - last.x;
-        const dy = e.clientY - last.y;
-        last = { x: e.clientX, y: e.clientY };
+      function applyDelta(dx, dy) {
         state.look.yaw += dx * 0.004 * sens;
         state.look.pitch += dy * 0.003 * sens;
         state.look.pitch = Math.max(-1.2, Math.min(1.2, state.look.pitch));
+      }
+
+      function startAt(x, y) {
+        active = true;
+        last = { x, y };
+      }
+
+      function moveTo(x, y) {
+        if (!active || !last) return;
+        const dx = x - last.x;
+        const dy = y - last.y;
+        last = { x, y };
+        applyDelta(dx, dy);
+      }
+
+      function end() {
+        active = false;
+        last = null;
+      }
+
+      // Disable long-press menu
+      pad.addEventListener('contextmenu', (e) => prevent(e));
+      canvas.addEventListener('contextmenu', (e) => prevent(e));
+
+      // Pointer events on pad
+      pad.addEventListener('pointerdown', (e) => {
+        prevent(e);
+        pad.setPointerCapture(e.pointerId);
+        startAt(e.clientX, e.clientY);
       }, { passive: false });
 
-      const end = (e) => { if (e) prevent(e); active = false; };
-      el.addEventListener('pointerup', end, { passive: false });
-      el.addEventListener('pointercancel', end, { passive: false });
-      el.addEventListener('pointerleave', end, { passive: false });
+      pad.addEventListener('pointermove', (e) => {
+        if (!active) return;
+        prevent(e);
+        moveTo(e.clientX, e.clientY);
+      }, { passive: false });
+
+      pad.addEventListener('pointerup', (e) => { prevent(e); end(); }, { passive: false });
+      pad.addEventListener('pointercancel', (e) => { prevent(e); end(); }, { passive: false });
+      pad.addEventListener('pointerleave', (e) => { prevent(e); end(); }, { passive: false });
+
+      // Fallback: drag on canvas right half
+      canvas.addEventListener('pointerdown', (e) => {
+        if (!state.joined) return;
+        if (e.clientX < window.innerWidth * 0.5) return;
+        prevent(e);
+        canvas.setPointerCapture(e.pointerId);
+        startAt(e.clientX, e.clientY);
+      }, { passive: false });
+
+      canvas.addEventListener('pointermove', (e) => {
+        if (!active) return;
+        prevent(e);
+        moveTo(e.clientX, e.clientY);
+      }, { passive: false });
+
+      canvas.addEventListener('pointerup', (e) => { if (active) prevent(e); end(); }, { passive: false });
+      canvas.addEventListener('pointercancel', (e) => { if (active) prevent(e); end(); }, { passive: false });
+
+      // iOS Safari sometimes prefers touch events; add a lightweight touch fallback.
+      canvas.addEventListener('touchstart', (e) => {
+        if (!state.joined) return;
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        if (t.clientX < window.innerWidth * 0.5) return;
+        prevent(e);
+        startAt(t.clientX, t.clientY);
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', (e) => {
+        if (!active) return;
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        prevent(e);
+        moveTo(t.clientX, t.clientY);
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', (e) => { if (active) prevent(e); end(); }, { passive: false });
+      canvas.addEventListener('touchcancel', (e) => { if (active) prevent(e); end(); }, { passive: false });
     })();
 
     // Buttons
