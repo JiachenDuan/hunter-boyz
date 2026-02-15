@@ -6,6 +6,13 @@
   <title>Hunter Boyz</title>
   <style>
     html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#05070f; color:#e6edf3; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial; }
+    /* iOS long-press / selection prevention */
+    body, #ui, canvas, button, input, select, textarea {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+    }
     #ui { position: fixed; inset: 0; pointer-events:none; }
     #hud { position:absolute; top:10px; left:10px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:auto; }
     #hud input { border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color:#e6edf3; padding:8px 10px; width: 160px; }
@@ -29,7 +36,7 @@
   </style>
 </head>
 <body>
-  <canvas id="renderCanvas" style="width:100%; height:100%;"></canvas>
+  <canvas id="renderCanvas" style="width:100%; height:100%; touch-action:none;"></canvas>
 
   <div id="ui">
     <div id="hud">
@@ -243,7 +250,6 @@
     // Touch controls
     function makeStick(el, nubEl, onMove) {
       let active = false;
-      let start = null;
 
       const rect = () => el.getBoundingClientRect();
       const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
@@ -254,17 +260,24 @@
         nubEl.style.transform = `translate(${clamp(dx,-max,max)}px, ${clamp(dy,-max,max)}px)`;
       };
 
+      const prevent = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      };
+
+      el.addEventListener('contextmenu', (e) => prevent(e));
+
       el.addEventListener('pointerdown', (e) => {
+        prevent(e);
         active = true;
         el.setPointerCapture(e.pointerId);
-        const r = rect();
-        start = { x: e.clientX - (r.left + r.width/2), y: e.clientY - (r.top + r.height/2) };
         setNub(0,0);
         onMove(0,0,true);
-      });
+      }, { passive: false });
 
       el.addEventListener('pointermove', (e) => {
         if (!active) return;
+        prevent(e);
         const r = rect();
         const dx = e.clientX - (r.left + r.width/2);
         const dy = e.clientY - (r.top + r.height/2);
@@ -273,16 +286,18 @@
         const ny = clamp(dy / max, -1, 1);
         setNub(dx,dy);
         onMove(nx, ny, false);
-      });
+      }, { passive: false });
 
       const end = (e) => {
         if (!active) return;
+        prevent(e);
         active = false;
         setNub(0,0);
         onMove(0,0,true);
       };
-      el.addEventListener('pointerup', end);
-      el.addEventListener('pointercancel', end);
+      el.addEventListener('pointerup', end, { passive: false });
+      el.addEventListener('pointercancel', end, { passive: false });
+      el.addEventListener('pointerleave', end, { passive: false });
     }
 
     makeStick(
@@ -301,30 +316,45 @@
       let active = false;
       let last = null;
       const sens = 2.2;
+
+      const prevent = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      };
+      el.addEventListener('contextmenu', (e) => prevent(e));
+
       el.addEventListener('pointerdown', (e) => {
+        prevent(e);
         active = true;
         el.setPointerCapture(e.pointerId);
         last = { x: e.clientX, y: e.clientY };
-      });
+      }, { passive: false });
+
       el.addEventListener('pointermove', (e) => {
         if (!active) return;
+        prevent(e);
         const dx = e.clientX - last.x;
         const dy = e.clientY - last.y;
         last = { x: e.clientX, y: e.clientY };
         state.look.yaw += dx * 0.004 * sens;
         state.look.pitch += dy * 0.003 * sens;
         state.look.pitch = Math.max(-1.2, Math.min(1.2, state.look.pitch));
-      });
-      const end = () => { active = false; };
-      el.addEventListener('pointerup', end);
-      el.addEventListener('pointercancel', end);
+      }, { passive: false });
+
+      const end = (e) => { if (e) prevent(e); active = false; };
+      el.addEventListener('pointerup', end, { passive: false });
+      el.addEventListener('pointercancel', end, { passive: false });
+      el.addEventListener('pointerleave', end, { passive: false });
     })();
 
     // Buttons
     function holdButton(el, on) {
-      el.addEventListener('pointerdown', (e)=>{ el.setPointerCapture(e.pointerId); on(true); });
-      el.addEventListener('pointerup', ()=> on(false));
-      el.addEventListener('pointercancel', ()=> on(false));
+      const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+      el.addEventListener('contextmenu', (e) => prevent(e));
+      el.addEventListener('pointerdown', (e)=>{ prevent(e); el.setPointerCapture(e.pointerId); on(true); }, { passive:false });
+      el.addEventListener('pointerup', (e)=>{ prevent(e); on(false); }, { passive:false });
+      el.addEventListener('pointercancel', (e)=>{ prevent(e); on(false); }, { passive:false });
+      el.addEventListener('pointerleave', (e)=>{ prevent(e); on(false); }, { passive:false });
     }
     holdButton(document.getElementById('btnShoot'), (v)=> state.shoot = v);
     holdButton(document.getElementById('btnJump'), (v)=>{/* jump later */});
