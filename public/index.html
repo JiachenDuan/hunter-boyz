@@ -424,12 +424,19 @@
     holdButton(document.getElementById('btnJump'), (v)=>{/* jump later */});
 
     // Join
-    document.getElementById('joinBtn').addEventListener('click', () => {
+    const joinBtn = document.getElementById('joinBtn');
+    const nameInput = document.getElementById('name');
+    function doJoin(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
       if (state.joined) return;
       connectAndJoin();
-      document.getElementById('joinBtn').disabled = true;
-      document.getElementById('name').disabled = true;
-    });
+      joinBtn.disabled = true;
+      nameInput.disabled = true;
+    }
+    // iOS Safari can be flaky with click depending on viewport/overlays; wire multiple events.
+    joinBtn.addEventListener('click', doJoin);
+    joinBtn.addEventListener('pointerdown', doJoin, { passive: false });
+    joinBtn.addEventListener('touchend', doJoin, { passive: false });
 
     // Network tick
     let seq = 0;
