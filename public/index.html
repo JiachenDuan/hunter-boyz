@@ -74,6 +74,7 @@
     };
 
     const players = new Map(); // id -> mesh
+    let fpRig = null;
 
     function log(msg) {
       document.getElementById('log').textContent = msg;
@@ -138,6 +139,15 @@
           mesh.material = mat;
           players.set(p.id, mesh);
         }
+
+        // Hide your own body in first-person (otherwise you see yourself when turning)
+        if (p.id === myId) {
+          mesh.isVisible = false;
+          ensureFirstPersonRig();
+        } else {
+          mesh.isVisible = true;
+        }
+
         mesh.position.x = p.x;
         mesh.position.z = p.z;
         mesh.rotation.y = p.yaw;
@@ -201,6 +211,58 @@
     gmat.specularColor = new BABYLON.Color3(0,0,0);
     ground.material = gmat;
 
+    function ensureFirstPersonRig() {
+      if (fpRig) return fpRig;
+      const root = new BABYLON.TransformNode('fpRoot', scene);
+      root.parent = camera;
+
+      // Hands (very simple blocks)
+      const handMat = new BABYLON.StandardMaterial('handMat', scene);
+      handMat.diffuseColor = new BABYLON.Color3(0.85, 0.72, 0.62);
+      handMat.specularColor = new BABYLON.Color3(0,0,0);
+
+      const leftHand = BABYLON.MeshBuilder.CreateBox('leftHand', { width:0.18, height:0.18, depth:0.32 }, scene);
+      leftHand.material = handMat;
+      leftHand.parent = root;
+      leftHand.position.set(-0.18, -0.18, 0.55);
+
+      const rightHand = BABYLON.MeshBuilder.CreateBox('rightHand', { width:0.18, height:0.18, depth:0.32 }, scene);
+      rightHand.material = handMat;
+      rightHand.parent = root;
+      rightHand.position.set(0.22, -0.20, 0.55);
+
+      // Gun
+      const gunMat = new BABYLON.StandardMaterial('gunMat', scene);
+      gunMat.diffuseColor = new BABYLON.Color3(0.10, 0.12, 0.16);
+      gunMat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.03);
+      gunMat.specularColor = new BABYLON.Color3(0,0,0);
+
+      const gunBody = BABYLON.MeshBuilder.CreateBox('gunBody', { width:0.22, height:0.14, depth:0.55 }, scene);
+      gunBody.material = gunMat;
+      gunBody.parent = root;
+      gunBody.position.set(0.12, -0.22, 0.62);
+
+      const gunBarrel = BABYLON.MeshBuilder.CreateBox('gunBarrel', { width:0.10, height:0.10, depth:0.30 }, scene);
+      gunBarrel.material = gunMat;
+      gunBarrel.parent = root;
+      gunBarrel.position.set(0.12, -0.20, 0.92);
+
+      // Muzzle flash (hidden most of the time)
+      const flashMat = new BABYLON.StandardMaterial('flashMat', scene);
+      flashMat.emissiveColor = new BABYLON.Color3(1.0, 0.85, 0.25);
+      flashMat.diffuseColor = new BABYLON.Color3(0,0,0);
+      flashMat.alpha = 0.95;
+
+      const muzzleFlash = BABYLON.MeshBuilder.CreatePlane('muzzleFlash', { size:0.22 }, scene);
+      muzzleFlash.material = flashMat;
+      muzzleFlash.parent = root;
+      muzzleFlash.position.set(0.12, -0.20, 1.10);
+      muzzleFlash.isVisible = false;
+
+      fpRig = { root, leftHand, rightHand, gunBody, gunBarrel, muzzleFlash };
+      return fpRig;
+    }
+
     const blockMat = new BABYLON.StandardMaterial('bm', scene);
     blockMat.diffuseColor = new BABYLON.Color3(0.25,0.30,0.55);
     blockMat.emissiveColor = blockMat.diffuseColor.scale(0.08);
@@ -244,7 +306,14 @@
       lines.alpha = 0.9;
       setTimeout(() => lines.dispose(), 70);
 
-      if (s.from === myId) flashReticle(s.hit ? 'hit' : 'shoot');
+      if (s.from === myId) {
+        flashReticle(s.hit ? 'hit' : 'shoot');
+        // simple muzzle flash in first-person
+        if (fpRig?.muzzleFlash) {
+          fpRig.muzzleFlash.isVisible = true;
+          setTimeout(() => { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; }, 60);
+        }
+      }
     }
 
     // Touch controls
