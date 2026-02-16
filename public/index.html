@@ -32,9 +32,28 @@
       --btn-gap: 12px;
       --bottom: calc(20px + env(safe-area-inset-bottom));
     }
-    #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); }
+    #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; }
     #btnShoot { right: calc(var(--pad) + var(--btn) + var(--btn-gap)); background: rgba(255,80,80,0.25); border-color: rgba(255,80,80,0.6); }
     #btnJump { right: calc(var(--pad) + (var(--btn) + var(--btn-gap)) * 2); background: rgba(80,200,255,0.18); border-color: rgba(80,200,255,0.55); }
+
+    #btnSprint, #btnReload, #btnScope { display:flex; align-items:center; justify-content:center; }
+
+    .btnLabel {
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      font-size: 13px;
+      color: rgba(230,237,243,0.92);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.65);
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: none;
+    }
+
+    .btnPressed {
+      transform: scale(0.94);
+      filter: saturate(1.1) brightness(1.2);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.14), 0 8px 20px rgba(0,0,0,0.35);
+    }
     #score { position:absolute; top:10px; right:10px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:none; font-size:12px; min-width: 140px; }
 
     /* Extra buttons (sprint/reload) sit above jump/shoot */
@@ -126,11 +145,11 @@
 
     <div id="moveStick" class="stick"><div id="moveNub" class="nub"></div></div>
     <div id="lookPad" class="stick"></div>
-    <div id="btnJump"></div>
-    <div id="btnSprint"></div>
-    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: var(--pad); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35);"></div>
-    <div id="btnReload"></div>
-    <div id="btnShoot"></div>
+    <div id="btnJump"><div class="btnLabel">JUMP</div></div>
+    <div id="btnSprint"><div class="btnLabel">RUN</div></div>
+    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: var(--pad); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35);"><div class="btnLabel">SCOPE</div></div>
+    <div id="btnReload"><div class="btnLabel">RLD</div></div>
+    <div id="btnShoot"><div class="btnLabel">FIRE</div></div>
   </div>
 
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -1144,11 +1163,15 @@
     // Buttons
     function holdButton(el, on) {
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+      const press = (v) => {
+        try { el.classList.toggle('btnPressed', !!v); } catch {}
+        on(!!v);
+      };
       el.addEventListener('contextmenu', (e) => prevent(e));
-      el.addEventListener('pointerdown', (e)=>{ prevent(e); el.setPointerCapture(e.pointerId); on(true); }, { passive:false });
-      el.addEventListener('pointerup', (e)=>{ prevent(e); on(false); }, { passive:false });
-      el.addEventListener('pointercancel', (e)=>{ prevent(e); on(false); }, { passive:false });
-      el.addEventListener('pointerleave', (e)=>{ prevent(e); on(false); }, { passive:false });
+      el.addEventListener('pointerdown', (e)=>{ prevent(e); el.setPointerCapture(e.pointerId); press(true); }, { passive:false });
+      el.addEventListener('pointerup', (e)=>{ prevent(e); press(false); }, { passive:false });
+      el.addEventListener('pointercancel', (e)=>{ prevent(e); press(false); }, { passive:false });
+      el.addEventListener('pointerleave', (e)=>{ prevent(e); press(false); }, { passive:false });
     }
     // Shoot: hold-to-fire by default; optional tap-to-toggle (autofire)
     const autoFireEl = document.getElementById('autofire');
@@ -1181,6 +1204,7 @@
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
       const fire = (e) => {
         prevent(e);
+        try { el.classList.add('btnPressed'); setTimeout(() => el.classList.remove('btnPressed'), 90); } catch {}
         if (!socket || socket.readyState !== 1) return;
         socket.send(JSON.stringify({ t:'reload' }));
       };
@@ -1195,6 +1219,7 @@
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
       const fire = (e) => {
         prevent(e);
+        try { el.classList.add('btnPressed'); setTimeout(() => el.classList.remove('btnPressed'), 90); } catch {}
         state.scope = !state.scope;
       };
       el.addEventListener('click', fire);
