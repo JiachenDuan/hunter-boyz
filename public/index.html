@@ -1073,7 +1073,12 @@
           tube.rotation.x = Math.PI / 2;
           tube.position.set(0.02, 0.04, 0.34);
 
-          const tip = BABYLON.MeshBuilder.CreateCone(`rk_tip_${kind}`, { diameter: 0.10, height: 0.14, tessellation: 12 }, scene);
+          // Babylon doesn't have CreateCone in all builds; emulate with a tapered cylinder.
+          const tip = BABYLON.MeshBuilder.CreateCylinder(
+            `rk_tip_${kind}`,
+            { height: 0.14, diameterTop: 0.001, diameterBottom: 0.10, tessellation: 12 },
+            scene
+          );
           tip.material = bodyM;
           tip.parent = g;
           tip.rotation.x = Math.PI / 2;
