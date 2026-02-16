@@ -2104,17 +2104,34 @@ function showKill(text) {
 
         const mat = new BABYLON.StandardMaterial(`dentm_${Date.now()}`, scene);
         if (kind === 'rocket') {
-          mat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.06);
+          mat.diffuseColor = new BABYLON.Color3(0.02, 0.02, 0.02);
           mat.emissiveColor = new BABYLON.Color3(0.02, 0.01, 0.00);
-          mat.alpha = 0.55;
+          mat.alpha = 0.78;
         } else {
-          mat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.08);
-          mat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.02);
-          mat.alpha = 0.45;
+          mat.diffuseColor = new BABYLON.Color3(0.04, 0.04, 0.04);
+          mat.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.01);
+          mat.alpha = 0.72;
         }
         mat.specularColor = new BABYLON.Color3(0,0,0);
         mat.disableLighting = true;
         dent.material = mat;
+
+        // Rocket crater: add a larger faint scorch ring
+        let craterRing = null;
+        let rmat = null;
+        if (kind === 'rocket') {
+          craterRing = BABYLON.MeshBuilder.CreateTorus(`dent_ring_${Date.now()}`, { diameter: size * 1.35, thickness: Math.max(0.06, size * 0.10), tessellation: 28 }, scene);
+          craterRing.isPickable = false;
+          craterRing.position.copyFrom(p);
+          craterRing.billboardMode = BABYLON.Mesh.BILLBOARDMODE_Y;
+          rmat = new BABYLON.StandardMaterial(`dent_ringm_${Date.now()}`, scene);
+          rmat.diffuseColor = new BABYLON.Color3(0.12, 0.08, 0.04);
+          rmat.emissiveColor = new BABYLON.Color3(0.06, 0.03, 0.01);
+          rmat.alpha = 0.55;
+          rmat.disableLighting = true;
+          craterRing.material = rmat;
+          _dents.push(craterRing);
+        }
 
         _dents.push(dent);
         while (_dents.length > MAX_DENTS) {
@@ -2127,7 +2144,8 @@ function showKill(text) {
         const tick = () => {
           const t = performance.now() - born;
           const k = Math.min(1, t / life);
-          try { mat.alpha = (kind === 'rocket' ? 0.55 : 0.45) * (1 - k); } catch {}
+          try { mat.alpha = (kind === 'rocket' ? 0.78 : 0.72) * (1 - k); } catch {}
+          try { if (rmat) rmat.alpha = 0.55 * (1 - k); } catch {}
           if (k < 1) requestAnimationFrame(tick);
           else { try { dent.dispose(); } catch {} }
         };
