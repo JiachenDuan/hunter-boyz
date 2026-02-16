@@ -416,11 +416,9 @@
       for (const [id, mesh] of players.entries()) {
         if (!liveIds.has(id)) {
           try {
-            const tag = mesh?.metadata?.nameTag;
-            if (tag) {
-              try { advancedTexture.removeControl(tag); } catch {}
-              try { tag.dispose(); } catch {}
-            }
+            const np = mesh?.metadata?.namePlate;
+            if (np?.plane) { try { np.plane.dispose(); } catch {} }
+            if (np?.dt) { try { np.dt.dispose(); } catch {} }
           } catch {}
           mesh.dispose();
           players.delete(id);
@@ -476,32 +474,42 @@
           gun.position.set(0.32, 1.05, 0.38);
           gun.material = gunMat;
 
-          // Name tag (so you know who's shooting)
-          let nameTag = null;
+          // 3D nameplate above character (in-world, not UI overlay)
+          let namePlate = null;
           try {
-            const tag = new BABYLON.GUI.Rectangle(`tag_${p.id}`);
-            tag.background = 'rgba(0,0,0,0.45)';
-            tag.thickness = 1;
-            tag.color = 'rgba(255,255,255,0.22)';
-            tag.cornerRadius = 6;
-            tag.height = '24px';
-            tag.width = '140px';
-            tag.linkWithMesh(root);
-            tag.linkOffsetY = -95;
-            tag.isPointerBlocker = false;
+            const plane = BABYLON.MeshBuilder.CreatePlane(`name_${p.id}`, { width: 1.6, height: 0.35 }, scene);
+            plane.parent = root;
+            plane.position.y = 2.35;
+            plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+            plane.isPickable = false;
 
-            const text = new BABYLON.GUI.TextBlock();
-            text.text = p.name;
-            text.color = 'rgba(230,237,243,0.95)';
-            text.fontSize = 12;
-            text.fontWeight = '800';
-            tag.addControl(text);
+            const dt = new BABYLON.DynamicTexture(`name_dt_${p.id}`, { width: 512, height: 128 }, scene, true);
+            dt.hasAlpha = true;
+            const ctx = dt.getContext();
+            ctx.clearRect(0, 0, 512, 128);
+            // background pill
+            ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            roundRect(ctx, 20, 22, 472, 84, 22);
+            ctx.fill();
+            // text
+            ctx.font = 'bold 56px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+            ctx.fillStyle = 'rgba(230,237,243,0.95)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(p.name, 256, 64);
+            dt.update();
 
-            advancedTexture.addControl(tag);
-            nameTag = tag;
+            const mat = new BABYLON.StandardMaterial(`name_mat_${p.id}`, scene);
+            mat.diffuseTexture = dt;
+            mat.opacityTexture = dt;
+            mat.emissiveColor = new BABYLON.Color3(1,1,1);
+            mat.disableLighting = true;
+            plane.material = mat;
+
+            namePlate = { plane, dt };
           } catch {}
 
-          root.metadata = { target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z), targetYaw: p.yaw, nameTag };
+          root.metadata = { target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z), targetYaw: p.yaw, namePlate };
           players.set(p.id, root);
           mesh = root;
         }
@@ -509,12 +517,12 @@
         // Hide your own body in first-person (otherwise you see yourself when turning)
         if (p.id === myId) {
           mesh.isVisible = false;
-          // Hide your own nametag too.
-          try { if (mesh?.metadata?.nameTag) mesh.metadata.nameTag.isVisible = false; } catch {}
+          // Hide your own nameplate too.
+          try { if (mesh?.metadata?.namePlate?.plane) mesh.metadata.namePlate.plane.isVisible = false; } catch {}
           ensureFirstPersonRig();
         } else {
           mesh.isVisible = true;
-          try { if (mesh?.metadata?.nameTag) mesh.metadata.nameTag.isVisible = true; } catch {}
+          try { if (mesh?.metadata?.namePlate?.plane) mesh.metadata.namePlate.plane.isVisible = true; } catch {}
         }
 
         // Smooth other players (reduce jitter)
@@ -545,6 +553,17 @@
     }
 
     // Helpers to parse hsl() to rgb
+    function roundRect(ctx, x, y, w, h, r) {
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
+    }
+
     function cssToRgb(css) {
       // expects hsl(h s% l%)
       const m = css.match(/hsl\(([-\d.]+)\s+([\d.]+)%\s+([\d.]+)%\)/);
