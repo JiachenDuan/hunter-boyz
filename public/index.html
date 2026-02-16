@@ -264,6 +264,17 @@
         log('Disconnected. Refresh to rejoin.');
         state.joined = false;
       });
+
+      // Best-effort: when the tab is backgrounded/closed, close the socket so the server
+      // removes the player immediately (prevents "ghost host" lingering).
+      const closeSock = () => {
+        try { socket?.close(); } catch {}
+      };
+      window.addEventListener('pagehide', closeSock, { passive: true });
+      window.addEventListener('beforeunload', closeSock, { passive: true });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') closeSock();
+      }, { passive: true });
     }
 
     function applyState(s) {

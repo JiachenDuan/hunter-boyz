@@ -305,7 +305,7 @@ function doDamage({ shooter, target, amount }) {
 wss.on('connection', (ws) => {
   ws.isAlive = true;
   ws.lastMsgAt = nowMs();
-  ws.on('pong', () => { ws.isAlive = true; });
+  ws.on('pong', () => { ws.isAlive = true; ws.lastMsgAt = nowMs(); });
 
   ws.on('message', (buf) => {
     ws.lastMsgAt = nowMs();
@@ -624,7 +624,8 @@ setInterval(() => {
   const t = nowMs();
   for (const ws of wss.clients) {
     // If we haven't heard anything in a while, kill it.
-    if (ws.lastMsgAt && (t - ws.lastMsgAt) > 45_000) {
+    // Kill truly dead/ghost tabs quickly (mobile browsers sometimes leave sockets half-open).
+    if (ws.lastMsgAt && (t - ws.lastMsgAt) > 20_000) {
       try { ws.terminate(); } catch {}
       continue;
     }
