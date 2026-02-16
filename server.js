@@ -115,6 +115,10 @@ let nextId = 1;
 const clients = new Map(); // ws -> playerId
 const players = new Map(); // id -> player state
 
+// Connection/session management to prevent duplicate players on reconnect.
+const playerConn = new Map(); // playerId -> ws
+const clientToPlayer = new Map(); // clientId -> playerId
+
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function nowMs() { return Date.now(); }
 
@@ -309,9 +313,43 @@ wss.on('connection', (ws) => {
     try { msg = JSON.parse(buf.toString('utf8')); } catch { return; }
 
     if (msg.t === 'join') {
-      const p = makePlayer(msg.name);
+      const clientId = (msg.clientId && String(msg.clientId).slice(0, 64)) || null;
+
+      // If this clientId has an existing player, treat this as a reconnect and reuse that player.
+      let p = null;
+      if (clientId && clientToPlayer.has(clientId)) {
+        const existingId = clientToPlayer.get(clientId);
+        const existingP = players.get(existingId);
+        if (existingP) {
+          p = existingP;
+          // Update name on reconnect (optional)
+          if (msg.name) p.name = String(msg.name).slice(0, 16);
+
+          // Kick/close previous connection for this player (if any)
+          const oldWs = playerConn.get(existingId);
+          if (oldWs && oldWs !== ws) {
+            try { oldWs.terminate(); } catch {}
+            clients.delete(oldWs);
+          }
+
+          clients.set(ws, existingId);
+          playerConn.set(existingId, ws);
+
+          ws.send(JSON.stringify({ t: 'welcome', id: existingId, state: serializeState(), world: WORLD }));
+          broadcast({ t: 'state', state: serializeState() });
+          return;
+        } else {
+          // stale mapping
+          clientToPlayer.delete(clientId);
+        }
+      }
+
+      // Fresh join
+      p = makePlayer(msg.name);
       clients.set(ws, p.id);
       players.set(p.id, p);
+      playerConn.set(p.id, ws);
+      if (clientId) clientToPlayer.set(clientId, p.id);
 
       if (!GAME.hostId) GAME.hostId = p.id;
 
@@ -540,19 +578,31 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     const id = clients.get(ws);
     clients.delete(ws);
-    if (id) players.delete(id);
 
-    // If the host left, reassign host to the next connected player and pause game.
-    if (id && GAME.hostId === id) {
-      const next = players.keys().next().value || null;
-      GAME.hostId = next;
-      GAME.started = false;
-    }
+    if (id) {
+      // Only remove the player if this ws is still the active connection.
+      if (playerConn.get(id) === ws) {
+        playerConn.delete(id);
+        players.delete(id);
 
-    // If no players remain, reset game.
-    if (players.size === 0) {
-      GAME.hostId = null;
-      GAME.started = false;
+        // Clean up any clientId -> playerId mapping pointing at this id
+        for (const [cid, pid] of clientToPlayer.entries()) {
+          if (pid === id) clientToPlayer.delete(cid);
+        }
+
+        // If the host left, reassign host to the next connected player and pause game.
+        if (GAME.hostId === id) {
+          const next = players.keys().next().value || null;
+          GAME.hostId = next;
+          GAME.started = false;
+        }
+
+        // If no players remain, reset game.
+        if (players.size === 0) {
+          GAME.hostId = null;
+          GAME.started = false;
+        }
+      }
     }
 
     broadcast({ t: 'state', state: serializeState() });

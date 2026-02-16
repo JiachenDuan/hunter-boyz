@@ -208,10 +208,23 @@
     function connectAndJoin() {
       const name = (document.getElementById('name').value || 'Hunter').trim();
       const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+
+      // Persistent client id so reconnects replace the old session (prevents "two of myself" bugs).
+      let clientId = null;
+      try {
+        clientId = localStorage.getItem('hunterBoyz.clientId');
+        if (!clientId) {
+          clientId = (crypto?.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now());
+          localStorage.setItem('hunterBoyz.clientId', clientId);
+        }
+      } catch {
+        clientId = String(Math.random()).slice(2) + Date.now();
+      }
+
       socket = new WebSocket(`${proto}://${location.host}`);
 
       socket.addEventListener('open', () => {
-        socket.send(JSON.stringify({ t:'join', name }));
+        socket.send(JSON.stringify({ t:'join', name, clientId }));
         log('Joined. Use left stick to move, right pad to look, red to shoot.');
       });
 
