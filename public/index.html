@@ -283,6 +283,13 @@
       const liveIds = new Set(s.players.map(p => p.id));
       for (const [id, mesh] of players.entries()) {
         if (!liveIds.has(id)) {
+          try {
+            const tag = mesh?.metadata?.nameTag;
+            if (tag) {
+              try { advancedTexture.removeControl(tag); } catch {}
+              try { tag.dispose(); } catch {}
+            }
+          } catch {}
           mesh.dispose();
           players.delete(id);
         }
@@ -337,7 +344,32 @@
           gun.position.set(0.32, 1.05, 0.38);
           gun.material = gunMat;
 
-          root.metadata = { target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z), targetYaw: p.yaw };
+          // Name tag (so you know who's shooting)
+          let nameTag = null;
+          try {
+            const tag = new BABYLON.GUI.Rectangle(`tag_${p.id}`);
+            tag.background = 'rgba(0,0,0,0.45)';
+            tag.thickness = 1;
+            tag.color = 'rgba(255,255,255,0.22)';
+            tag.cornerRadius = 6;
+            tag.height = '24px';
+            tag.width = '140px';
+            tag.linkWithMesh(root);
+            tag.linkOffsetY = -95;
+            tag.isPointerBlocker = false;
+
+            const text = new BABYLON.GUI.TextBlock();
+            text.text = p.name;
+            text.color = 'rgba(230,237,243,0.95)';
+            text.fontSize = 12;
+            text.fontWeight = '800';
+            tag.addControl(text);
+
+            advancedTexture.addControl(tag);
+            nameTag = tag;
+          } catch {}
+
+          root.metadata = { target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z), targetYaw: p.yaw, nameTag };
           players.set(p.id, root);
           mesh = root;
         }
@@ -345,9 +377,12 @@
         // Hide your own body in first-person (otherwise you see yourself when turning)
         if (p.id === myId) {
           mesh.isVisible = false;
+          // Hide your own nametag too.
+          try { if (mesh?.metadata?.nameTag) mesh.metadata.nameTag.isVisible = false; } catch {}
           ensureFirstPersonRig();
         } else {
           mesh.isVisible = true;
+          try { if (mesh?.metadata?.nameTag) mesh.metadata.nameTag.isVisible = true; } catch {}
         }
 
         // Smooth other players (reduce jitter)
