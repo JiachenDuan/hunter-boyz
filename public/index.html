@@ -641,6 +641,66 @@
     gmat.specularColor = new BABYLON.Color3(0,0,0);
     ground.material = gmat;
 
+    // World boundary walls (visual only) so you can tell when you're at map edge.
+    (() => {
+      const bounds = { minX: -25, maxX: 25, minZ: -25, maxZ: 25 };
+      const h = 6;
+      const thickness = 0.25;
+
+      // Simple emissive grid texture
+      const dt = new BABYLON.DynamicTexture('wallGrid', { width: 512, height: 512 }, scene, true);
+      dt.hasAlpha = true;
+      const ctx = dt.getContext();
+      ctx.clearRect(0, 0, 512, 512);
+      ctx.fillStyle = 'rgba(0,0,0,0.0)';
+      ctx.fillRect(0, 0, 512, 512);
+      // grid lines
+      ctx.strokeStyle = 'rgba(120, 220, 255, 0.35)';
+      ctx.lineWidth = 2;
+      const step = 64;
+      for (let x = 0; x <= 512; x += step) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
+      }
+      for (let y = 0; y <= 512; y += step) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+      }
+      // border
+      ctx.strokeStyle = 'rgba(255, 240, 120, 0.55)';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(6, 6, 500, 500);
+      dt.update();
+
+      const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
+      wallMat.diffuseTexture = dt;
+      wallMat.opacityTexture = dt;
+      wallMat.emissiveTexture = dt;
+      wallMat.emissiveColor = new BABYLON.Color3(0.6, 0.9, 1.0);
+      wallMat.disableLighting = true;
+      wallMat.backFaceCulling = false;
+      wallMat.alpha = 0.55;
+
+      function wall(name, x, z, w, d, rotY) {
+        const m = BABYLON.MeshBuilder.CreateBox(name, { width: w, height: h, depth: d }, scene);
+        m.position.set(x, h / 2, z);
+        m.rotation.y = rotY || 0;
+        m.material = wallMat;
+        m.isPickable = false;
+        return m;
+      }
+
+      const midX = (bounds.minX + bounds.maxX) / 2;
+      const midZ = (bounds.minZ + bounds.maxZ) / 2;
+      const sizeX = (bounds.maxX - bounds.minX);
+      const sizeZ = (bounds.maxZ - bounds.minZ);
+
+      // North/South (Z walls)
+      wall('wallN', midX, bounds.maxZ, sizeX + thickness, thickness, 0);
+      wall('wallS', midX, bounds.minZ, sizeX + thickness, thickness, 0);
+      // East/West (X walls)
+      wall('wallE', bounds.maxX, midZ, thickness, sizeZ + thickness, 0);
+      wall('wallW', bounds.minX, midZ, thickness, sizeZ + thickness, 0);
+    })();
+
     function ensureFirstPersonRig() {
       if (fpRig) return fpRig;
       const root = new BABYLON.TransformNode('fpRoot', scene);
