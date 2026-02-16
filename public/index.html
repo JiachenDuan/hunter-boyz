@@ -133,6 +133,7 @@
 
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+  <script src="https://cdn.babylonjs.com/materialsLibrary/babylon.gridMaterial.min.js"></script>
   <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
   <script>
     const canvas = document.getElementById('renderCanvas');
@@ -399,10 +400,32 @@
 
     // Scene
     const scene = new BABYLON.Scene(engine);
-    scene.clearColor = new BABYLON.Color4(0.03,0.04,0.08,1);
+    // More colorful vibe
+    scene.clearColor = new BABYLON.Color4(0.02, 0.03, 0.06, 1);
 
     const light = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0, 1, 0), scene);
-    light.intensity = 0.9;
+    light.intensity = 0.95;
+
+    const dir = new BABYLON.DirectionalLight('sun', new BABYLON.Vector3(-0.4, -1, 0.2), scene);
+    dir.intensity = 0.55;
+
+    // Subtle sky gradient (big inverted sphere)
+    const sky = BABYLON.MeshBuilder.CreateSphere('sky', { diameter: 500, segments: 12 }, scene);
+    sky.infiniteDistance = true;
+    sky.isPickable = false;
+    sky.scaling.x = -1;
+    const skyMat = new BABYLON.StandardMaterial('skyMat', scene);
+    skyMat.backFaceCulling = false;
+    skyMat.disableLighting = true;
+    skyMat.diffuseColor = new BABYLON.Color3(0,0,0);
+    // Fake gradient by using emissive color + vertex colors-like effect via fresnel
+    skyMat.emissiveColor = new BABYLON.Color3(0.10, 0.15, 0.35);
+    skyMat.emissiveFresnelParameters = new BABYLON.FresnelParameters();
+    skyMat.emissiveFresnelParameters.bias = 0.1;
+    skyMat.emissiveFresnelParameters.power = 1.8;
+    skyMat.emissiveFresnelParameters.leftColor = new BABYLON.Color3(0.55, 0.20, 0.65);
+    skyMat.emissiveFresnelParameters.rightColor = new BABYLON.Color3(0.10, 0.25, 0.60);
+    sky.material = skyMat;
 
     const camera = new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(0, 2, -5), scene);
     camera.fov = 0.9;
@@ -411,9 +434,21 @@
     // Ground + some blocks
     const ground = BABYLON.MeshBuilder.CreateGround('g', { width: 60, height: 60 }, scene);
     const gmat = new BABYLON.StandardMaterial('gm', scene);
-    gmat.diffuseColor = new BABYLON.Color3(0.12,0.18,0.32);
+    gmat.diffuseColor = new BABYLON.Color3(0.10, 0.22, 0.22);
+    gmat.emissiveColor = new BABYLON.Color3(0.02, 0.04, 0.04);
     gmat.specularColor = new BABYLON.Color3(0,0,0);
     ground.material = gmat;
+
+    // Neon grid lines for color
+    const gridMat = new BABYLON.GridMaterial('grid', scene);
+    gridMat.majorUnitFrequency = 5;
+    gridMat.minorUnitVisibility = 0.25;
+    gridMat.gridRatio = 2;
+    gridMat.backFaceCulling = false;
+    gridMat.mainColor = new BABYLON.Color3(0.10, 0.18, 0.25);
+    gridMat.lineColor = new BABYLON.Color3(0.55, 0.20, 0.65);
+    gridMat.opacity = 0.28;
+    ground.material = gridMat;
 
     function ensureFirstPersonRig() {
       if (fpRig) return fpRig;
