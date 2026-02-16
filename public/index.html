@@ -38,7 +38,7 @@
     #log { margin-top:8px; font-size:12px; color: rgba(230,237,243,0.75); }
 
     /* Touch controls */
-    .stick { position:absolute; bottom:18px; width:140px; height:140px; border-radius:999px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); pointer-events:auto; touch-action:none; }
+    .stick { position:absolute; bottom: var(--move-bottom); width:140px; height:140px; border-radius:999px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); pointer-events:auto; touch-action:none; }
     #moveStick { left: var(--pad); }
     #lookPad { right: var(--pad); width: calc(var(--btn) * 2.1); height: calc(var(--btn) * 2.1); border-radius: 18px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); }
     .nub { position:absolute; left:50%; top:50%; width:64px; height:64px; margin-left:-32px; margin-top:-32px; border-radius:999px; background: rgba(124,92,255,0.25); border:1px solid rgba(124,92,255,0.55); }
@@ -48,6 +48,7 @@
       --btn: 86px;
       --btn-gap: 12px;
       --bottom: calc(20px + env(safe-area-inset-bottom));
+      --move-bottom: calc(var(--bottom) + 18px);
     }
     #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; }
     #btnShoot { right: calc(var(--pad) + var(--btn) + var(--btn-gap)); background: rgba(255,80,80,0.25); border-color: rgba(255,80,80,0.6); }
@@ -89,10 +90,10 @@
 
     /* Responsive tuning */
     @media (max-width: 420px) {
-      :root { --pad: 12px; --btn: 72px; --btn-gap: 10px; --bottom: calc(14px + env(safe-area-inset-bottom)); }
+      :root { --pad: 12px; --btn: 72px; --btn-gap: 10px; --bottom: calc(14px + env(safe-area-inset-bottom)); --move-bottom: calc(var(--bottom) + 16px); }
     }
     @media (max-width: 360px) {
-      :root { --pad: 10px; --btn: 64px; --btn-gap: 8px; --bottom: calc(12px + env(safe-area-inset-bottom)); }
+      :root { --pad: 10px; --btn: 64px; --btn-gap: 8px; --bottom: calc(12px + env(safe-area-inset-bottom)); --move-bottom: calc(var(--bottom) + 14px); }
     }
   </style>
 </head>
