@@ -1030,10 +1030,20 @@
     let shootToggled = false;
     holdButton(shootEl, (v)=> {
       if (autoFireEl.checked) {
+        // Tap-to-toggle when autofire is enabled.
         if (v) { shootToggled = !shootToggled; state.shoot = shootToggled; }
       } else {
+        // Hold-to-fire when autofire is disabled.
         state.shoot = v;
         if (!v) shootToggled = false;
+      }
+    });
+
+    // If user turns OFF autofire while shooting is toggled ON, stop immediately.
+    autoFireEl.addEventListener('change', () => {
+      if (!autoFireEl.checked) {
+        shootToggled = false;
+        state.shoot = false;
       }
     });
     holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
