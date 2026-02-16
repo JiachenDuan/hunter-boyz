@@ -1510,20 +1510,25 @@
       }
 
       return {
-        enable: async () => {
-          try { await unlockIfNeeded(); } catch {}
-          // iOS/iPadOS: sometimes resume() succeeds but audio still doesn't route until
-          // a (near-)silent buffer is played.
+        enable: () => {
+          // IMPORTANT: keep this synchronous with the user gesture on iOS.
+          // Kick resume immediately, then try to play a near-silent buffer to fully unlock routing.
+          try { unlockIfNeeded(); } catch {}
           try {
             const c = ensure();
+            // If still suspended, attempt resume again (gesture).
+            if (c.state === 'suspended') { try { c.resume(); } catch {} }
+
             const b = c.createBuffer(1, 1, c.sampleRate);
             const src = c.createBufferSource();
             src.buffer = b;
             const g = c.createGain();
             g.gain.value = 0.00001;
             src.connect(g).connect(c.destination);
-            src.start();
-            src.stop(c.currentTime + 0.01);
+            // schedule slightly in the future to avoid "cannot start" edge cases
+            const t0 = (c.currentTime || 0) + 0.005;
+            src.start(t0);
+            src.stop(t0 + 0.01);
           } catch {}
         },
         shoot: (weapon) => {
@@ -2283,9 +2288,9 @@ function showKill(text) {
     copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
     copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
 
-    async function doEnableSound(e) {
+    function doEnableSound(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
-      try { await SFX.enable(); } catch {}
+      try { SFX.enable(); } catch {}
       try { SFX.hit(); } catch {}
       log('Sound enabled.');
     }
