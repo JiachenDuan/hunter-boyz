@@ -269,6 +269,7 @@
             state.joined = true;
             // Apply immediately so host detection + Start button works even before the next tick.
             if (msg.state) applyState(msg.state);
+            trySendStart();
           }
           if (msg.t === 'state') applyState(msg.state);
           if (msg.t === 'shot') renderShot(msg);
@@ -278,6 +279,10 @@
 
         socket.addEventListener('close', () => {
           state.joined = false;
+          try {
+            joinBtn.disabled = false;
+            nameInput.disabled = false;
+          } catch {}
           scheduleReconnect();
         });
 
@@ -1208,9 +1213,9 @@
       pad.addEventListener('pointercancel', (e) => { prevent(e); end(); }, { passive: false });
       pad.addEventListener('pointerleave', (e) => { prevent(e); end(); }, { passive: false });
 
-      // Fallback: drag on canvas right half
+      // Fallback: drag on canvas right half (ONLY while game is started)
       canvas.addEventListener('pointerdown', (e) => {
-        if (!state.joined) return;
+        if (!state.joined || !state.started || state.settingsOpen) return;
         if (e.clientX < window.innerWidth * 0.5) return;
         prevent(e);
         canvas.setPointerCapture(e.pointerId);
@@ -1228,7 +1233,7 @@
 
       // iOS Safari sometimes prefers touch events; add a lightweight touch fallback.
       canvas.addEventListener('touchstart', (e) => {
-        if (!state.joined) return;
+        if (!state.joined || !state.started || state.settingsOpen) return;
         const t = e.touches && e.touches[0];
         if (!t) return;
         if (t.clientX < window.innerWidth * 0.5) return;
@@ -1368,10 +1373,19 @@
       try { syncHudCompact(); } catch {}
     }
 
+    let pendingStart = false;
+    function trySendStart() {
+      if (!pendingStart) return;
+      if (!socket || socket.readyState !== 1) return;
+      if (!state.joined) return;
+      pendingStart = false;
+      try { socket.send(JSON.stringify({ t:'start' })); } catch {}
+    }
+
     function doStart(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
-      if (!socket || socket.readyState !== 1) return;
-      socket.send(JSON.stringify({ t:'start' }));
+      pendingStart = true;
+      trySendStart();
     }
 
     function doSnap(e) {
