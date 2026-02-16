@@ -573,8 +573,8 @@ wss.on('connection', (ws) => {
       // shoot
       if (msg.shoot) {
         const t = nowMs();
-        const weapon = (msg.weapon === 'shotgun' || msg.weapon === 'sniper' || msg.weapon === 'fart') ? msg.weapon : 'rifle';
-        const fireCdMs = weapon === 'shotgun' ? 650 : (weapon === 'sniper' ? 1100 : (weapon === 'fart' ? 450 : 250));
+        const weapon = (msg.weapon === 'shotgun' || msg.weapon === 'sniper' || msg.weapon === 'fart' || msg.weapon === 'rocket') ? msg.weapon : 'rifle';
+        const fireCdMs = weapon === 'shotgun' ? 650 : (weapon === 'sniper' ? 1100 : (weapon === 'fart' ? 450 : (weapon === 'rocket' ? 1500 : 250))); 
 
         if (t - p.lastShotAt > fireCdMs) {
           // can't shoot while reloading

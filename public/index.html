@@ -186,6 +186,7 @@
             <option value="shotgun">Shotgun</option>
             <option value="sniper">Sniper</option>
             <option value="fart">Fart gun</option>
+            <option value="rocket">Rocket</option>
           </select>
         </div>
         <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
@@ -267,6 +268,7 @@
           <div class="wm-opt" data-weapon="shotgun">💥 Shotgun</div>
           <div class="wm-opt" data-weapon="sniper">🎯 Sniper</div>
           <div class="wm-opt" data-weapon="fart">💨 Fart Gun</div>
+          <div class="wm-opt" data-weapon="rocket">🚀 Rocket</div>
         </div>
       </div>
     </div>
@@ -378,6 +380,7 @@
           if (msg.t === 'winner') showWinner(msg);
           if (msg.t === 'fartPuff') spawnFartPuff(msg.to);
           if (msg.t === 'fartDot') spawnFartDot(msg.to, msg.dmg || 5);
+          if (msg.t === 'explosion') spawnExplosion(msg);
           if (msg.t === 'snapSaved') {
             const url = `${location.origin}/snaps/${msg.file}`;
             log(`Snapshot saved: ${url}`);
@@ -1032,6 +1035,21 @@
           pump.position.set(0.02, -0.02, 0.34);
         }
 
+        // Rocket launcher extras: tube + tip
+        if (kind === 'rocket') {
+          const tube = BABYLON.MeshBuilder.CreateCylinder(`rk_tube_${kind}`, { diameter: 0.12, height: 0.62, tessellation: 12 }, scene);
+          tube.material = accM;
+          tube.parent = g;
+          tube.rotation.x = Math.PI / 2;
+          tube.position.set(0.02, 0.04, 0.34);
+
+          const tip = BABYLON.MeshBuilder.CreateCone(`rk_tip_${kind}`, { diameter: 0.10, height: 0.14, tessellation: 12 }, scene);
+          tip.material = bodyM;
+          tip.parent = g;
+          tip.rotation.x = Math.PI / 2;
+          tip.position.set(0.02, 0.04, 0.70);
+        }
+
         // Fart gun extras: a "tank" + nozzle so it's obvious.
         if (kind === 'fart') {
           const tank = BABYLON.MeshBuilder.CreateCylinder(`tk_${kind}`, { diameter: 0.14, height: 0.20, tessellation: 12 }, scene);
@@ -1054,11 +1072,12 @@
         rifle: makeGunVariant('rifle'),
         shotgun: makeGunVariant('shotgun'),
         sniper: makeGunVariant('sniper'),
+        rocket: makeGunVariant('rocket'),
         fart: makeGunVariant('fart'),
       };
 
       function setGun(kind) {
-        const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart') ? kind : 'rifle';
+        const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket') ? kind : 'rifle';
         for (const [name, node] of Object.entries(guns)) node.setEnabled(name === k);
       }
       // Default
@@ -1464,6 +1483,35 @@
         },
         hit: () => tick(760, 60, 0.02),
         kill: () => tick(320, 120, 0.02),
+        boom: () => (function(){
+          play((c)=>{
+            const t0=c.currentTime+0.001;
+            const o=c.createOscillator();
+            const g=c.createGain();
+            o.type='sine';
+            o.frequency.setValueAtTime(120,t0);
+            o.frequency.exponentialRampToValueAtTime(45,t0+0.28);
+            g.gain.setValueAtTime(0.0001,t0);
+            g.gain.exponentialRampToValueAtTime(0.22,t0+0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001,t0+0.36);
+            o.connect(g).connect(c.destination);
+            o.start(t0);
+            o.stop(t0+0.38);
+
+            const n=c.createBufferSource();
+            n.buffer=noiseBuffer(c,0.20);
+            const lp=c.createBiquadFilter();
+            lp.type='lowpass';
+            lp.frequency.setValueAtTime(800,t0);
+            const ng=c.createGain();
+            ng.gain.setValueAtTime(0.0001,t0);
+            ng.gain.exponentialRampToValueAtTime(0.18,t0+0.01);
+            ng.gain.exponentialRampToValueAtTime(0.0001,t0+0.30);
+            n.connect(lp).connect(ng).connect(c.destination);
+            n.start(t0);
+            n.stop(t0+0.30);
+          });
+        })(),
         fart,
       };
     })();
@@ -1565,6 +1613,62 @@
         requestAnimationFrame(tick);
       } catch {}
     }
+
+    function spawnExplosion(msg) {
+      try {
+        const x = +msg.x, y = +msg.y, z = +msg.z;
+        const r = +msg.r || 6;
+
+        // Visual: expanding orange sphere + a few streak lines
+        const sphere = BABYLON.MeshBuilder.CreateSphere(`ex_${Date.now()}`, { diameter: 0.6, segments: 10 }, scene);
+        sphere.position.set(x, y, z);
+        sphere.isPickable = false;
+
+        const mat = new BABYLON.StandardMaterial(`exm_${Date.now()}`, scene);
+        mat.diffuseColor = new BABYLON.Color3(1.0, 0.55, 0.12);
+        mat.emissiveColor = new BABYLON.Color3(1.0, 0.35, 0.05);
+        mat.alpha = 0.85;
+        mat.disableLighting = true;
+        sphere.material = mat;
+
+        const streaks = [];
+        for (let i = 0; i < 6; i++) {
+          const ang = Math.random() * Math.PI * 2;
+          const len = 0.7 + Math.random() * 1.0;
+          const p1 = new BABYLON.Vector3(x, y, z);
+          const p2 = new BABYLON.Vector3(x + Math.cos(ang) * len, y + (Math.random()-0.5)*0.4, z + Math.sin(ang) * len);
+          const line = BABYLON.MeshBuilder.CreateLines(`exl_${Date.now()}_${i}`, { points: [p1, p2] }, scene);
+          line.color = new BABYLON.Color3(1.0, 0.75, 0.20);
+          line.alpha = 0.85;
+          streaks.push(line);
+        }
+
+        // Sound
+        try { SFX.boom(); } catch {}
+
+        const start = performance.now();
+        const dur = 420;
+        const tick = () => {
+          const t = performance.now() - start;
+          const k = Math.min(1, t / dur);
+          try {
+            const scale = 1 + k * (r * 0.35);
+            sphere.scaling.setAll(scale);
+            mat.alpha = 0.85 * (1 - k);
+          } catch {}
+          for (const line of streaks) {
+            try { line.alpha = 0.85 * (1 - k); } catch {}
+          }
+          if (k < 1) requestAnimationFrame(tick);
+          else {
+            try { sphere.dispose(); } catch {}
+            for (const line of streaks) { try { line.dispose(); } catch {} }
+          }
+        };
+        requestAnimationFrame(tick);
+      } catch {}
+    }
+
 
 function showKill(text) {
       // reuse hit toast area for now
@@ -2238,7 +2342,7 @@ function showKill(text) {
           }
 
           const wSel = document.getElementById('weapon')?.value;
-          const weapon = (wSel === 'shotgun' || wSel === 'sniper' || wSel === 'fart') ? wSel : 'rifle';
+          const weapon = (wSel === 'shotgun' || wSel === 'sniper' || wSel === 'fart' || wSel === 'rocket') ? wSel : 'rifle';
 
           const autoReload = !!document.getElementById('autoReload')?.checked;
 
