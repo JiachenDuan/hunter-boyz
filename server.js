@@ -292,6 +292,20 @@ wss.on('connection', (ws) => {
     const id = clients.get(ws);
     clients.delete(ws);
     if (id) players.delete(id);
+
+    // If the host left, reassign host to the next connected player and pause game.
+    if (id && GAME.hostId === id) {
+      const next = players.keys().next().value || null;
+      GAME.hostId = next;
+      GAME.started = false;
+    }
+
+    // If no players remain, reset game.
+    if (players.size === 0) {
+      GAME.hostId = null;
+      GAME.started = false;
+    }
+
     broadcast({ t: 'state', state: serializeState() });
   });
 });
