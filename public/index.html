@@ -85,6 +85,56 @@
     #score { position:absolute; top:10px; right:10px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:none; font-size:12px; min-width: 140px; }
 
     /* Extra buttons (sprint/reload) sit above jump/shoot */
+
+    /* Weapon picker button */
+    #btnWeaponPick {
+      position:absolute;
+      bottom: calc(var(--bottom) + var(--btn) + 12px);
+      right: var(--pad);
+      width: var(--btn); height: var(--btn);
+      border-radius: 999px;
+      pointer-events:auto; touch-action:none;
+      border:1px solid rgba(255,200,60,0.55);
+      background: rgba(255,200,60,0.15);
+      display:flex; align-items:center; justify-content:center;
+      z-index: 12;
+    }
+    /* Weapon picker modal */
+    #weaponModal {
+      position:fixed; inset:0;
+      display:none; align-items:center; justify-content:center;
+      background: rgba(0,0,0,0.65);
+      z-index: 9999;
+      pointer-events:auto;
+      touch-action: manipulation;
+    }
+    #weaponModal.open { display:flex; }
+    #weaponModalInner {
+      width: min(380px, 88vw);
+      background: rgba(10,14,26,0.95);
+      border:1px solid rgba(255,255,255,0.16);
+      border-radius:18px;
+      padding: 18px 16px 14px;
+    }
+    #weaponModalInner .wm-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    #weaponModalInner .wm-header span { font-weight:900; font-size:17px; }
+    #weaponModalInner .wm-close { width:36px; height:36px; border-radius:999px; border:1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color:#e6edf3; font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    #weaponModalInner .wm-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    #weaponModalInner .wm-opt {
+      padding: 18px 10px;
+      border-radius: 14px;
+      border: 2px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: #e6edf3;
+      font-weight: 800;
+      font-size: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 120ms, background 120ms;
+    }
+    #weaponModalInner .wm-opt:active { transform: scale(0.96); }
+    #weaponModalInner .wm-opt.selected { border-color: rgba(124,92,255,0.85); background: rgba(124,92,255,0.18); }
+
     #btnReload, #btnScope { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 12; }
     /* Put scope above the shoot cluster (so it doesn't overlap the look pad) */
     #btnScope { right: calc(var(--pad) + var(--btn) + var(--btn-gap)); }
@@ -189,6 +239,25 @@
     <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: calc(var(--pad) + var(--btn) + var(--btn-gap)); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35); opacity: 0.92; z-index: 20;"><div class="btnLabel"><div class="btnIcon">⌖</div></div></div>
     <div id="btnReload"><div class="btnLabel"><div class="btnIcon">↻</div></div></div>
     <div id="btnShoot"><div class="btnLabel"><div class="btnIcon">◎</div></div></div>
+
+    <div id="btnWeaponPick"><div class="btnLabel"><div class="btnIcon">🔫</div></div></div>
+
+    <!-- Weapon picker modal -->
+    <div id="weaponModal">
+      <div id="weaponModalInner">
+        <div class="wm-header">
+          <span>Pick Weapon</span>
+          <div class="wm-close" id="weaponModalClose">✕</div>
+        </div>
+        <div class="wm-grid">
+          <div class="wm-opt" data-weapon="rifle">🔫 Rifle</div>
+          <div class="wm-opt" data-weapon="shotgun">💥 Shotgun</div>
+          <div class="wm-opt" data-weapon="sniper">🎯 Sniper</div>
+          <div class="wm-opt" data-weapon="fart">💨 Fart Gun</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -1681,6 +1750,63 @@
     const autoReloadEl = document.getElementById('autoReload');
     const reloadBtn = document.getElementById('btnReload');
     const weaponEl = document.getElementById('weapon');
+
+    // --- Weapon picker modal ---
+    const weaponModal = document.getElementById('weaponModal');
+    const weaponModalClose = document.getElementById('weaponModalClose');
+    const btnWeaponPick = document.getElementById('btnWeaponPick');
+    const wmOpts = document.querySelectorAll('#weaponModalInner .wm-opt');
+
+    function syncPickerHighlight() {
+      const cur = weaponEl?.value || 'rifle';
+      wmOpts.forEach(o => o.classList.toggle('selected', o.dataset.weapon === cur));
+    }
+
+    function openWeaponModal() {
+      syncPickerHighlight();
+      weaponModal.classList.add('open');
+    }
+    function closeWeaponModal() {
+      weaponModal.classList.remove('open');
+    }
+
+    btnWeaponPick?.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      openWeaponModal();
+    });
+
+    weaponModalClose?.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      closeWeaponModal();
+    });
+
+    // Tap backdrop to close
+    weaponModal?.addEventListener('pointerdown', (e) => {
+      if (e.target === weaponModal) { e.preventDefault(); closeWeaponModal(); }
+    });
+
+    wmOpts.forEach(opt => {
+      opt.addEventListener('pointerdown', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const val = opt.dataset.weapon;
+        if (weaponEl) {
+          weaponEl.value = val;
+          weaponEl.dispatchEvent(new Event('change'));
+        }
+        try { localStorage.setItem('hunterBoyz.weapon', val); } catch {}
+        closeWeaponModal();
+      });
+    });
+
+    // Restore persisted weapon on load
+    try {
+      const saved = localStorage.getItem('hunterBoyz.weapon');
+      if (saved && weaponEl) {
+        weaponEl.value = saved;
+        weaponEl.dispatchEvent(new Event('change'));
+      }
+    } catch {}
+
 
     // Persist username + settings locally so re-joining is fast.
     const NAME_KEY = 'hunterBoyz.name';
