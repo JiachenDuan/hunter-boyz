@@ -232,6 +232,16 @@
       <div id="hitDetail" style="margin-top:6px; text-align:center; font-weight:800; font-size:13px; opacity:0; transition: opacity 120ms ease; color: rgba(230,237,243,0.9);">—</div>
     </div>
 
+    <!-- Hitmarker overlay (centered X) -->
+    <div id="hitmarker" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; opacity:0; z-index:90;">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="4" y1="4" x2="11" y2="11" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="24" y1="4" x2="17" y2="11" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="4" y1="24" x2="11" y2="17" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="24" y1="24" x2="17" y2="17" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+
     <div id="moveStick" class="stick"><div id="moveNub" class="nub"></div></div>
     <div id="lookPad" class="stick"></div>
     <div id="btnJump"><div class="btnLabel"><div class="btnIcon">⇧</div></div></div>
@@ -1054,18 +1064,18 @@
 
       // Muzzle flash (hidden most of the time)
       const flashMat = new BABYLON.StandardMaterial('flashMat', scene);
-      flashMat.emissiveColor = new BABYLON.Color3(1.0, 0.85, 0.25);
+      flashMat.emissiveColor = new BABYLON.Color3(1.0, 0.92, 0.35);
       flashMat.diffuseColor = new BABYLON.Color3(0,0,0);
-      flashMat.alpha = 0.95;
+      flashMat.alpha = 1.0;
 
-      const muzzleFlash = BABYLON.MeshBuilder.CreatePlane('muzzleFlash', { size:0.10 }, scene);
+      const muzzleFlash = BABYLON.MeshBuilder.CreatePlane('muzzleFlash', { size:0.18 }, scene);
       muzzleFlash.material = flashMat;
       muzzleFlash.parent = gunRoot;
       muzzleFlash.position.set(0.02, 0.00, 0.56);
       muzzleFlash.rotation.y = Math.PI; // face camera
       muzzleFlash.isVisible = false;
 
-      fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, muzzleFlash, setGun };
+      fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, muzzleFlash, setGun, _flashBaseSize: 0.18 };
       // Keep gun in sync with weapon selection.
       try { fpRig.setGun(document.getElementById('weapon')?.value); } catch {}
       return fpRig;
@@ -1133,6 +1143,43 @@
       setTimeout(() => { ret.color = orig; }, 80);
     }
 
+
+
+    // ── Combat feel: hitmarker, recoil, screen-shake ──
+    const _hitmarkerEl = document.getElementById('hitmarker');
+    let _hitmarkerTimer = 0;
+    function showHitmarker() {
+      if (!_hitmarkerEl) return;
+      clearTimeout(_hitmarkerTimer);
+      _hitmarkerEl.style.opacity = '1';
+      _hitmarkerEl.style.transform = 'translate(-50%,-50%) scale(1.3)';
+      requestAnimationFrame(() => {
+        _hitmarkerEl.style.transition = 'opacity 100ms ease-out, transform 100ms ease-out';
+        _hitmarkerEl.style.opacity = '0';
+        _hitmarkerEl.style.transform = 'translate(-50%,-50%) scale(0.7)';
+      });
+      _hitmarkerTimer = setTimeout(() => {
+        _hitmarkerEl.style.transition = 'none';
+      }, 120);
+    }
+
+    const RECOIL = {
+      rifle:   { gunKick: 0.04, pitchKick: 0.018, shakeAmt: 0.003, flashScale: 1.0 },
+      shotgun: { gunKick: 0.08, pitchKick: 0.035, shakeAmt: 0.008, flashScale: 1.6 },
+      sniper:  { gunKick: 0.10, pitchKick: 0.045, shakeAmt: 0.005, flashScale: 1.3 },
+      fart:    { gunKick: 0.02, pitchKick: 0.005, shakeAmt: 0.001, flashScale: 0.6 },
+    };
+
+    let _shakePitch = 0;
+    let _shakeYaw = 0;
+    const SHAKE_DECAY = 0.82;
+
+    function applyRecoil(weapon) {
+      const r = RECOIL[weapon] || RECOIL.rifle;
+      if (fpRig?.gunRoot) fpRig.gunRoot.position.z -= r.gunKick;
+      _shakePitch += r.pitchKick * (0.8 + Math.random() * 0.4);
+      _shakeYaw   += (Math.random() - 0.5) * r.shakeAmt * 2;
+    }
     // Sound FX (procedural WebAudio; no external files)
     const SFX = (() => {
       let ctx = null;
@@ -1446,17 +1493,19 @@
 
       if (s.from === myId) {
         flashReticle(s.hit ? 'hit' : 'shoot');
-        if (fpRig?.muzzleFlash) {
+        const wpn = s.weapon || 'rifle';
+        const rc = RECOIL[wpn] || RECOIL.rifle;
+        if (fpRig?.muzzleFlash && fpRig._flashBaseSize) {
+          fpRig.muzzleFlash.scaling.setAll(rc.flashScale);
           fpRig.muzzleFlash.isVisible = true;
-          // tiny recoil
-          if (fpRig?.gunRoot) fpRig.gunRoot.position.z -= 0.03;
+          applyRecoil(wpn);
           setTimeout(() => {
             if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false;
-            if (fpRig?.gunRoot) fpRig.gunRoot.position.z += 0.03;
-          }, 70);
+          }, 55);
         }
-        SFX.shoot(s.weapon || 'rifle');
+        SFX.shoot(wpn);
         if (s.hit) {
+          showHitmarker();
           const target = s.hit;
           const hp = (typeof s.hitHp === 'number') ? s.hitHp : null;
           const detail = hp === null ? `Hit ${target}` : `Hit ${target} (HP ${hp})`;
@@ -2001,6 +2050,19 @@
     let seq = 0;
     let lastSend = performance.now();
     engine.runRenderLoop(() => {
+      // ── Recoil decay: smoothly return gun position + camera shake ──
+      if (fpRig?.gunRoot) {
+        const gz = fpRig.gunRoot.position.z;
+        if (gz < -0.001) fpRig.gunRoot.position.z += (-gz) * 0.18;
+        else fpRig.gunRoot.position.z = 0;
+      }
+      if (camera && (Math.abs(_shakePitch) > 0.0001 || Math.abs(_shakeYaw) > 0.0001)) {
+        camera.rotation.x += _shakePitch;
+        camera.rotation.y += _shakeYaw;
+        _shakePitch *= SHAKE_DECAY;
+        _shakeYaw   *= SHAKE_DECAY;
+      }
+
       // Smooth remote players
       for (const [id, mesh] of players.entries()) {
         if (id === myId) continue;
