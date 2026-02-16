@@ -553,6 +553,7 @@
           camera.position.z = p.z;
           camera.rotation.y = p.yaw;
           camera.rotation.x = p.pitch;
+          try { fpRig?.setGun?.(document.getElementById('weapon')?.value); } catch {}
         }
       }
     }
@@ -791,62 +792,80 @@
         rightHand.handRoot.setEnabled(false);
       } catch {}
 
-      // Gun: use Kenney GLB model if available; fall back to simple primitives.
+      // Gun models (simple primitives per weapon). This avoids asset loading issues on iPhone.
       const gunRoot = new BABYLON.TransformNode('gunRoot', scene);
       gunRoot.parent = root;
       gunRoot.position.set(0.08, -0.30, 0.80);
 
-      let receiver = null, barrel = null, stock = null, grip = null;
+      const gunMat = new BABYLON.StandardMaterial('gunMat', scene);
+      gunMat.diffuseColor = new BABYLON.Color3(0.10, 0.11, 0.13);
+      gunMat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.025);
+      gunMat.specularColor = new BABYLON.Color3(0.02,0.02,0.02);
 
-      (async () => {
-        try {
-          const result = await BABYLON.SceneLoader.ImportMeshAsync(
-            null,
-            '/',
-            'assets/kenney/blaster-kit/Models/GLB format/blaster-a.glb',
-            scene
-          );
-          const imported = new BABYLON.TransformNode('kenneyGun', scene);
-          for (const m of result.meshes) {
-            if (m === scene.meshes[0]) continue;
-            // Some meshes may be empty nodes; attach everything.
-            if (m.parent === null) m.parent = imported;
-          }
-          imported.parent = gunRoot;
-          imported.scaling.setAll(0.6);
-          imported.rotation.x = 0;
-          imported.rotation.y = Math.PI;
-          imported.position.set(0.02, -0.02, 0.02);
-        } catch (e) {
-          // fallback primitives
-          const gunMat = new BABYLON.StandardMaterial('gunMat', scene);
-          gunMat.diffuseColor = new BABYLON.Color3(0.10, 0.11, 0.13);
-          gunMat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.025);
-          gunMat.specularColor = new BABYLON.Color3(0.02,0.02,0.02);
+      function makeGunVariant(kind) {
+        const g = new BABYLON.TransformNode(`gun_${kind}`, scene);
+        g.parent = gunRoot;
 
-          receiver = BABYLON.MeshBuilder.CreateBox('gunReceiver', { width:0.10, height:0.09, depth:0.22 }, scene);
-          receiver.material = gunMat;
-          receiver.parent = gunRoot;
-          receiver.position.set(0.02, 0.00, 0.02);
+        // Receiver
+        const receiver = BABYLON.MeshBuilder.CreateBox(`recv_${kind}`, { width:0.10, height:0.09, depth:0.22 }, scene);
+        receiver.material = gunMat;
+        receiver.parent = g;
+        receiver.position.set(0.02, 0.00, 0.02);
 
-          barrel = BABYLON.MeshBuilder.CreateCylinder('gunBarrel', { diameter:0.045, height:0.42, tessellation: 10 }, scene);
-          barrel.material = gunMat;
-          barrel.parent = gunRoot;
-          barrel.rotation.x = Math.PI / 2;
-          barrel.position.set(0.02, 0.00, 0.30);
+        // Barrel (varies)
+        const barrelLen = (kind === 'sniper') ? 0.78 : (kind === 'shotgun' ? 0.50 : 0.56);
+        const barrelDia = (kind === 'shotgun') ? 0.065 : (kind === 'sniper' ? 0.04 : 0.045);
+        const barrel = BABYLON.MeshBuilder.CreateCylinder(`bar_${kind}`, { diameter:barrelDia, height:barrelLen, tessellation: 10 }, scene);
+        barrel.material = gunMat;
+        barrel.parent = g;
+        barrel.rotation.x = Math.PI / 2;
+        barrel.position.set(0.02, 0.00, 0.24 + barrelLen / 2);
 
-          stock = BABYLON.MeshBuilder.CreateBox('gunStock', { width:0.09, height:0.08, depth:0.14 }, scene);
-          stock.material = gunMat;
-          stock.parent = gunRoot;
-          stock.position.set(0.02, -0.01, -0.14);
+        // Stock
+        const stock = BABYLON.MeshBuilder.CreateBox(`stk_${kind}`, { width:0.09, height:0.08, depth:0.16 }, scene);
+        stock.material = gunMat;
+        stock.parent = g;
+        stock.position.set(0.02, -0.01, -0.16);
 
-          grip = BABYLON.MeshBuilder.CreateBox('gunGrip', { width:0.05, height:0.10, depth:0.06 }, scene);
-          grip.material = gunMat;
-          grip.parent = gunRoot;
-          grip.position.set(0.05, -0.08, 0.02);
-          grip.rotation.x = 0.25;
+        // Grip
+        const grip = BABYLON.MeshBuilder.CreateBox(`gr_${kind}`, { width:0.05, height:0.10, depth:0.06 }, scene);
+        grip.material = gunMat;
+        grip.parent = g;
+        grip.position.set(0.05, -0.08, 0.02);
+        grip.rotation.x = 0.25;
+
+        // Sniper scope tube
+        if (kind === 'sniper') {
+          const scope = BABYLON.MeshBuilder.CreateCylinder(`sc_${kind}`, { diameter:0.06, height:0.22, tessellation: 12 }, scene);
+          scope.material = gunMat;
+          scope.parent = g;
+          scope.rotation.x = Math.PI / 2;
+          scope.position.set(0.02, 0.05, 0.34);
         }
-      })();
+
+        // Shotgun pump
+        if (kind === 'shotgun') {
+          const pump = BABYLON.MeshBuilder.CreateBox(`pm_${kind}`, { width:0.10, height:0.06, depth:0.12 }, scene);
+          pump.material = gunMat;
+          pump.parent = g;
+          pump.position.set(0.02, -0.02, 0.34);
+        }
+
+        return g;
+      }
+
+      const guns = {
+        rifle: makeGunVariant('rifle'),
+        shotgun: makeGunVariant('shotgun'),
+        sniper: makeGunVariant('sniper'),
+      };
+
+      function setGun(kind) {
+        const k = (kind === 'shotgun' || kind === 'sniper') ? kind : 'rifle';
+        for (const [name, node] of Object.entries(guns)) node.setEnabled(name === k);
+      }
+      // Default
+      setGun('rifle');
 
       // Slight tilt so it feels more like aiming forward
       root.rotation.x = 0.01;
@@ -865,7 +884,9 @@
       muzzleFlash.rotation.y = Math.PI; // face camera
       muzzleFlash.isVisible = false;
 
-      fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, muzzleFlash };
+      fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, muzzleFlash, setGun };
+      // Keep gun in sync with weapon selection.
+      try { fpRig.setGun(document.getElementById('weapon')?.value); } catch {}
       return fpRig;
     }
 
@@ -1434,6 +1455,7 @@
     const nameInput = document.getElementById('name');
     const autoReloadEl = document.getElementById('autoReload');
     const reloadBtn = document.getElementById('btnReload');
+    const weaponEl = document.getElementById('weapon');
 
     // Persist username + settings locally so re-joining is fast.
     const NAME_KEY = 'hunterBoyz.name';
@@ -1454,6 +1476,11 @@
     autoReloadEl?.addEventListener('change', () => {
       try { localStorage.setItem(AUTO_RELOAD_KEY, autoReloadEl.checked ? '1' : '0'); } catch {}
       syncReloadButtonVisibility();
+    });
+
+    // Swap first-person gun model when weapon changes
+    weaponEl?.addEventListener('change', () => {
+      try { ensureFirstPersonRig()?.setGun?.(weaponEl.value); } catch {}
     });
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
