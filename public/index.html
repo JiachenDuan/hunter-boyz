@@ -1209,8 +1209,9 @@
     function applyRecoil(weapon) {
       const r = RECOIL[weapon] || RECOIL.rifle;
       if (fpRig?.gunRoot) fpRig.gunRoot.position.z -= r.gunKick;
-      _shakePitch += r.pitchKick * (0.8 + Math.random() * 0.4);
-      _shakeYaw   += (Math.random() - 0.5) * r.shakeAmt * 2;
+      // Screen shake disabled (too nauseating on mobile).
+      // _shakePitch += r.pitchKick * (0.8 + Math.random() * 0.4);
+      // _shakeYaw   += (Math.random() - 0.5) * r.shakeAmt * 2;
     }
     // Sound FX (procedural WebAudio; no external files)
     const SFX = (() => {
@@ -2183,12 +2184,7 @@ function showKill(text) {
         if (gz < -0.001) fpRig.gunRoot.position.z += (-gz) * 0.18;
         else fpRig.gunRoot.position.z = 0;
       }
-      if (camera && (Math.abs(_shakePitch) > 0.0001 || Math.abs(_shakeYaw) > 0.0001)) {
-        camera.rotation.x += _shakePitch;
-        camera.rotation.y += _shakeYaw;
-        _shakePitch *= SHAKE_DECAY;
-        _shakeYaw   *= SHAKE_DECAY;
-      }
+      // Screen shake disabled.
 
       // Smooth remote players
       for (const [id, mesh] of players.entries()) {
