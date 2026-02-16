@@ -399,17 +399,7 @@
         document.getElementById('ammoText').textContent = rel > 0 ? `Reloading…` : `Ammo ${ammo}`;
 
         // Scope UI (sniper)
-        const weaponSel = document.getElementById('weapon')?.value;
-        const scoped = (weaponSel === 'sniper') && (state.scope === true);
-        camera.fov = scoped ? SCOPE_FOV : DEFAULT_FOV;
-        scope.isVisible = scoped;
-        scopeLines.isVisible = scoped;
-        ret.isVisible = !scoped;
-        // Show/enable the scope button only for sniper.
-        try {
-          const scopeBtn = document.getElementById('btnScope');
-          if (scopeBtn) scopeBtn.style.display = (weaponSel === 'sniper') ? 'flex' : 'none';
-        } catch {}
+        updateScopeUI();
 
         // show spawn protection by tinting HP bar
         const inv = (meP.invulnInMs || 0);
@@ -998,6 +988,19 @@
     scopeLines.fontSize = 44;
     scopeLines.isVisible = false;
     advancedTexture.addControl(scopeLines);
+
+    function updateScopeUI() {
+      try {
+        const weaponSel = document.getElementById('weapon')?.value;
+        const scoped = (weaponSel === 'sniper') && (state.scope === true);
+        camera.fov = scoped ? SCOPE_FOV : DEFAULT_FOV;
+        scope.isVisible = scoped;
+        scopeLines.isVisible = scoped;
+        ret.isVisible = !scoped;
+        const scopeBtn = document.getElementById('btnScope');
+        if (scopeBtn) scopeBtn.style.display = (weaponSel === 'sniper') ? 'flex' : 'none';
+      } catch {}
+    }
 
     function flashReticle(kind) {
       const orig = ret.color;
@@ -1596,6 +1599,7 @@
         const w = document.getElementById('weapon')?.value;
         if (w !== 'sniper') return;
         state.scope = !state.scope;
+        updateScopeUI();
         try { el.classList.toggle('btnPressed', state.scope); } catch {}
         try { log(`Scope: ${state.scope ? 'ON' : 'OFF'}`); } catch {}
       };
@@ -1642,6 +1646,7 @@
       try { ensureFirstPersonRig()?.setGun?.(weaponEl.value); } catch {}
       // If switching away from sniper, force scope off.
       if (weaponEl.value !== 'sniper') state.scope = false;
+      updateScopeUI();
     });
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
