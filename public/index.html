@@ -744,59 +744,127 @@
         return buf;
       }
 
-      function gunshot() {
+      function gunshot(weapon = 'rifle') {
         play((c) => {
           const t0 = c.currentTime + 0.001;
 
+          const w = String(weapon || 'rifle');
+          const cfg = (w === 'shotgun')
+            ? {
+                noise: 0.18,
+                bpFreq: 900,
+                bpQ: 0.7,
+                lpFreq: 2600,
+                gainPeak: 0.38,
+                gainMid: 0.06,
+                gainMidAt: 0.09,
+                gainEndAt: 0.22,
+                thumpType: 'sine',
+                thumpStart: 120,
+                thumpEnd: 70,
+                thumpPeak: 0.16,
+                thumpEndAt: 0.16,
+              }
+            : (w === 'sniper')
+            ? {
+                noise: 0.14,
+                bpFreq: 1600,
+                bpQ: 1.1,
+                lpFreq: 5200,
+                gainPeak: 0.30,
+                gainMid: 0.03,
+                gainMidAt: 0.05,
+                gainEndAt: 0.18,
+                thumpType: 'triangle',
+                thumpStart: 220,
+                thumpEnd: 110,
+                thumpPeak: 0.12,
+                thumpEndAt: 0.13,
+                // small "tail" click to feel snappier
+                clickHz: 3200,
+                clickMs: 18,
+                clickGain: 0.015,
+              }
+            : {
+                // rifle default
+                noise: 0.11,
+                bpFreq: 1300,
+                bpQ: 0.9,
+                lpFreq: 3800,
+                gainPeak: 0.24,
+                gainMid: 0.02,
+                gainMidAt: 0.06,
+                gainEndAt: 0.14,
+                thumpType: 'triangle',
+                thumpStart: 170,
+                thumpEnd: 95,
+                thumpPeak: 0.10,
+                thumpEndAt: 0.11,
+              };
+
           // Noise burst
           const src = c.createBufferSource();
-          src.buffer = noiseBuffer(c, 0.12);
+          src.buffer = noiseBuffer(c, cfg.noise);
 
           // Shape it: bandpass + slight distortion + fast decay
           const bp = c.createBiquadFilter();
           bp.type = 'bandpass';
-          bp.frequency.setValueAtTime(1200, t0);
-          bp.Q.setValueAtTime(0.8, t0);
+          bp.frequency.setValueAtTime(cfg.bpFreq, t0);
+          bp.Q.setValueAtTime(cfg.bpQ, t0);
 
           const lp = c.createBiquadFilter();
           lp.type = 'lowpass';
-          lp.frequency.setValueAtTime(3500, t0);
+          lp.frequency.setValueAtTime(cfg.lpFreq, t0);
 
           const shaper = c.createWaveShaper();
           const curve = new Float32Array(256);
           for (let i = 0; i < curve.length; i++) {
             const x = (i / (curve.length - 1)) * 2 - 1;
-            curve[i] = Math.tanh(2.2 * x);
+            curve[i] = Math.tanh(2.0 * x);
           }
           shaper.curve = curve;
 
           const g = c.createGain();
           g.gain.setValueAtTime(0.0001, t0);
-          g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.003);
-          g.gain.exponentialRampToValueAtTime(0.02, t0 + 0.06);
-          g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+          g.gain.exponentialRampToValueAtTime(cfg.gainPeak, t0 + 0.003);
+          g.gain.exponentialRampToValueAtTime(cfg.gainMid, t0 + cfg.gainMidAt);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + cfg.gainEndAt);
 
-          // Add a low "thump" oscillator for realism
+          // Low "thump"
           const o = c.createOscillator();
-          o.type = 'triangle';
-          o.frequency.setValueAtTime(160, t0);
-          o.frequency.exponentialRampToValueAtTime(90, t0 + 0.08);
+          o.type = cfg.thumpType;
+          o.frequency.setValueAtTime(cfg.thumpStart, t0);
+          o.frequency.exponentialRampToValueAtTime(cfg.thumpEnd, t0 + 0.09);
           const og = c.createGain();
           og.gain.setValueAtTime(0.0001, t0);
-          og.gain.exponentialRampToValueAtTime(0.10, t0 + 0.004);
-          og.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.10);
+          og.gain.exponentialRampToValueAtTime(cfg.thumpPeak, t0 + 0.004);
+          og.gain.exponentialRampToValueAtTime(0.0001, t0 + cfg.thumpEndAt);
 
           const mix = c.createGain();
-          mix.gain.value = 0.7;
+          mix.gain.value = 0.78;
 
           src.connect(bp).connect(shaper).connect(lp).connect(g).connect(mix);
           o.connect(og).connect(mix);
+
+          // Optional click (sniper)
+          let clickOsc = null;
+          if (cfg.clickHz) {
+            clickOsc = c.createOscillator();
+            clickOsc.type = 'square';
+            clickOsc.frequency.value = cfg.clickHz;
+            const cg = c.createGain();
+            cg.gain.value = cfg.clickGain || 0.01;
+            clickOsc.connect(cg).connect(mix);
+            clickOsc.start(t0);
+            clickOsc.stop(t0 + (cfg.clickMs || 12) / 1000);
+          }
+
           mix.connect(c.destination);
 
           src.start(t0);
-          src.stop(t0 + 0.14);
+          src.stop(t0 + cfg.gainEndAt);
           o.start(t0);
-          o.stop(t0 + 0.11);
+          o.stop(t0 + cfg.thumpEndAt);
         });
       }
 
@@ -814,7 +882,7 @@
       }
 
       return {
-        shoot: () => gunshot(),
+        shoot: (weapon) => gunshot(weapon),
         hit: () => tick(760, 60, 0.02),
         kill: () => tick(320, 120, 0.02),
       };
@@ -871,7 +939,7 @@
             if (fpRig?.gunRoot) fpRig.gunRoot.position.z += 0.03;
           }, 70);
         }
-        SFX.shoot();
+        SFX.shoot(s.weapon || 'rifle');
         if (s.hit) {
           const target = s.hit;
           const hp = (typeof s.hitHp === 'number') ? s.hitHp : null;
