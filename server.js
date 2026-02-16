@@ -8,6 +8,75 @@ const PORT = process.env.PORT || 3030;
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Debug endpoints (localhost only) to support automated screenshots.
+function isLocalReq(req) {
+  const ip = (req.ip || req.connection?.remoteAddress || '').toString();
+  return ip.includes('127.0.0.1') || ip.includes('::1') || ip.includes('::ffff:127.0.0.1');
+}
+
+app.post('/debug/start', (req, res) => {
+  if (!isLocalReq(req)) return res.status(403).send('forbidden');
+  GAME.started = true;
+  broadcast({ t: 'state', state: serializeState() });
+  res.json({ ok: true });
+});
+
+app.post('/debug/teleport', express.json(), (req, res) => {
+  if (!isLocalReq(req)) return res.status(403).send('forbidden');
+  const { id, x, y, z, yaw, pitch, hp } = req.body || {};
+  const p = players.get(String(id));
+  if (!p) return res.status(404).json({ ok: false, error: 'no-player' });
+  if (typeof x === 'number') p.x = x;
+  if (typeof y === 'number') p.y = y;
+  if (typeof z === 'number') p.z = z;
+  if (typeof yaw === 'number') p.yaw = yaw;
+  if (typeof pitch === 'number') p.pitch = pitch;
+  if (typeof hp === 'number') p.hp = Math.max(0, Math.min(100, hp));
+  broadcast({ t: 'state', state: serializeState() });
+  res.json({ ok: true });
+});
+
+app.post('/debug/shoot', express.json(), (req, res) => {
+  if (!isLocalReq(req)) return res.status(403).send('forbidden');
+  const { fromId } = req.body || {};
+  const shooter = players.get(String(fromId));
+  if (!shooter) return res.status(404).json({ ok: false, error: 'no-shooter' });
+  if (!GAME.started) GAME.started = true;
+  if (shooter.hp <= 0) return res.json({ ok: false, error: 'dead' });
+
+  const hit = rayHit(shooter);
+  const target = hit.target;
+
+  let hitId = null;
+  let hitHp = null;
+  if (target && target.hp > 0) {
+    target.hp -= 25;
+    if (target.hp <= 0) {
+      target.hp = 0;
+      target.respawnAt = nowMs() + 2000;
+      shooter.score += 1;
+    }
+    hitId = target.id;
+    hitHp = target.hp;
+  }
+
+  broadcast({
+    t: 'shot',
+    from: shooter.id,
+    sx: shooter.x,
+    sy: shooter.y,
+    sz: shooter.z,
+    ex: hit.endX,
+    ey: shooter.y,
+    ez: hit.endZ,
+    hit: hitId,
+    hitHp,
+  });
+
+  broadcast({ t: 'state', state: serializeState() });
+  res.json({ ok: true, hit: hitId, hitHp });
+});
+
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 

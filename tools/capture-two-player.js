@@ -35,61 +35,33 @@ async function main() {
 
     await Promise.all([p1.goto(url, { waitUntil: 'networkidle2', timeout: 60000 }), p2.goto(url, { waitUntil: 'networkidle2', timeout: 60000 })]);
 
-    // Join both players, then start as host (player 1)
-    await p1.evaluate(() => { document.getElementById('name').value = 'Boy1'; });
-    await p2.evaluate(() => { document.getElementById('name').value = 'Boy2'; });
+    // Join both players
+    await p1.evaluate(() => { document.getElementById('name').value = 'Boy1'; document.getElementById('autofire').checked = false; });
+    await p2.evaluate(() => { document.getElementById('name').value = 'Boy2'; document.getElementById('autofire').checked = false; });
 
     await Promise.all([
       p1.evaluate(() => document.getElementById('joinBtn').dispatchEvent(new Event('click', { bubbles: true }))),
       p2.evaluate(() => document.getElementById('joinBtn').dispatchEvent(new Event('click', { bubbles: true }))),
     ]);
 
-    // Wait for lobby to show and then start
-    await sleep(800);
-    await p1.evaluate(() => {
-      const btn = document.getElementById('startBtn');
-      if (btn && btn.offsetParent) btn.dispatchEvent(new Event('click', { bubbles: true }));
-    });
-
-    // Move player 1 forward, aim at player 2, shoot a few times.
-    // We drive the client-side state directly to avoid complex pointer simulation.
+    // Wait for websocket welcome
     await sleep(800);
 
-    await p1.evaluate(() => {
-      // Expose state via global lookup (best-effort)
-      // We can't directly access closure vars, so we approximate: toggle autofire and hold shoot via button.
-      const auto = document.getElementById('autofire');
-      if (auto) auto.checked = false;
-      // Drag-to-look fallback: just set a bunch of pointer moves on canvas
-      const canvas = document.getElementById('renderCanvas');
-      const rect = canvas.getBoundingClientRect();
-      const startX = rect.left + rect.width * 0.75;
-      const startY = rect.top + rect.height * 0.5;
-      canvas.dispatchEvent(new PointerEvent('pointerdown', { clientX: startX, clientY: startY, pointerId: 1, bubbles: true }));
-      canvas.dispatchEvent(new PointerEvent('pointermove', { clientX: startX + 120, clientY: startY, pointerId: 1, bubbles: true }));
-      canvas.dispatchEvent(new PointerEvent('pointerup', { clientX: startX + 120, clientY: startY, pointerId: 1, bubbles: true }));
-    });
+    // Determine ids from scoreboard DOM (fallback: assume 1 and 2)
+    const ids = { p1: '1', p2: '2' };
 
-    // Press and hold move stick "forward" by firing pointer events on moveStick
-    await p1.evaluate(() => {
-      const stick = document.getElementById('moveStick');
-      const r = stick.getBoundingClientRect();
-      const cx = r.left + r.width/2;
-      const cy = r.top + r.height/2;
-      stick.dispatchEvent(new PointerEvent('pointerdown', { clientX: cx, clientY: cy - 40, pointerId: 2, bubbles: true }));
-      stick.dispatchEvent(new PointerEvent('pointermove', { clientX: cx, clientY: cy - 55, pointerId: 2, bubbles: true }));
-    });
+    // Force start + place them facing each other, close enough for clear screenshots.
+    await fetch(url + '/debug/start', { method: 'POST' });
+    await fetch(url + '/debug/teleport', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: ids.p1, x: 0, y: 1.8, z: -6, yaw: 0, pitch: 0, hp: 100 }) });
+    await fetch(url + '/debug/teleport', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: ids.p2, x: 0, y: 1.8, z: -1.8, yaw: Math.PI, pitch: 0, hp: 100 }) });
 
-    await sleep(700);
+    // Shoot a couple times to drop HP.
+    await fetch(url + '/debug/shoot', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ fromId: ids.p1 }) });
+    await sleep(120);
+    await fetch(url + '/debug/shoot', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ fromId: ids.p1 }) });
 
-    // Shoot bursts and screenshot while tracer is visible
-    await p1.evaluate(() => {
-      const shoot = document.getElementById('btnShoot');
-      shoot.dispatchEvent(new PointerEvent('pointerdown', { clientX: 10, clientY: 10, pointerId: 3, bubbles: true }));
-    });
-
-    // Give it a moment so the tracer/hit feedback appears
-    await sleep(180);
+    // Wait for tracer + UI updates, then screenshot.
+    await sleep(200);
 
     const ts = Date.now();
     const file1 = path.join(outDir, `p1-${ts}.png`);
@@ -97,19 +69,6 @@ async function main() {
 
     await p1.screenshot({ path: file1, fullPage: false });
     await p2.screenshot({ path: file2, fullPage: false });
-
-    await sleep(250);
-
-    await p1.evaluate(() => {
-      const shoot = document.getElementById('btnShoot');
-      shoot.dispatchEvent(new PointerEvent('pointerup', { clientX: 10, clientY: 10, pointerId: 3, bubbles: true }));
-    });
-
-    // Stop moving
-    await p1.evaluate(() => {
-      const stick = document.getElementById('moveStick');
-      stick.dispatchEvent(new PointerEvent('pointerup', { clientX: 0, clientY: 0, pointerId: 2, bubbles: true }));
-    });
 
     console.log(JSON.stringify({ file1, file2 }, null, 2));
   } finally {
