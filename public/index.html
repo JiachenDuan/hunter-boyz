@@ -334,6 +334,7 @@
       // game flags
       state.started = !!s.game?.started;
       state.isHost = (s.game?.hostId && myId) ? (s.game.hostId === myId) : false;
+      try { if (s.build) setConn(`connected • build ${String(s.build).slice(-4)}`); } catch {}
 
       // lobby UI
       const lobby = document.getElementById('lobby');

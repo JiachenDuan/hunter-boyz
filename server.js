@@ -6,6 +6,14 @@ const WebSocket = require('ws');
 const PORT = process.env.PORT || 3030;
 
 const app = express();
+// Prevent iOS/Chrome from caching old JS during rapid iteration.
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Debug endpoints (localhost only) to support automated screenshots.
@@ -106,6 +114,8 @@ const WORLD = {
   ],
 };
 
+const BUILD = String(Date.now());
+
 const GAME = {
   started: false,
   hostId: null,
@@ -151,6 +161,7 @@ function makePlayer(name) {
 function serializeState() {
   return {
     ts: nowMs(),
+    build: BUILD,
     game: { started: GAME.started, hostId: GAME.hostId },
     players: Array.from(players.values()).map(p => ({
       id: p.id,
