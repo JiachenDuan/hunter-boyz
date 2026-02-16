@@ -103,8 +103,7 @@
     <div id="hud">
       <div style="display:flex; align-items:center; gap:10px;">
         <div style="font-weight:800; letter-spacing:0.2px;">Hunter Boyz</div>
-        <div id="conn" style="margin-left:8px; font-size:12px; opacity:.75;">offline</div>
-        <div id="build" style="font-size:12px; opacity:.55;">—</div>
+        <div id="connDot" style="margin-left:8px; width:10px; height:10px; border-radius:999px; background: rgba(255,80,80,0.95); box-shadow: 0 0 0 2px rgba(0,0,0,0.25);"></div>
         <button id="settingsBtn" style="margin-left:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:800;">Settings</button>
       </div>
 
@@ -222,13 +221,12 @@
       const el = document.getElementById('log');
       if (el) el.textContent = msg;
     }
-    function setConn(msg) {
-      const el = document.getElementById('conn');
-      if (el) el.textContent = msg;
-    }
-    function setBuild(msg) {
-      const el = document.getElementById('build');
-      if (el) el.textContent = msg;
+    function setConnState(state /* 'online'|'offline'|'connecting' */) {
+      const el = document.getElementById('connDot');
+      if (!el) return;
+      if (state === 'online') el.style.background = 'rgba(80,255,140,0.95)';
+      else if (state === 'connecting') el.style.background = 'rgba(255,220,100,0.95)';
+      else el.style.background = 'rgba(255,80,80,0.95)';
     }
 
     function connectAndJoin() {
@@ -255,7 +253,7 @@
         if (reconnectTimer) return;
         reconnectAttempts = Math.min(reconnectAttempts + 1, 8);
         const delay = Math.min(500 * Math.pow(1.6, reconnectAttempts), 6000);
-        setConn(`reconnecting… #${reconnectAttempts}`);
+        setConnState('connecting');
         log(`Reconnecting… (${Math.round(delay)}ms)`);
         reconnectTimer = setTimeout(() => {
           reconnectTimer = null;
@@ -265,13 +263,12 @@
 
       function openSocket() {
         try { socket?.close(); } catch {}
-        setConn('connecting…');
+        setConnState('connecting');
         socket = new WebSocket(url);
 
         socket.addEventListener('open', () => {
           reconnectAttempts = 0;
-          setConn('connected');
-          setBuild('—');
+          setConnState('online');
           socket.send(JSON.stringify({ t:'join', name, clientId }));
           log('Connected.');
         });
@@ -294,7 +291,7 @@
 
         socket.addEventListener('close', () => {
           state.joined = false;
-          setConn('offline');
+          setConnState('offline');
           try {
             joinBtn.disabled = false;
             nameInput.disabled = false;
@@ -340,8 +337,7 @@
       // game flags
       state.started = !!s.game?.started;
       state.isHost = (s.game?.hostId && myId) ? (s.game.hostId === myId) : false;
-      // Build id is informational; don't spam the connection status each tick.
-      try { if (s.build) setBuild(`build ${String(s.build).slice(-4)}`); } catch {}
+      // Build id removed (no longer displayed).
 
       // lobby UI
       const lobby = document.getElementById('lobby');
