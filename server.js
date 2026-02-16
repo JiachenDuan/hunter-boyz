@@ -20,6 +20,8 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.static(path.join(__dirname, 'public')));
+// Serve saved snapshots
+app.use('/snaps', express.static(path.join(__dirname, 'snaps')));
 
 // Redirect root to a cache-busting URL so iOS doesn't reuse a stale HTML.
 app.get('/', (req, res) => res.redirect(302, `/index.html?v=${Date.now()}`));

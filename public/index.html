@@ -287,7 +287,10 @@
           if (msg.t === 'state') applyState(msg.state);
           if (msg.t === 'shot') renderShot(msg);
           if (msg.t === 'kill') showKill(`${msg.killerName || msg.killer} eliminated ${msg.victimName || msg.victim}`);
-          if (msg.t === 'snapSaved') log(`Snapshot saved: ${msg.file}`);
+          if (msg.t === 'snapSaved') {
+            const url = `${location.origin}/snaps/${msg.file}`;
+            log(`Snapshot saved: ${url}`);
+          }
         });
 
         socket.addEventListener('close', () => {
@@ -1570,14 +1573,35 @@
 
     function doSnap(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
-      if (!socket || socket.readyState !== 1) return;
-      // capture canvas as jpg to keep size small
+      if (!socket || socket.readyState !== 1) { log('Snapshot failed: offline'); return; }
+
+      // Downscale before encoding (iPhone can choke on huge base64 payloads).
+      const snapMaxW = 720;
+      const srcW = canvas.width || 1280;
+      const srcH = canvas.height || 720;
+      const scale = Math.min(1, snapMaxW / srcW);
+      const outW = Math.max(1, Math.round(srcW * scale));
+      const outH = Math.max(1, Math.round(srcH * scale));
+
       let dataUrl = null;
-      try { dataUrl = canvas.toDataURL('image/jpeg', 0.7); }
-      catch { try { dataUrl = canvas.toDataURL('image/png'); } catch {} }
-      if (!dataUrl) return;
-      socket.send(JSON.stringify({ t:'snap', dataUrl }));
-      log('Snapshot sent (saving on server)…');
+      try {
+        const tmp = document.createElement('canvas');
+        tmp.width = outW;
+        tmp.height = outH;
+        const ctx = tmp.getContext('2d');
+        ctx.drawImage(canvas, 0, 0, outW, outH);
+        dataUrl = tmp.toDataURL('image/jpeg', 0.55);
+      } catch (err) {
+        try { dataUrl = canvas.toDataURL('image/jpeg', 0.5); } catch {}
+      }
+
+      if (!dataUrl) { log('Snapshot failed: canvas capture blocked'); return; }
+      try {
+        socket.send(JSON.stringify({ t:'snap', dataUrl }));
+        log('Snapshot sent (saving on server)…');
+      } catch {
+        log('Snapshot failed: send error');
+      }
     }
 
     async function doCopyLink(e) {
