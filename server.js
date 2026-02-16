@@ -315,6 +315,20 @@ function doDamage({ shooter, target, amount }) {
   return { hitId: target.id, hitHp: target.hp, killed: false };
 }
 
+function dist2D(a, b) {
+  const dx = (a.x - b.x);
+  const dz = (a.z - b.z);
+  return Math.hypot(dx, dz);
+}
+
+function damageFalloff(base, dist, { near = 4, far = 30, minMult = 0.45 } = {}) {
+  if (dist <= near) return base;
+  if (dist >= far) return Math.max(1, Math.round(base * minMult));
+  const t = (dist - near) / (far - near);
+  const mult = 1 - t * (1 - minMult);
+  return Math.max(1, Math.round(base * mult));
+}
+
 wss.on('connection', (ws) => {
   ws.isAlive = true;
   ws.lastMsgAt = nowMs();
@@ -544,13 +558,19 @@ wss.on('connection', (ws) => {
 
           if (weapon === 'rifle') {
             const hit = rayHit(p, 30);
-            const dmg = doDamage({ shooter: p, target: hit.target, amount: 25 });
+            let dmgAmt = 25;
+            if (hit.target) {
+              const d = dist2D(p, hit.target);
+              dmgAmt = damageFalloff(25, d, { near: 5, far: 30, minMult: 0.55 });
+            }
+            const dmg = doDamage({ shooter: p, target: hit.target, amount: dmgAmt });
             hitId = dmg.hitId;
             hitHp = dmg.hitHp;
 
             broadcast({
               t: 'shot',
               weapon,
+              dmg: dmgAmt,
               from: p.id,
               sx: p.x,
               sy: p.y,
@@ -588,13 +608,18 @@ wss.on('connection', (ws) => {
             // Shotgun: multiple pellets with small yaw spread.
             const pellets = 6;
             const spread = 0.14; // radians
-            const dmgPerPellet = 10;
+            const basePerPellet = 10;
             const traces = [];
             for (let i = 0; i < pellets; i++) {
               const off = (Math.random() * 2 - 1) * spread;
               const hit = rayHit(p, 22, p.yaw + off);
               traces.push({ ex: hit.endX, ez: hit.endZ, hit: hit.target ? hit.target.id : null });
-              const dmg = doDamage({ shooter: p, target: hit.target, amount: dmgPerPellet });
+              let pelletDmg = basePerPellet;
+              if (hit.target) {
+                const d = dist2D(p, hit.target);
+                pelletDmg = damageFalloff(basePerPellet, d, { near: 3, far: 22, minMult: 0.45 });
+              }
+              const dmg = doDamage({ shooter: p, target: hit.target, amount: pelletDmg });
               if (dmg.hitId) { hitId = dmg.hitId; hitHp = dmg.hitHp; }
             }
             broadcast({
