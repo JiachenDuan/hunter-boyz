@@ -880,7 +880,7 @@ setInterval(() => {
   for (const ws of wss.clients) {
     // If we haven't heard anything in a while, kill it.
     // Kill truly dead/ghost tabs quickly (mobile browsers sometimes leave sockets half-open).
-    if (ws.lastMsgAt && (t - ws.lastMsgAt) > 20_000) {
+    if (ws.lastMsgAt && (t - ws.lastMsgAt) > 120_000) {
       try { ws.terminate(); } catch {}
       continue;
     }

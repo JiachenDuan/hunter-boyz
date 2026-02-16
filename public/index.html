@@ -360,7 +360,7 @@
       if (!el) return;
       const now = Date.now();
       const left = Math.max(0, (roundEndsAtMs || 0) - now);
-      const str = fmtMs(left);
+      const str = roundEndsAtMs ? fmtMs(left) : 'LOBBY';
       if (str !== lastTimerStr) {
         lastTimerStr = str;
         el.textContent = str;
@@ -2933,6 +2933,14 @@ function spawnDent(pos, normal, size, kind) {
       scene.render();
 
       if (socket && socket.readyState === 1 && state.joined) {
+        // Keepalive so mobile Safari doesn't silently kill idle websockets in lobby.
+        const now = performance.now();
+        if (!window._hbPingAt) window._hbPingAt = 0;
+        if (now - window._hbPingAt > 5000) {
+          window._hbPingAt = now;
+          try { socket.send(JSON.stringify({ t:'ping' })); } catch {}
+        }
+
         // disable gameplay input until started
         if (!state.started) return;
 
