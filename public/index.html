@@ -860,6 +860,7 @@
 
     // Ground + some blocks
     const ground = BABYLON.MeshBuilder.CreateGround('g', { width: 60, height: 60 }, scene);
+    ground.isPickable = true;
     // Floor: make it feel like a real floor (grass-ish)
     const gmat = new BABYLON.StandardMaterial('gm', scene);
     gmat.diffuseColor = new BABYLON.Color3(0.22, 0.50, 0.28);
@@ -910,7 +911,8 @@
         m.position.set(x, h / 2, z);
         m.rotation.y = rotY || 0;
         m.material = wallMat;
-        m.isPickable = false;
+        // Pickable so bullet marks can land on boundary walls.
+        m.isPickable = true;
         return m;
       }
 
@@ -1214,6 +1216,7 @@
       const b = BABYLON.MeshBuilder.CreateBox('b', { width:w, height:h, depth:d }, scene);
       b.position.set(x, y + h/2, z);
       b.material = blockMat;
+      b.isPickable = true;
       return b;
     }
     addBlock(0,0,0, 3,3,3);
@@ -2162,8 +2165,8 @@ function spawnDent(pos, size, kind) {
         }, scene);
         dent.isPickable = false;
         dent.position.copyFrom(p);
-        // Billboard-ish so it reads on mobile even without surface normals.
-        dent.billboardMode = BABYLON.Mesh.BILLBOARDMODE_Y;
+        // Billboard so it reads on mobile on any surface (wall/floor/ceiling).
+        dent.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
         dent.rotation.y = Math.random() * Math.PI * 2;
 
         const mat = new BABYLON.StandardMaterial(`dentm_${Date.now()}`, scene);
@@ -2187,7 +2190,7 @@ function spawnDent(pos, size, kind) {
           craterRing = BABYLON.MeshBuilder.CreateTorus(`dent_ring_${Date.now()}`, { diameter: size * 1.35, thickness: Math.max(0.06, size * 0.10), tessellation: 28 }, scene);
           craterRing.isPickable = false;
           craterRing.position.copyFrom(p);
-          craterRing.billboardMode = BABYLON.Mesh.BILLBOARDMODE_Y;
+          craterRing.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
           rmat = new BABYLON.StandardMaterial(`dent_ringm_${Date.now()}`, scene);
           rmat.diffuseColor = new BABYLON.Color3(0.12, 0.08, 0.04);
           rmat.emissiveColor = new BABYLON.Color3(0.06, 0.03, 0.01);
