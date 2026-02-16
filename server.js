@@ -165,6 +165,26 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.t === 'snap') {
+      // Client can send a canvas snapshot (data URL). We'll store it and (optionally) notify.
+      try {
+        const fs = require('fs');
+        const snapDir = path.join(__dirname, 'snaps');
+        if (!fs.existsSync(snapDir)) fs.mkdirSync(snapDir, { recursive: true });
+        const dataUrl = String(msg.dataUrl || '');
+        const m = dataUrl.match(/^data:image\/(png|jpeg);base64,(.+)$/);
+        if (!m) return;
+        const ext = m[1] === 'jpeg' ? 'jpg' : 'png';
+        const b64 = m[2];
+        const buf = Buffer.from(b64, 'base64');
+        const ts = Date.now();
+        const file = path.join(snapDir, `snap-${ts}-${id}.${ext}`);
+        fs.writeFileSync(file, buf);
+        ws.send(JSON.stringify({ t: 'snapSaved', file: path.basename(file) }));
+      } catch {}
+      return;
+    }
+
     if (msg.t === 'input') {
       // Ignore gameplay until host starts.
       if (!GAME.started) return;

@@ -53,6 +53,10 @@
         <label style="font-size:12px; opacity:.8;">Auto-fire</label>
         <input id="autofire" type="checkbox" />
       </div>
+      <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+        <button id="snapBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Send snapshot</button>
+        <div style="font-size:12px; opacity:.75;">(saves an in-game screenshot)</div>
+      </div>
       <div id="log">Tip: same Wi‑Fi, open this page on each iPhone.</div>
     </div>
 
@@ -137,6 +141,9 @@
         }
         if (msg.t === 'shot') {
           renderShot(msg);
+        }
+        if (msg.t === 'snapSaved') {
+          log(`Snapshot saved: ${msg.file}`);
         }
       });
 
@@ -659,6 +666,7 @@
     const joinBtn = document.getElementById('joinBtn');
     const nameInput = document.getElementById('name');
     const startBtn = document.getElementById('startBtn');
+    const snapBtn = document.getElementById('snapBtn');
 
     function doJoin(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -674,6 +682,18 @@
       socket.send(JSON.stringify({ t:'start' }));
     }
 
+    function doSnap(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (!socket || socket.readyState !== 1) return;
+      // capture canvas as jpg to keep size small
+      let dataUrl = null;
+      try { dataUrl = canvas.toDataURL('image/jpeg', 0.7); }
+      catch { try { dataUrl = canvas.toDataURL('image/png'); } catch {} }
+      if (!dataUrl) return;
+      socket.send(JSON.stringify({ t:'snap', dataUrl }));
+      log('Snapshot sent (saving on server)…');
+    }
+
     // iOS Safari can be flaky with click depending on viewport/overlays; wire multiple events.
     joinBtn.addEventListener('click', doJoin);
     joinBtn.addEventListener('pointerdown', doJoin, { passive: false });
@@ -682,6 +702,10 @@
     startBtn.addEventListener('click', doStart);
     startBtn.addEventListener('pointerdown', doStart, { passive: false });
     startBtn.addEventListener('touchend', doStart, { passive: false });
+
+    snapBtn.addEventListener('click', doSnap);
+    snapBtn.addEventListener('pointerdown', doSnap, { passive: false });
+    snapBtn.addEventListener('touchend', doSnap, { passive: false });
 
     // Network tick
     let seq = 0;
