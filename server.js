@@ -164,6 +164,8 @@ function makePlayer(name) {
     reloadUntil: 0,
     autoReload: true,
     disconnectedAt: 0,
+    fartUntil: 0,
+    fartTickAt: 0,
     color: `hsl(${hue} 80% 60%)`,
   };
 }
@@ -188,6 +190,7 @@ function serializeState() {
       invulnInMs: Math.max(0, p.invulnUntil - nowMs()),
       respawnInMs: p.hp > 0 ? 0 : Math.max(0, p.respawnAt - nowMs()),
       connected: playerConn.has(p.id),
+      fartInMs: Math.max(0, (p.fartUntil || 0) - nowMs()),
       color: p.color,
     })),
   };
@@ -545,8 +548,8 @@ wss.on('connection', (ws) => {
       // shoot
       if (msg.shoot) {
         const t = nowMs();
-        const weapon = (msg.weapon === 'shotgun' || msg.weapon === 'sniper') ? msg.weapon : 'rifle';
-        const fireCdMs = weapon === 'shotgun' ? 650 : (weapon === 'sniper' ? 1100 : 250);
+        const weapon = (msg.weapon === 'shotgun' || msg.weapon === 'sniper' || msg.weapon === 'fart') ? msg.weapon : 'rifle';
+        const fireCdMs = weapon === 'shotgun' ? 650 : (weapon === 'sniper' ? 1100 : (weapon === 'fart' ? 450 : 250));
 
         if (t - p.lastShotAt > fireCdMs) {
           // can't shoot while reloading
@@ -618,6 +621,31 @@ wss.on('connection', (ws) => {
               hit: hitId,
               hitHp,
             });
+          } else if (weapon === 'fart') {
+            // Fart gun: applies a 5s fart cloud debuff; -5 HP per second.
+            const hit = rayHit(p, 22);
+            if (hit.target) {
+              const tNow = nowMs();
+              hit.target.fartUntil = tNow + 5000;
+              hit.target.fartTickAt = tNow; // tick immediately on next loop
+              broadcast({ t: 'fart', from: p.id, to: hit.target.id, until: hit.target.fartUntil });
+            }
+
+            broadcast({
+              t: 'shot',
+              weapon,
+              from: p.id,
+              sx: p.x,
+              sy: p.y,
+              sz: p.z,
+              yaw: p.yaw,
+              pitch: p.pitch,
+              ex: hit.endX,
+              ey: p.y,
+              ez: hit.endZ,
+              hit: hit.target ? hit.target.id : null,
+              hitHp: hit.target ? hit.target.hp : null,
+            });
           } else {
             // Shotgun: multiple pellets with small yaw spread.
             const pellets = 6;
@@ -676,11 +704,30 @@ wss.on('connection', (ws) => {
 });
 
 setInterval(() => {
-  // Handle respawns + reload completion + cleanup disconnected players
+  // Handle respawns + reload completion + fart debuff + cleanup disconnected players
   const t = nowMs();
   for (const p of players.values()) {
     if (p.hp <= 0 && p.respawnAt && t >= p.respawnAt) respawn(p);
     if (p.hp > 0 && p.reloadUntil && t >= p.reloadUntil) { p.ammo = 12; p.reloadUntil = 0; }
+
+    // Fart cloud DOT: -5 HP each second for up to 5s
+    if (p.hp > 0 && p.fartUntil && t < p.fartUntil) {
+      if (!p.fartTickAt) p.fartTickAt = t;
+      if (t - p.fartTickAt >= 1000) {
+        p.fartTickAt = t;
+        // Apply damage without awarding a kill to a specific shooter.
+        p.hp = Math.max(0, p.hp - 5);
+        if (p.hp <= 0) {
+          p.hp = 0;
+          p.respawnAt = t + 2000;
+        }
+      }
+    }
+
+    if (p.fartUntil && t >= p.fartUntil) {
+      p.fartUntil = 0;
+      p.fartTickAt = 0;
+    }
   }
 
   // Reconnect grace window: keep disconnected players briefly so they don't rejoin as "new users".

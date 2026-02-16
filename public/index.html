@@ -131,6 +131,7 @@
             <option value="rifle">Rifle</option>
             <option value="shotgun">Shotgun</option>
             <option value="sniper">Sniper</option>
+            <option value="fart">Fart gun</option>
           </select>
         </div>
         <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
@@ -374,6 +375,16 @@
       if (meP) {
         const hp = Math.max(0, Math.min(100, meP.hp));
         document.getElementById('hpText').textContent = `HP ${hp}`;
+
+        // Fart debuff indicator
+        try {
+          const fi = (meP.fartInMs || 0);
+          if (fi > 0) {
+            const secs = Math.ceil(fi / 1000);
+            document.getElementById('hitDetail').textContent = `💨 Fart cloud ${secs}s (-5 HP/s)`;
+            document.getElementById('hitDetail').style.opacity = '1';
+          }
+        } catch {}
         const fill = document.getElementById('hpFill');
         fill.style.width = `${hp}%`;
         fill.style.background = hp > 60 ? 'rgba(80,255,140,0.85)' : (hp > 30 ? 'rgba(255,220,100,0.85)' : 'rgba(255,80,80,0.85)');
@@ -1039,6 +1050,22 @@
                 clickMs: 18,
                 clickGain: 0.015,
               }
+            : (w === 'fart')
+            ? {
+                noise: 0.22,
+                bpFreq: 280,
+                bpQ: 0.6,
+                lpFreq: 900,
+                gainPeak: 0.20,
+                gainMid: 0.05,
+                gainMidAt: 0.12,
+                gainEndAt: 0.28,
+                thumpType: 'sine',
+                thumpStart: 90,
+                thumpEnd: 55,
+                thumpPeak: 0.10,
+                thumpEndAt: 0.20,
+              }
             : {
                 // rifle default
                 noise: 0.11,
@@ -1215,7 +1242,8 @@
           const hp = (typeof s.hitHp === 'number') ? s.hitHp : null;
           const detail = hp === null ? `Hit ${target}` : `Hit ${target} (HP ${hp})`;
           showHitToast(detail);
-          SFX.hit();
+          // Fart gun should feel goofy, not a "hit" beep.
+          if ((s.weapon || 'rifle') !== 'fart') SFX.hit();
         }
       }
 
@@ -1723,7 +1751,7 @@
           }
 
           const wSel = document.getElementById('weapon')?.value;
-          const weapon = (wSel === 'shotgun' || wSel === 'sniper') ? wSel : 'rifle';
+          const weapon = (wSel === 'shotgun' || wSel === 'sniper' || wSel === 'fart') ? wSel : 'rifle';
 
           const autoReload = !!document.getElementById('autoReload')?.checked;
 
