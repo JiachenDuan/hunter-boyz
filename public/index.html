@@ -74,6 +74,7 @@
       line-height: 1;
       opacity: 0.95;
     }
+    #btnScope .btnIcon { font-size: 30px; }
     .btnText { display:none; }
 
     .btnPressed {
@@ -84,8 +85,11 @@
     #score { position:absolute; top:10px; right:10px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:none; font-size:12px; min-width: 140px; }
 
     /* Extra buttons (sprint/reload) sit above jump/shoot */
-    #btnReload, #btnScope { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 11; }
-    #btnReload { right: calc(var(--pad) + var(--btn) + var(--btn-gap)); background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.35); }
+    #btnReload, #btnScope { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 12; }
+    /* Put scope above the shoot cluster (so it doesn't overlap the look pad) */
+    #btnScope { right: calc(var(--pad) + var(--btn) + var(--btn-gap)); }
+    /* Reload sits to the left of scope when visible */
+    #btnReload { right: calc(var(--pad) + (var(--btn) + var(--btn-gap)) * 2); background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.35); }
 
     /* Responsive tuning */
     @media (max-width: 420px) {
@@ -141,6 +145,7 @@
         <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <button id="snapBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Send snapshot</button>
           <button id="copyLinkBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Copy link</button>
+          <button id="soundBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.18); background: rgba(80,255,140,0.10); color:#d6ffe6; padding:8px 10px; font-weight:800;">Enable sound</button>
           <button id="resetLobbyBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.18); background: rgba(255,80,80,0.12); color:#ffdede; padding:8px 10px; font-weight:800;">Reset lobby</button>
           <div style="font-size:12px; opacity:.75;">(snapshot saves on server)</div>
         </div>
@@ -181,7 +186,7 @@
     <div id="lookPad" class="stick"></div>
     <div id="btnJump"><div class="btnLabel"><div class="btnIcon">⇧</div></div></div>
     <!-- sprint removed -->
-    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: var(--pad); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35); opacity: 0.85; z-index: 12;"><div class="btnLabel"><div class="btnIcon">⌖</div></div></div>
+    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35); opacity: 0.85;"><div class="btnLabel"><div class="btnIcon">⌖</div></div></div>
     <div id="btnReload"><div class="btnLabel"><div class="btnIcon">↻</div></div></div>
     <div id="btnShoot"><div class="btnLabel"><div class="btnIcon">◎</div></div></div>
   </div>
@@ -1005,6 +1010,7 @@
     const SFX = (() => {
       let ctx = null;
       let unlockPromise = null;
+      let unlocked = false;
 
       function ensure() {
         if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1013,9 +1019,9 @@
 
       function unlockIfNeeded() {
         const c = ensure();
-        if (c.state !== 'suspended') return Promise.resolve();
+        if (c.state !== 'suspended') { unlocked = true; return Promise.resolve(); }
         if (!unlockPromise) {
-          unlockPromise = c.resume().catch(()=>{}).finally(() => { unlockPromise = null; });
+          unlockPromise = c.resume().catch(()=>{}).finally(() => { unlockPromise = null; unlocked = (c.state !== 'suspended'); });
         }
         return unlockPromise;
       }
@@ -1024,9 +1030,16 @@
         const c = ensure();
         if (c.state === 'suspended') {
           // iOS will sometimes suspend audio again; resume, then play.
-          unlockIfNeeded().then(() => { try { fn(c); } catch {} });
+          unlockIfNeeded().then(() => {
+            if (c.state === 'suspended') {
+              try { log('Audio locked (tap screen once)'); } catch {}
+              return;
+            }
+            try { fn(c); } catch {}
+          });
           return;
         }
+        unlocked = true;
         try { fn(c); } catch {}
       }
 
@@ -1236,6 +1249,7 @@
       }
 
       return {
+        enable: () => unlockIfNeeded(),
         shoot: (weapon) => {
           if (String(weapon) === 'fart') return fart();
           return gunshot(weapon);
@@ -1429,7 +1443,7 @@
 
       function applyDelta(dx, dy) {
         // Slow down turning a bit (was too twitchy on iPhone).
-        state.look.yaw += dx * 0.003 * sens;
+        state.look.yaw += dx * 0.0024 * sens;
         // Up/down look ~25% slower
         state.look.pitch += dy * 0.00165 * sens;
         // Limit looking up/down so you don't get lost on mobile.
@@ -1631,6 +1645,7 @@
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const soundBtn = document.getElementById('soundBtn');
     const resetLobbyBtn = document.getElementById('resetLobbyBtn');
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsPanel = document.getElementById('settingsPanel');
@@ -1662,6 +1677,8 @@
       settingsPanel.style.display = 'none';
       try { syncHudCompact(); } catch {}
 
+      // Ensure audio is unlocked early on iOS.
+      try { SFX.enable(); } catch {}
       connectAndJoin();
     }
 
@@ -1740,6 +1757,16 @@
     copyLinkBtn.addEventListener('click', doCopyLink);
     copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
     copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
+
+    function doEnableSound(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      try { SFX.enable(); } catch {}
+      try { SFX.hit(); } catch {}
+      log('Sound enabled.');
+    }
+    soundBtn.addEventListener('click', doEnableSound);
+    soundBtn.addEventListener('pointerdown', doEnableSound, { passive: false });
+    soundBtn.addEventListener('touchend', doEnableSound, { passive: false });
 
     function doResetLobby(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
