@@ -234,7 +234,10 @@
     </div>
 
     <!-- Winner banner -->
-    <div id="winnerBanner" style="position:fixed; top:18%; left:50%; transform:translateX(-50%); padding:12px 14px; border-radius:14px; background: rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18); color:#e6edf3; font-weight:900; font-size:18px; letter-spacing:0.4px; opacity:0; transition: opacity 120ms ease; pointer-events:none; z-index:95;">WINNER: —</div>
+    <div id="winnerBanner" style="position:fixed; top:18%; left:50%; transform:translateX(-50%); padding:12px 14px; border-radius:14px; background: rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18); color:#e6edf3; font-weight:900; font-size:18px; letter-spacing:0.4px; opacity:0; transition: opacity 120ms ease; pointer-events:none; z-index:95;">WINNER: —    <!-- Round countdown timer (top center) -->
+    <div id="roundTimer" style="position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:96; pointer-events:none; font-weight:900; font-size:14px; letter-spacing:0.6px; color: rgba(230,237,243,0.95); background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:999px; padding:8px 12px; min-width: 86px; text-align:center;">02:00</div>
+
+</div>
 
     <!-- Hitmarker overlay (centered X) -->
     <div id="hitmarker" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; opacity:0; z-index:90;">
@@ -286,6 +289,9 @@
     let myId = null;
     let world = null;
 
+    let roundEndsAtMs = 0;
+    let lastTimerStr = null;
+
     // Connection resilience (mobile browsers drop websockets aggressively in background)
     let reconnectAttempts = 0;
     let reconnectTimer = null;
@@ -311,6 +317,28 @@
       const el = document.getElementById('log');
       if (el) el.textContent = msg;
     }
+
+
+    function fmtMs(ms) {
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return String(m).padStart(2,'0') + ':' + String(r).padStart(2,'0');
+    }
+
+    function updateRoundTimer() {
+      const el = document.getElementById('roundTimer');
+      if (!el) return;
+      const now = Date.now();
+      const left = Math.max(0, (roundEndsAtMs || 0) - now);
+      const str = fmtMs(left);
+      if (str !== lastTimerStr) {
+        lastTimerStr = str;
+        el.textContent = str;
+      }
+      requestAnimationFrame(updateRoundTimer);
+    }
+    requestAnimationFrame(updateRoundTimer);
     function setConnState(state /* 'online'|'offline'|'connecting' */) {
       const el = document.getElementById('connDot');
       if (!el) return;
@@ -435,6 +463,8 @@
       lastServerState = s;
       // game flags
       state.started = !!s.game?.started;
+      if (state.started && !roundEndsAtMs) roundEndsAtMs = Date.now() + 120000;
+      if (!state.started) roundEndsAtMs = 0;
       state.isHost = (s.game?.hostId && myId) ? (s.game.hostId === myId) : false;
       // Build id removed (no longer displayed).
 
