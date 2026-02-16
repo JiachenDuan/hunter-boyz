@@ -20,10 +20,12 @@
     #hud button { margin-left:6px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(124,92,255,0.9); color:white; padding:8px 10px; }
 
     /* Compact HUD to avoid overlapping the score box when Settings are closed */
-    #hud.hudCompact { padding: 8px 10px; }
+    #hud.hudCompact { padding: 8px 10px; max-width: min(56vw, 320px); }
     #hud.hudCompact #log { display:none; }
     #hud.hudCompact button, #hud.hudCompact input, #hud.hudCompact select { padding: 6px 8px; }
     #hud.hudCompact #settingsBtn { padding: 6px 8px !important; }
+    #hud.hudCompact { backdrop-filter: blur(2px); }
+    #hud.hudCompact div[style*="font-weight:800"] { font-size: 13px; }
     #log { margin-top:8px; font-size:12px; color: rgba(230,237,243,0.75); }
 
     /* Touch controls */
