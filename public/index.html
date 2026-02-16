@@ -2234,9 +2234,6 @@ function spawnDent(pos, size, kind) {
         segments.push([gunStart, new BABYLON.Vector3(s.ex, (s.sy || 1.8) - 0.2, s.ez)]);
       }
       const weaponNoTracer = ((s.weapon || 'rifle') === 'rocket');
-      if (!weaponNoTracer) {
-
-
 
       // Use client-side picking so dents appear on ALL geometry (walls, blocks, floor, ceiling).
       function pickImpact(from, to) {
@@ -2249,19 +2246,42 @@ function spawnDent(pos, size, kind) {
             if (!mesh) return false;
             // ignore player meshes (they're stored in players map, plus names etc)
             if (mesh.name && (mesh.name.startsWith('p_') || mesh.name.includes('nameplate') || mesh.name.includes('shot'))) return false;
-            return mesh.isPickable === true;
+            return true;
           });
           if (hit && hit.hit && hit.pickedPoint) return hit.pickedPoint;
         } catch {}
         return to;
       }
-      for (const pts of segments) {
-        const lines = BABYLON.MeshBuilder.CreateLines('shot', { points: pts }, scene);
-        lines.color = color;
-        lines.alpha = 0.9;
-        setTimeout(() => lines.dispose(), 260);
+
+      // Tracers (skip for rocket; rocket has a projectile)
+      if (!weaponNoTracer) {
+        for (const pts of segments) {
+          const lines = BABYLON.MeshBuilder.CreateLines('shot', { points: pts }, scene);
+          lines.color = color;
+          lines.alpha = 0.9;
+          setTimeout(() => lines.dispose(), 260);
+        }
       }
 
+      // Dents: only on world impacts (not when you hit a player)
+      if (!s.hit) {
+        try {
+          const wpn = (s.weapon || 'rifle');
+          const dentSize = (wpn === 'rocket') ? 1.95 : (wpn === 'shotgun' ? 0.26 : 0.22);
+          if (Array.isArray(s.traces) && s.traces.length) {
+            for (const tr of s.traces) {
+              const raw = new BABYLON.Vector3(tr.ex, (s.ey || (s.sy || 1.8) - 0.2), tr.ez);
+              const pp = pickImpact(gunStart, raw);
+              spawnDent(pp, dentSize, wpn);
+              if (wpn !== 'rocket') spawnSparks(pp, wpn === 'shotgun' ? 0.8 : 1.0);
+            }
+          } else {
+            const raw = new BABYLON.Vector3(s.ex, (s.ey || (s.sy || 1.8) - 0.2), s.ez);
+            const pp = pickImpact(gunStart, raw);
+            spawnDent(pp, dentSize, wpn);
+            if (wpn !== 'rocket') spawnSparks(pp, wpn === 'shotgun' ? 0.8 : 1.0);
+          }
+        } catch {}
       }
 
       if ((s.weapon || 'rifle') === 'rocket') {
