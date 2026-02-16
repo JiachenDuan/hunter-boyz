@@ -1205,12 +1205,13 @@
       };
 
       function applyDelta(dx, dy) {
-        state.look.yaw += dx * 0.004 * sens;
-        state.look.pitch += dy * 0.003 * sens;
+        // Slow down turning a bit (was too twitchy on iPhone).
+        state.look.yaw += dx * 0.003 * sens;
+        state.look.pitch += dy * 0.0022 * sens;
         // Limit looking up/down so you don't get lost on mobile.
         // (radians) ~ -35° down to +20° up
-        const MIN_PITCH = -0.6;
-        const MAX_PITCH = 0.35;
+        const MIN_PITCH = -0.55;
+        const MAX_PITCH = 0.0; // don't allow looking up
         state.look.pitch = Math.max(MIN_PITCH, Math.min(MAX_PITCH, state.look.pitch));
       }
 
