@@ -109,6 +109,7 @@
   </div>
 
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
   <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
   <script>
     const canvas = document.getElementById('renderCanvas');
@@ -460,37 +461,62 @@
       rightHand.handRoot.rotation.x = 0.12;
       rightHand.handRoot.rotation.z = -0.08;
 
-      // Gun (more rifle-ish silhouette)
-      const gunMat = new BABYLON.StandardMaterial('gunMat', scene);
-      gunMat.diffuseColor = new BABYLON.Color3(0.10, 0.11, 0.13);
-      gunMat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.025);
-      gunMat.specularColor = new BABYLON.Color3(0.02,0.02,0.02);
-
+      // Gun: use Kenney GLB model if available; fall back to simple primitives.
       const gunRoot = new BABYLON.TransformNode('gunRoot', scene);
       gunRoot.parent = root;
       gunRoot.position.set(0.08, -0.30, 0.80);
 
-      const receiver = BABYLON.MeshBuilder.CreateBox('gunReceiver', { width:0.10, height:0.09, depth:0.22 }, scene);
-      receiver.material = gunMat;
-      receiver.parent = gunRoot;
-      receiver.position.set(0.02, 0.00, 0.02);
+      let receiver = null, barrel = null, stock = null, grip = null;
 
-      const barrel = BABYLON.MeshBuilder.CreateCylinder('gunBarrel', { diameter:0.045, height:0.42, tessellation: 10 }, scene);
-      barrel.material = gunMat;
-      barrel.parent = gunRoot;
-      barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0.02, 0.00, 0.30);
+      (async () => {
+        try {
+          const result = await BABYLON.SceneLoader.ImportMeshAsync(
+            null,
+            '/',
+            'assets/kenney/blaster-kit/Models/GLB format/blaster-a.glb',
+            scene
+          );
+          const imported = new BABYLON.TransformNode('kenneyGun', scene);
+          for (const m of result.meshes) {
+            if (m === scene.meshes[0]) continue;
+            // Some meshes may be empty nodes; attach everything.
+            if (m.parent === null) m.parent = imported;
+          }
+          imported.parent = gunRoot;
+          imported.scaling.setAll(0.6);
+          imported.rotation.x = 0;
+          imported.rotation.y = Math.PI;
+          imported.position.set(0.02, -0.02, 0.02);
+        } catch (e) {
+          // fallback primitives
+          const gunMat = new BABYLON.StandardMaterial('gunMat', scene);
+          gunMat.diffuseColor = new BABYLON.Color3(0.10, 0.11, 0.13);
+          gunMat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.025);
+          gunMat.specularColor = new BABYLON.Color3(0.02,0.02,0.02);
 
-      const stock = BABYLON.MeshBuilder.CreateBox('gunStock', { width:0.09, height:0.08, depth:0.14 }, scene);
-      stock.material = gunMat;
-      stock.parent = gunRoot;
-      stock.position.set(0.02, -0.01, -0.14);
+          receiver = BABYLON.MeshBuilder.CreateBox('gunReceiver', { width:0.10, height:0.09, depth:0.22 }, scene);
+          receiver.material = gunMat;
+          receiver.parent = gunRoot;
+          receiver.position.set(0.02, 0.00, 0.02);
 
-      const grip = BABYLON.MeshBuilder.CreateBox('gunGrip', { width:0.05, height:0.10, depth:0.06 }, scene);
-      grip.material = gunMat;
-      grip.parent = gunRoot;
-      grip.position.set(0.05, -0.08, 0.02);
-      grip.rotation.x = 0.25;
+          barrel = BABYLON.MeshBuilder.CreateCylinder('gunBarrel', { diameter:0.045, height:0.42, tessellation: 10 }, scene);
+          barrel.material = gunMat;
+          barrel.parent = gunRoot;
+          barrel.rotation.x = Math.PI / 2;
+          barrel.position.set(0.02, 0.00, 0.30);
+
+          stock = BABYLON.MeshBuilder.CreateBox('gunStock', { width:0.09, height:0.08, depth:0.14 }, scene);
+          stock.material = gunMat;
+          stock.parent = gunRoot;
+          stock.position.set(0.02, -0.01, -0.14);
+
+          grip = BABYLON.MeshBuilder.CreateBox('gunGrip', { width:0.05, height:0.10, depth:0.06 }, scene);
+          grip.material = gunMat;
+          grip.parent = gunRoot;
+          grip.position.set(0.05, -0.08, 0.02);
+          grip.rotation.x = 0.25;
+        }
+      })();
 
       // Slight tilt so it feels more like aiming forward
       root.rotation.x = 0.01;
@@ -509,7 +535,7 @@
       muzzleFlash.rotation.y = Math.PI; // face camera
       muzzleFlash.isVisible = false;
 
-      fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, receiver, barrel, stock, grip, muzzleFlash };
+      fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, muzzleFlash };
       return fpRig;
     }
 
