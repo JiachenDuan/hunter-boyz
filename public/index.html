@@ -29,7 +29,7 @@
       --pad: 18px;
       --btn: 86px;
       --btn-gap: 12px;
-      --bottom: 26px;
+      --bottom: calc(20px + env(safe-area-inset-bottom));
     }
     #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); }
     #btnShoot { right: calc(var(--pad) + var(--btn) + var(--btn-gap)); background: rgba(255,80,80,0.25); border-color: rgba(255,80,80,0.6); }
@@ -43,10 +43,10 @@
 
     /* Responsive tuning */
     @media (max-width: 420px) {
-      :root { --pad: 12px; --btn: 72px; --btn-gap: 10px; --bottom: 18px; }
+      :root { --pad: 12px; --btn: 72px; --btn-gap: 10px; --bottom: calc(14px + env(safe-area-inset-bottom)); }
     }
     @media (max-width: 360px) {
-      :root { --pad: 10px; --btn: 64px; --btn-gap: 8px; --bottom: 16px; }
+      :root { --pad: 10px; --btn: 64px; --btn-gap: 8px; --bottom: calc(12px + env(safe-area-inset-bottom)); }
     }
   </style>
 </head>
@@ -168,6 +168,8 @@
           myId = msg.id;
           world = msg.world;
           state.joined = true;
+          // Apply immediately so host detection + Start button works even before the next tick.
+          if (msg.state) applyState(msg.state);
         }
         if (msg.t === 'state') {
           applyState(msg.state);
@@ -204,9 +206,12 @@
         lobby.style.display = 'flex';
         lobbyPlayers.innerHTML = s.players.map(p => {
           const tag = p.id === s.game?.hostId ? ' <span style="opacity:.75">(host)</span>' : '';
-          return `<div style="margin:6px 0;"><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${p.name}${tag}</div>`;
+          const label = `${p.name} #${p.id}`;
+          return `<div style="margin:6px 0;"><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${label}${tag}</div>`;
         }).join('');
-        startBtn.style.display = state.isHost ? 'inline-block' : 'none';
+        startBtn.style.display = 'inline-block';
+        startBtn.disabled = !state.isHost;
+        startBtn.style.opacity = state.isHost ? '1' : '0.5';
         waitMsg.textContent = state.isHost ? 'Tap Start when ready.' : 'Waiting for host to start…';
       } else {
         lobby.style.display = 'none';
