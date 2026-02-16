@@ -61,7 +61,7 @@
         <button id="settingsBtn" style="margin-left:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:800;">Settings</button>
       </div>
 
-      <div id="settingsPanel" style="margin-top:10px; display:block;">
+      <div id="settingsPanel" style="margin-top:10px; display:none;">
         <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
           <input id="name" placeholder="Name" maxlength="16" />
           <button id="joinBtn">Join</button>
@@ -135,7 +135,6 @@
 
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-  <script src="https://cdn.babylonjs.com/materialsLibrary/babylon.gridMaterial.min.js"></script>
   <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
   <script>
     const canvas = document.getElementById('renderCanvas');
@@ -155,7 +154,7 @@
       joined: false,
       started: false,
       isHost: false,
-      settingsOpen: true,
+      settingsOpen: false,
     };
 
     const players = new Map(); // id -> mesh
@@ -217,9 +216,8 @@
       const waitMsg = document.getElementById('waitMsg');
       if (state.joined && !state.started) {
         lobby.style.display = 'flex';
-        // show settings before game starts
-        state.settingsOpen = true;
-        settingsPanel.style.display = 'block';
+        // keep settings hidden unless user opens it
+        settingsPanel.style.display = state.settingsOpen ? 'block' : 'none';
         lobbyPlayers.innerHTML = s.players.map(p => {
           const tag = p.id === s.game?.hostId ? ' <span style="opacity:.75">(host)</span>' : '';
           const label = `${p.name} #${p.id}`;
@@ -449,22 +447,12 @@
 
     // Ground + some blocks
     const ground = BABYLON.MeshBuilder.CreateGround('g', { width: 60, height: 60 }, scene);
+    // Floor: make it feel like a real floor (grass-ish)
     const gmat = new BABYLON.StandardMaterial('gm', scene);
-    gmat.diffuseColor = new BABYLON.Color3(0.10, 0.22, 0.22);
-    gmat.emissiveColor = new BABYLON.Color3(0.02, 0.04, 0.04);
+    gmat.diffuseColor = new BABYLON.Color3(0.22, 0.50, 0.28);
+    gmat.emissiveColor = new BABYLON.Color3(0.03, 0.06, 0.03);
     gmat.specularColor = new BABYLON.Color3(0,0,0);
     ground.material = gmat;
-
-    // Neon grid lines for color
-    const gridMat = new BABYLON.GridMaterial('grid', scene);
-    gridMat.majorUnitFrequency = 5;
-    gridMat.minorUnitVisibility = 0.25;
-    gridMat.gridRatio = 2;
-    gridMat.backFaceCulling = false;
-    gridMat.mainColor = new BABYLON.Color3(0.78, 0.92, 0.98);
-    gridMat.lineColor = new BABYLON.Color3(0.12, 0.45, 0.85);
-    gridMat.opacity = 0.22;
-    ground.material = gridMat;
 
     function ensureFirstPersonRig() {
       if (fpRig) return fpRig;
@@ -623,9 +611,9 @@
     }
 
     const blockMat = new BABYLON.StandardMaterial('bm', scene);
-    // Wall/obstacle color different from floor
-    blockMat.diffuseColor = new BABYLON.Color3(0.95, 0.70, 0.22);
-    blockMat.emissiveColor = new BABYLON.Color3(0.08, 0.05, 0.01);
+    // Walls/obstacles: concrete wall vibe
+    blockMat.diffuseColor = new BABYLON.Color3(0.62, 0.64, 0.68);
+    blockMat.emissiveColor = new BABYLON.Color3(0.04, 0.04, 0.04);
 
     function addBlock(x,y,z,w=2,h=2,d=2) {
       const b = BABYLON.MeshBuilder.CreateBox('b', { width:w, height:h, depth:d }, scene);
@@ -1085,6 +1073,9 @@
       connectAndJoin();
       joinBtn.disabled = true;
       nameInput.disabled = true;
+      // Hide settings while playing; you can reopen via Settings.
+      state.settingsOpen = false;
+      settingsPanel.style.display = 'none';
     }
 
     function doStart(e) {
@@ -1133,8 +1124,13 @@
     copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
     copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
 
+    let lastSettingsToggleAt = 0;
     function toggleSettings(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
+      const now = Date.now();
+      // Prevent double-toggle from iOS firing multiple events (touchend + click)
+      if (now - lastSettingsToggleAt < 350) return;
+      lastSettingsToggleAt = now;
       state.settingsOpen = !state.settingsOpen;
       settingsPanel.style.display = state.settingsOpen ? 'block' : 'none';
     }
