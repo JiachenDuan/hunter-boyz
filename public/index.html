@@ -104,6 +104,7 @@
       <div style="display:flex; align-items:center; gap:10px;">
         <div style="font-weight:800; letter-spacing:0.2px;">Hunter Boyz</div>
         <div id="conn" style="margin-left:8px; font-size:12px; opacity:.75;">offline</div>
+        <div id="build" style="font-size:12px; opacity:.55;">—</div>
         <button id="settingsBtn" style="margin-left:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:800;">Settings</button>
       </div>
 
@@ -225,6 +226,10 @@
       const el = document.getElementById('conn');
       if (el) el.textContent = msg;
     }
+    function setBuild(msg) {
+      const el = document.getElementById('build');
+      if (el) el.textContent = msg;
+    }
 
     function connectAndJoin() {
       const name = (document.getElementById('name').value || 'Hunter').trim();
@@ -266,6 +271,7 @@
         socket.addEventListener('open', () => {
           reconnectAttempts = 0;
           setConn('connected');
+          setBuild('—');
           socket.send(JSON.stringify({ t:'join', name, clientId }));
           log('Connected.');
         });
@@ -334,7 +340,8 @@
       // game flags
       state.started = !!s.game?.started;
       state.isHost = (s.game?.hostId && myId) ? (s.game.hostId === myId) : false;
-      try { if (s.build) setConn(`connected • build ${String(s.build).slice(-4)}`); } catch {}
+      // Build id is informational; don't spam the connection status each tick.
+      try { if (s.build) setBuild(`build ${String(s.build).slice(-4)}`); } catch {}
 
       // lobby UI
       const lobby = document.getElementById('lobby');
