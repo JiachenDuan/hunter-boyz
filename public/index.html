@@ -55,36 +55,43 @@
 
   <div id="ui">
     <div id="hud">
-      <div style="font-weight:800; letter-spacing:0.2px;">Hunter Boyz</div>
-      <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
-        <input id="name" placeholder="Name" maxlength="16" />
-        <button id="joinBtn">Join</button>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="font-weight:800; letter-spacing:0.2px;">Hunter Boyz</div>
+        <button id="settingsBtn" style="margin-left:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:800;">Settings</button>
       </div>
-      <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
-        <label style="font-size:12px; opacity:.8;">Look</label>
-        <input id="sens" type="range" min="0.6" max="3.0" step="0.1" value="2.2" style="width:140px;" />
+
+      <div id="settingsPanel" style="margin-top:10px; display:block;">
+        <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
+          <input id="name" placeholder="Name" maxlength="16" />
+          <button id="joinBtn">Join</button>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12px; opacity:.8;">Look</label>
+          <input id="sens" type="range" min="0.6" max="3.0" step="0.1" value="2.2" style="width:140px;" />
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12px; opacity:.8;">Auto-fire</label>
+          <input id="autofire" type="checkbox" />
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12px; opacity:.8;">Weapon</label>
+          <select id="weapon" class="pill" style="cursor:pointer; padding:8px 10px;">
+            <option value="rifle">Rifle</option>
+            <option value="shotgun">Shotgun</option>
+          </select>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12px; opacity:.8;">Aim assist</label>
+          <input id="aimAssist" type="checkbox" checked />
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button id="snapBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Send snapshot</button>
+          <button id="copyLinkBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Copy link</button>
+          <div style="font-size:12px; opacity:.75;">(snapshot saves on server)</div>
+        </div>
       </div>
-      <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
-        <label style="font-size:12px; opacity:.8;">Auto-fire</label>
-        <input id="autofire" type="checkbox" />
-      </div>
-      <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
-        <label style="font-size:12px; opacity:.8;">Weapon</label>
-        <select id="weapon" class="pill" style="cursor:pointer; padding:8px 10px;">
-          <option value="rifle">Rifle</option>
-          <option value="shotgun">Shotgun</option>
-        </select>
-      </div>
-      <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
-        <label style="font-size:12px; opacity:.8;">Aim assist</label>
-        <input id="aimAssist" type="checkbox" checked />
-      </div>
-      <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <button id="snapBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Send snapshot</button>
-        <button id="copyLinkBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Copy link</button>
-        <div style="font-size:12px; opacity:.75;">(snapshot saves on server)</div>
-      </div>
-      <div id="log">Tip: same Wi‑Fi, open this page on each iPhone.</div>
+
+      <div id="log" style="margin-top:10px;">Tip: tap Settings to hide this panel while playing.</div>
     </div>
 
     <div id="lobby" style="position:absolute; inset:0; display:none; align-items:center; justify-content:center; pointer-events:auto; background: rgba(0,0,0,0.45);">
@@ -204,6 +211,8 @@
       const waitMsg = document.getElementById('waitMsg');
       if (state.joined && !state.started) {
         lobby.style.display = 'flex';
+        // show settings before game starts
+        settingsPanel.style.display = 'block';
         lobbyPlayers.innerHTML = s.players.map(p => {
           const tag = p.id === s.game?.hostId ? ' <span style="opacity:.75">(host)</span>' : '';
           const label = `${p.name} #${p.id}`;
@@ -215,6 +224,8 @@
         waitMsg.textContent = state.isHost ? 'Tap Start when ready.' : 'Waiting for host to start…';
       } else {
         lobby.style.display = 'none';
+        // hide settings while playing to avoid blocking vision
+        if (state.started) settingsPanel.style.display = 'none';
       }
 
       // respawn UI + HP bar
@@ -982,6 +993,8 @@
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsPanel = document.getElementById('settingsPanel');
 
     function doJoin(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -1036,6 +1049,15 @@
     copyLinkBtn.addEventListener('click', doCopyLink);
     copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
     copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
+
+    function toggleSettings(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      const on = settingsPanel.style.display !== 'none';
+      settingsPanel.style.display = on ? 'none' : 'block';
+    }
+    settingsBtn.addEventListener('click', toggleSettings);
+    settingsBtn.addEventListener('pointerdown', toggleSettings, { passive:false });
+    settingsBtn.addEventListener('touchend', toggleSettings, { passive:false });
 
     // Keep last server state for aim assist
     let lastServerState = null;
