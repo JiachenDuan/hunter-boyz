@@ -94,6 +94,11 @@
           <input id="autofire" type="checkbox" />
         </div>
         <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12px; opacity:.8;">Auto-reload</label>
+          <input id="autoReload" type="checkbox" checked />
+          <span style="font-size:12px; opacity:.6;">(hide Reload button)</span>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
           <label style="font-size:12px; opacity:.8;">Weapon</label>
           <select id="weapon" class="pill" style="cursor:pointer; padding:8px 10px;">
             <option value="rifle">Rifle</option>
@@ -1230,13 +1235,29 @@
     // Join
     const joinBtn = document.getElementById('joinBtn');
     const nameInput = document.getElementById('name');
+    const autoReloadEl = document.getElementById('autoReload');
+    const reloadBtn = document.getElementById('btnReload');
 
-    // Persist username locally so re-joining is fast.
+    // Persist username + settings locally so re-joining is fast.
     const NAME_KEY = 'hunterBoyz.name';
+    const AUTO_RELOAD_KEY = 'hunterBoyz.autoReload';
     try {
       const saved = localStorage.getItem(NAME_KEY);
       if (saved && !nameInput.value) nameInput.value = saved;
+
+      const savedAR = localStorage.getItem(AUTO_RELOAD_KEY);
+      if (savedAR !== null && autoReloadEl) autoReloadEl.checked = (savedAR === '1');
     } catch {}
+
+    function syncReloadButtonVisibility() {
+      const on = !!autoReloadEl?.checked;
+      try { if (reloadBtn) reloadBtn.style.display = on ? 'none' : 'flex'; } catch {}
+    }
+    syncReloadButtonVisibility();
+    autoReloadEl?.addEventListener('change', () => {
+      try { localStorage.setItem(AUTO_RELOAD_KEY, autoReloadEl.checked ? '1' : '0'); } catch {}
+      syncReloadButtonVisibility();
+    });
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
@@ -1247,10 +1268,11 @@
       if (e) { e.preventDefault(); e.stopPropagation(); }
       if (state.joined) return;
 
-      // Save name before joining.
+      // Save name + settings before joining.
       try {
         const v = (nameInput.value || '').trim();
         if (v) localStorage.setItem(NAME_KEY, v);
+        if (autoReloadEl) localStorage.setItem(AUTO_RELOAD_KEY, autoReloadEl.checked ? '1' : '0');
       } catch {}
 
       connectAndJoin();
@@ -1382,6 +1404,8 @@
           const wSel = document.getElementById('weapon')?.value;
           const weapon = (wSel === 'shotgun' || wSel === 'sniper') ? wSel : 'rifle';
 
+          const autoReload = !!document.getElementById('autoReload')?.checked;
+
           socket.send(JSON.stringify({
             t:'input',
             seq: seq++,
@@ -1392,6 +1416,7 @@
             jump: !!state.jump,
             sprint: !!state.sprint,
             weapon,
+            autoReload,
           }));
         }
       }

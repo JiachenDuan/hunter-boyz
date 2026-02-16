@@ -138,6 +138,7 @@ function makePlayer(name) {
     invulnUntil: 0,
     ammo: 12,
     reloadUntil: 0,
+    autoReload: true,
     color: `hsl(${hue} 80% 60%)`,
   };
 }
@@ -366,6 +367,9 @@ wss.on('connection', (ws) => {
       // Ignore gameplay until host starts.
       if (!GAME.started) return;
 
+      // Per-player settings
+      if (typeof msg.autoReload === 'boolean') p.autoReload = msg.autoReload;
+
       // Dead players can't move/shoot.
       if (p.hp <= 0) return;
 
@@ -445,9 +449,11 @@ wss.on('connection', (ws) => {
           // can't shoot while reloading
           if (t < p.reloadUntil) return;
 
-          // auto-reload if empty
+          // Auto-reload (optional)
           if (p.ammo <= 0) {
-            p.reloadUntil = t + 900;
+            if (p.autoReload) {
+              p.reloadUntil = t + 900;
+            }
             return;
           }
 
