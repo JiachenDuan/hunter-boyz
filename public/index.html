@@ -585,7 +585,7 @@
       setTimeout(() => { ret.color = orig; }, 80);
     }
 
-    // Tiny sound FX (no external assets)
+    // Sound FX (procedural WebAudio; no external files)
     const SFX = (() => {
       let ctx = null;
       function ensure() {
@@ -593,7 +593,73 @@
         if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
         return ctx;
       }
-      function beep(freq, durMs, gainVal) {
+
+      function noiseBuffer(c, seconds = 0.15) {
+        const len = Math.floor(c.sampleRate * seconds);
+        const buf = c.createBuffer(1, len, c.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1);
+        return buf;
+      }
+
+      function gunshot() {
+        try {
+          const c = ensure();
+          const t0 = c.currentTime;
+
+          // Noise burst
+          const src = c.createBufferSource();
+          src.buffer = noiseBuffer(c, 0.12);
+
+          // Shape it: bandpass + slight distortion + fast decay
+          const bp = c.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.setValueAtTime(1200, t0);
+          bp.Q.setValueAtTime(0.8, t0);
+
+          const lp = c.createBiquadFilter();
+          lp.type = 'lowpass';
+          lp.frequency.setValueAtTime(3500, t0);
+
+          const shaper = c.createWaveShaper();
+          const curve = new Float32Array(256);
+          for (let i = 0; i < curve.length; i++) {
+            const x = (i / (curve.length - 1)) * 2 - 1;
+            curve[i] = Math.tanh(2.2 * x);
+          }
+          shaper.curve = curve;
+
+          const g = c.createGain();
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.003);
+          g.gain.exponentialRampToValueAtTime(0.02, t0 + 0.06);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+
+          // Add a low "thump" oscillator for realism
+          const o = c.createOscillator();
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(160, t0);
+          o.frequency.exponentialRampToValueAtTime(90, t0 + 0.08);
+          const og = c.createGain();
+          og.gain.setValueAtTime(0.0001, t0);
+          og.gain.exponentialRampToValueAtTime(0.10, t0 + 0.004);
+          og.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.10);
+
+          const mix = c.createGain();
+          mix.gain.value = 0.7;
+
+          src.connect(bp).connect(shaper).connect(lp).connect(g).connect(mix);
+          o.connect(og).connect(mix);
+          mix.connect(c.destination);
+
+          src.start(t0);
+          src.stop(t0 + 0.14);
+          o.start(t0);
+          o.stop(t0 + 0.11);
+        } catch {}
+      }
+
+      function tick(freq, durMs, gainVal) {
         try {
           const c = ensure();
           const o = c.createOscillator();
@@ -606,10 +672,11 @@
           setTimeout(() => { o.stop(); }, durMs);
         } catch {}
       }
+
       return {
-        shoot: () => beep(520, 40, 0.02),
-        hit: () => beep(760, 60, 0.03),
-        kill: () => beep(320, 120, 0.03),
+        shoot: () => gunshot(),
+        hit: () => tick(760, 60, 0.02),
+        kill: () => tick(320, 120, 0.02),
       };
     })();
 
