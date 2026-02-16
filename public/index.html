@@ -279,6 +279,7 @@
             myId = msg.id;
             world = msg.world;
             state.joined = true;
+            joinInFlight = false;
             // Apply immediately so host detection + Start button works even before the next tick.
             if (msg.state) applyState(msg.state);
             trySendStart();
@@ -291,6 +292,7 @@
 
         socket.addEventListener('close', () => {
           state.joined = false;
+          joinInFlight = false;
           setConnState('offline');
           try {
             joinBtn.disabled = false;
@@ -1371,9 +1373,20 @@
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsPanel = document.getElementById('settingsPanel');
 
+    let joinInFlight = false;
+    let lastJoinAt = 0;
     function doJoin(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
-      if (state.joined) return;
+      const now = Date.now();
+      // iOS can fire pointerdown + touchend + click; debounce hard.
+      if (now - lastJoinAt < 600) return;
+      lastJoinAt = now;
+
+      if (state.joined || joinInFlight) return;
+      joinInFlight = true;
+
+      // Disable immediately so duplicate events can't open multiple sockets.
+      try { joinBtn.disabled = true; nameInput.disabled = true; } catch {}
 
       // Save name + settings before joining.
       try {
@@ -1382,13 +1395,12 @@
         if (autoReloadEl) localStorage.setItem(AUTO_RELOAD_KEY, autoReloadEl.checked ? '1' : '0');
       } catch {}
 
-      connectAndJoin();
-      joinBtn.disabled = true;
-      nameInput.disabled = true;
       // Hide settings while playing; you can reopen via Settings.
       state.settingsOpen = false;
       settingsPanel.style.display = 'none';
       try { syncHudCompact(); } catch {}
+
+      connectAndJoin();
     }
 
     let pendingStart = false;
