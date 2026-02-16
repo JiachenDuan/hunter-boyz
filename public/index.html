@@ -1211,7 +1211,7 @@
         // Limit looking up/down so you don't get lost on mobile.
         // (radians) ~ -35° down to +20° up
         const MIN_PITCH = -0.55;
-        const MAX_PITCH = 0.0; // don't allow looking up
+        const MAX_PITCH = 0.20; // allow slight looking up
         state.look.pitch = Math.max(MIN_PITCH, Math.min(MAX_PITCH, state.look.pitch));
       }
 
