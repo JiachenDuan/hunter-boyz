@@ -230,7 +230,12 @@ function doDamage({ shooter, target, amount }) {
 }
 
 wss.on('connection', (ws) => {
+  ws.isAlive = true;
+  ws.lastMsgAt = nowMs();
+  ws.on('pong', () => { ws.isAlive = true; });
+
   ws.on('message', (buf) => {
+    ws.lastMsgAt = nowMs();
     let msg;
     try { msg = JSON.parse(buf.toString('utf8')); } catch { return; }
 
@@ -467,6 +472,24 @@ setInterval(() => {
   }
   broadcast({ t: 'state', state: serializeState() });
 }, Math.round(1000 / TICK_HZ));
+
+// Drop stale/ghost connections (mobile Safari tabs can linger).
+setInterval(() => {
+  const t = nowMs();
+  for (const ws of wss.clients) {
+    // If we haven't heard anything in a while, kill it.
+    if (ws.lastMsgAt && (t - ws.lastMsgAt) > 45_000) {
+      try { ws.terminate(); } catch {}
+      continue;
+    }
+    if (ws.isAlive === false) {
+      try { ws.terminate(); } catch {}
+      continue;
+    }
+    ws.isAlive = false;
+    try { ws.ping(); } catch {}
+  }
+}, 15_000);
 
 server.listen(PORT, () => {
   console.log(`Hunter Boyz server on http://0.0.0.0:${PORT}`);
