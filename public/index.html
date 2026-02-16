@@ -1622,6 +1622,22 @@
         },
         hit: () => tick(760, 60, 0.02),
         kill: () => tick(320, 120, 0.02),
+        whoosh: () => (function(){
+          play((c)=>{
+            const t0=c.currentTime+0.001;
+            const o=c.createOscillator();
+            const g=c.createGain();
+            o.type='triangle';
+            o.frequency.setValueAtTime(180,t0);
+            o.frequency.exponentialRampToValueAtTime(520,t0+0.12);
+            g.gain.setValueAtTime(0.0001,t0);
+            g.gain.exponentialRampToValueAtTime(0.10,t0+0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001,t0+0.18);
+            o.connect(g).connect(c.destination);
+            o.start(t0);
+            o.stop(t0+0.20);
+          });
+        })(),
         boom: () => (function(){
           play((c)=>{
             const t0=c.currentTime+0.001;
@@ -1692,8 +1708,10 @@
         d.style.zIndex = '97';
         d.style.pointerEvents = 'none';
         document.body.appendChild(d);
+        const trailPuffs = [];
         const start = performance.now();
         const dur = 260;
+        let lastPuffAt = 0;
         const tick = () => {
           const t = performance.now()-start;
           const k = Math.min(1, t/dur);
@@ -1834,14 +1852,16 @@ function showWinner(msg) {
         const flame = BABYLON.MeshBuilder.CreateSphere(`rkf_${Date.now()}`, { diameter: 0.11, segments: 6 }, scene);
         flame.isPickable = false;
         const fmat = new BABYLON.StandardMaterial(`rkfm_${Date.now()}`, scene);
-        fmat.diffuseColor = new BABYLON.Color3(1.0, 0.55, 0.12);
+        fmat.diffuseColor = new BABYLON.Color3(1.0, 0.62, 0.12);
         fmat.emissiveColor = new BABYLON.Color3(1.0, 0.40, 0.08);
         fmat.alpha = 0.9;
         fmat.disableLighting = true;
         flame.material = fmat;
 
+        const trailPuffs = [];
         const start = performance.now();
         const dur = 260;
+        let lastPuffAt = 0;
         const tick = () => {
           const t = performance.now() - start;
           const k = Math.min(1, t / dur);
@@ -1850,10 +1870,36 @@ function showWinner(msg) {
           flame.position.copyFrom(p.add(fwd.scale(-0.20)));
           fmat.alpha = 0.9 * (1 - k * 0.25);
 
+          // Smoke trail puffs
+          if ((t - lastPuffAt) > 35) {
+            lastPuffAt = t;
+            try {
+              const puff = BABYLON.MeshBuilder.CreateSphere(`rks_${Date.now()}`, { diameter: 0.16, segments: 6 }, scene);
+              puff.isPickable = false;
+              puff.position.copyFrom(p.add(fwd.scale(-0.35)).add(new BABYLON.Vector3((Math.random()-0.5)*0.10, (Math.random()-0.5)*0.06, (Math.random()-0.5)*0.10)));
+              const sm = new BABYLON.StandardMaterial(`rksm_${Date.now()}`, scene);
+              sm.diffuseColor = new BABYLON.Color3(0.22,0.22,0.24);
+              sm.emissiveColor = new BABYLON.Color3(0.02,0.02,0.02);
+              sm.alpha = 0.30;
+              sm.disableLighting = true;
+              puff.material = sm;
+              trailPuffs.push({ puff, sm, born: performance.now() });
+            } catch {}
+          }
+          for (const sp of trailPuffs) {
+            const age = performance.now() - sp.born;
+            const kk = Math.min(1, age / 260);
+            try {
+              sp.puff.scaling.setAll(1 + kk * 2.2);
+              sp.sm.alpha = 0.30 * (1 - kk);
+            } catch {}
+          }
+
           if (k < 1) requestAnimationFrame(tick);
           else {
             try { rocket.dispose(); } catch {}
             try { flame.dispose(); } catch {}
+            for (const sp of trailPuffs) { try { sp.puff.dispose(); } catch {} }
           }
         };
         requestAnimationFrame(tick);
@@ -1876,8 +1922,8 @@ function spawnExplosion(msg) {
         sphere.isPickable = false;
 
         const mat = new BABYLON.StandardMaterial(`exm_${Date.now()}`, scene);
-        mat.diffuseColor = new BABYLON.Color3(1.0, 0.55, 0.12);
-        mat.emissiveColor = new BABYLON.Color3(1.0, 0.35, 0.05);
+        mat.diffuseColor = new BABYLON.Color3(1.0, 0.62, 0.12);
+        mat.emissiveColor = new BABYLON.Color3(1.0, 0.45, 0.08);
         mat.alpha = 0.85;
         mat.disableLighting = true;
         sphere.material = mat;
@@ -2016,12 +2062,16 @@ function showKill(text) {
       } else {
         segments.push([gunStart, new BABYLON.Vector3(s.ex, (s.sy || 1.8) - 0.2, s.ez)]);
       }
+      const weaponNoTracer = ((s.weapon || 'rifle') === 'rocket');
+      if (!weaponNoTracer) {
 
       for (const pts of segments) {
         const lines = BABYLON.MeshBuilder.CreateLines('shot', { points: pts }, scene);
         lines.color = color;
         lines.alpha = 0.9;
         setTimeout(() => lines.dispose(), 260);
+      }
+
       }
 
       if ((s.weapon || 'rifle') === 'rocket') {
@@ -2043,7 +2093,8 @@ function showKill(text) {
             if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false;
           }, 55);
         }
-        SFX.shoot(wpn);
+        if (wpn === 'rocket') { try { SFX.whoosh(); } catch {} }
+        else SFX.shoot(wpn);
         if (s.hit) {
           showHitmarker();
           const target = s.hit;
