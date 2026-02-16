@@ -654,6 +654,59 @@ wss.on('connection', (ws) => {
               hit: hitId,
               hitHp,
             });
+          } else if (weapon === 'rocket') {
+            // Rocket launcher: direct hit = instant kill; otherwise splash damage.
+            const hit = rayHit3D(p, 80);
+            const ex = hit.endX, ey = hit.endY, ez = hit.endZ;
+            const R = 6;
+
+            // Direct hit
+            if (hit.target) {
+              const dmg = doDamage({ shooter: p, target: hit.target, amount: 999 });
+              hitId = dmg.hitId;
+              hitHp = dmg.hitHp;
+            }
+
+            // Splash
+            for (const tP of players.values()) {
+              if (tP.id === p.id) continue;
+              if (tP.hp <= 0) continue;
+              if (hit.target && tP.id === hit.target.id) continue; // already applied direct
+
+              const dx = tP.x - ex;
+              const dy = (tP.y || 1.8) - ey;
+              const dz = tP.z - ez;
+              const dist = Math.hypot(dx, dy, dz);
+              if (dist > R) continue;
+
+              let dmgAmt;
+              if (dist <= 2) dmgAmt = 999;
+              else {
+                const tt = (dist - 2) / (R - 2);
+                dmgAmt = Math.max(10, Math.round(999 * (1 - tt)));
+                dmgAmt = Math.min(90, dmgAmt);
+              }
+              const dmg = doDamage({ shooter: p, target: tP, amount: dmgAmt });
+              if (dmg.hitId) { hitId = hitId || dmg.hitId; hitHp = hitHp ?? dmg.hitHp; }
+            }
+
+            broadcast({ t: 'explosion', x: ex, y: ey, z: ez, r: R });
+
+            broadcast({
+              t: 'shot',
+              weapon,
+              from: p.id,
+              sx: p.x,
+              sy: p.y,
+              sz: p.z,
+              yaw: p.yaw,
+              pitch: p.pitch,
+              ex,
+              ey,
+              ez,
+              hit: hitId,
+              hitHp,
+            });
           } else if (weapon === 'fart') {
             // Fart gun: applies a 5s fart cloud debuff; -5 HP per second.
             const hit = rayHit(p, 22);

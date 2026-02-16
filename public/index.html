@@ -1266,6 +1266,19 @@
         scopeLines.isVisible = scoped;
         ret.isVisible = !scoped;
 
+        // Rocket launcher: bigger reticle (big splash)
+        if (!scoped) {
+          if (weaponSel === 'rocket') {
+            ret.width = '18px';
+            ret.height = '18px';
+            ret.thickness = 3;
+          } else {
+            ret.width = '10px';
+            ret.height = '10px';
+            ret.thickness = 2;
+          }
+        }
+
         const scopeBtn = document.getElementById('btnScope');
         if (scopeBtn) {
           scopeBtn.style.display = (weaponSel === 'sniper') ? 'flex' : 'none';
