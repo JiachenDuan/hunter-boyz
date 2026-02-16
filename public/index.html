@@ -195,6 +195,11 @@
     let myId = null;
     let world = null;
 
+    // Connection resilience (mobile browsers drop websockets aggressively in background)
+    let reconnectAttempts = 0;
+    let reconnectTimer = null;
+    let intentionalClose = false;
+
     const state = {
       move: { x: 0, z: 0 },
       look: { yaw: 0, pitch: 0 },
@@ -231,50 +236,77 @@
         clientId = String(Math.random()).slice(2) + Date.now();
       }
 
-      socket = new WebSocket(`${proto}://${location.host}`);
+      const url = `${proto}://${location.host}`;
+      intentionalClose = false;
 
-      socket.addEventListener('open', () => {
-        socket.send(JSON.stringify({ t:'join', name, clientId }));
-        log('Joined. Use left stick to move, right pad to look, red to shoot.');
-      });
+      function scheduleReconnect() {
+        if (intentionalClose) return;
+        if (reconnectTimer) return;
+        reconnectAttempts = Math.min(reconnectAttempts + 1, 8);
+        const delay = Math.min(500 * Math.pow(1.6, reconnectAttempts), 6000);
+        log(`Reconnecting… (${Math.round(delay)}ms)`);
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          try { openSocket(); } catch {}
+        }, delay);
+      }
 
-      socket.addEventListener('message', (ev) => {
-        const msg = JSON.parse(ev.data);
-        if (msg.t === 'welcome') {
-          myId = msg.id;
-          world = msg.world;
-          state.joined = true;
-          // Apply immediately so host detection + Start button works even before the next tick.
-          if (msg.state) applyState(msg.state);
-        }
-        if (msg.t === 'state') {
-          applyState(msg.state);
-        }
-        if (msg.t === 'shot') {
-          renderShot(msg);
-        }
-        if (msg.t === 'kill') {
-          showKill(`${msg.killerName || msg.killer} eliminated ${msg.victimName || msg.victim}`);
-        }
-        if (msg.t === 'snapSaved') {
-          log(`Snapshot saved: ${msg.file}`);
-        }
-      });
+      function openSocket() {
+        try { socket?.close(); } catch {}
+        socket = new WebSocket(url);
 
-      socket.addEventListener('close', () => {
-        log('Disconnected. Refresh to rejoin.');
-        state.joined = false;
-      });
+        socket.addEventListener('open', () => {
+          reconnectAttempts = 0;
+          socket.send(JSON.stringify({ t:'join', name, clientId }));
+          log('Connected.');
+        });
+
+        socket.addEventListener('message', (ev) => {
+          const msg = JSON.parse(ev.data);
+          if (msg.t === 'welcome') {
+            myId = msg.id;
+            world = msg.world;
+            state.joined = true;
+            // Apply immediately so host detection + Start button works even before the next tick.
+            if (msg.state) applyState(msg.state);
+          }
+          if (msg.t === 'state') applyState(msg.state);
+          if (msg.t === 'shot') renderShot(msg);
+          if (msg.t === 'kill') showKill(`${msg.killerName || msg.killer} eliminated ${msg.victimName || msg.victim}`);
+          if (msg.t === 'snapSaved') log(`Snapshot saved: ${msg.file}`);
+        });
+
+        socket.addEventListener('close', () => {
+          state.joined = false;
+          scheduleReconnect();
+        });
+
+        socket.addEventListener('error', () => {
+          // Error usually followed by close; still schedule reconnect just in case.
+          scheduleReconnect();
+        });
+      }
+
+      openSocket();
 
       // Best-effort: when the tab is backgrounded/closed, close the socket so the server
       // removes the player immediately (prevents "ghost host" lingering).
       const closeSock = () => {
+        intentionalClose = true;
         try { socket?.close(); } catch {}
       };
       window.addEventListener('pagehide', closeSock, { passive: true });
       window.addEventListener('beforeunload', closeSock, { passive: true });
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') closeSock();
+        if (document.visibilityState === 'hidden') {
+          closeSock();
+        } else {
+          // Coming back from background: reconnect.
+          if (!socket || socket.readyState > 1) {
+            intentionalClose = false;
+            try { openSocket(); } catch {}
+          }
+        }
       }, { passive: true });
     }
 
