@@ -1767,7 +1767,64 @@ function showWinner(msg) {
       } catch {}
     }
 
-    function spawnExplosion(msg) {
+    
+    function renderRocketProjectile(from, to) {
+      try {
+        const dir = to.subtract(from);
+        const dist = dir.length();
+        if (dist < 0.01) return;
+
+        const fwd = dir.normalize();
+
+        // Rocket body
+        const rocket = BABYLON.MeshBuilder.CreateCylinder(
+          `rk_${Date.now()}`,
+          { height: 0.34, diameterTop: 0.05, diameterBottom: 0.08, tessellation: 10 },
+          scene
+        );
+        rocket.isPickable = false;
+
+        const mat = new BABYLON.StandardMaterial(`rkm_${Date.now()}`, scene);
+        mat.diffuseColor = new BABYLON.Color3(0.68, 0.68, 0.72);
+        mat.emissiveColor = new BABYLON.Color3(0.10, 0.10, 0.12);
+        mat.specularColor = new BABYLON.Color3(0.12, 0.12, 0.12);
+        rocket.material = mat;
+
+        // Cylinder points up (Y). Rotate so Y aligns to forward.
+        const up = new BABYLON.Vector3(0, 1, 0);
+        rocket.rotationQuaternion = BABYLON.Quaternion.RotationAlignToRef(up, fwd, new BABYLON.Quaternion());
+
+        // Flame
+        const flame = BABYLON.MeshBuilder.CreateSphere(`rkf_${Date.now()}`, { diameter: 0.11, segments: 6 }, scene);
+        flame.isPickable = false;
+        const fmat = new BABYLON.StandardMaterial(`rkfm_${Date.now()}`, scene);
+        fmat.diffuseColor = new BABYLON.Color3(1.0, 0.55, 0.12);
+        fmat.emissiveColor = new BABYLON.Color3(1.0, 0.40, 0.08);
+        fmat.alpha = 0.9;
+        fmat.disableLighting = true;
+        flame.material = fmat;
+
+        const start = performance.now();
+        const dur = 260;
+        const tick = () => {
+          const t = performance.now() - start;
+          const k = Math.min(1, t / dur);
+          const p = from.add(dir.scale(k));
+          rocket.position.copyFrom(p);
+          flame.position.copyFrom(p.add(fwd.scale(-0.20)));
+          fmat.alpha = 0.9 * (1 - k * 0.25);
+
+          if (k < 1) requestAnimationFrame(tick);
+          else {
+            try { rocket.dispose(); } catch {}
+            try { flame.dispose(); } catch {}
+          }
+        };
+        requestAnimationFrame(tick);
+      } catch {}
+    }
+
+function spawnExplosion(msg) {
       try {
         const x = +msg.x, y = +msg.y, z = +msg.z;
         const r = +msg.r || 6;
@@ -1790,6 +1847,20 @@ function showWinner(msg) {
         sphere.material = mat;
 
         const streaks = [];
+
+        const smokePuffs = [];
+        for (let i = 0; i < 7; i++) {
+          const puff = BABYLON.MeshBuilder.CreateSphere(`exs_${Date.now()}_${i}`, { diameter: 0.45, segments: 8 }, scene);
+          puff.isPickable = false;
+          puff.position.set(x + (Math.random()-0.5)*0.8, y + (Math.random()-0.5)*0.4, z + (Math.random()-0.5)*0.8);
+          const sm = new BABYLON.StandardMaterial(`exsm_${Date.now()}_${i}`, scene);
+          sm.diffuseColor = new BABYLON.Color3(0.20, 0.20, 0.22);
+          sm.emissiveColor = new BABYLON.Color3(0.03, 0.03, 0.03);
+          sm.alpha = 0.35;
+          sm.disableLighting = true;
+          puff.material = sm;
+          smokePuffs.push({ puff, sm });
+        }
 
         const rmat = new BABYLON.StandardMaterial(`exrm_${Date.now()}`, scene);
         rmat.diffuseColor = new BABYLON.Color3(1.0, 0.70, 0.20);
@@ -1821,6 +1892,12 @@ function showWinner(msg) {
             sphere.scaling.setAll(scale);
             try { ring.scaling.setAll(1 + k * (r * 0.22)); rmat.alpha = 0.65 * (1 - k); } catch {}
             mat.alpha = 0.85 * (1 - k);
+            for (const sp of smokePuffs) {
+              try {
+                sp.puff.scaling.setAll(1 + k * 2.4);
+                sp.sm.alpha = 0.35 * (1 - k);
+              } catch {}
+            }
           } catch {}
           for (const line of streaks) {
             try { line.alpha = 0.85 * (1 - k); } catch {}
@@ -1830,6 +1907,7 @@ function showWinner(msg) {
             try { sphere.dispose(); } catch {}
             try { ring.dispose(); } catch {}
             for (const line of streaks) { try { line.dispose(); } catch {} }
+            for (const sp of smokePuffs) { try { sp.puff.dispose(); } catch {} }
           }
         };
         requestAnimationFrame(tick);
@@ -1908,6 +1986,13 @@ function showKill(text) {
         lines.color = color;
         lines.alpha = 0.9;
         setTimeout(() => lines.dispose(), 260);
+      }
+
+      if ((s.weapon || 'rifle') === 'rocket') {
+        try {
+          const to = new BABYLON.Vector3(s.ex, (s.ey || (s.sy || 1.8) - 0.2), s.ez);
+          renderRocketProjectile(gunStart, to);
+        } catch {}
       }
 
       if (s.from === myId) {
