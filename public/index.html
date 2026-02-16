@@ -1658,14 +1658,21 @@
         try { el.classList.toggle('btnPressed', state.scope); } catch {}
         try { log(`Scope: ${state.scope ? 'ON' : 'OFF'}`); } catch {}
       };
-      // Debug taps (iOS sometimes swallows events depending on overlays)
-      el.addEventListener('pointerdown', (e) => { try { prevent(e); log('Scope tap…'); } catch {} }, { passive:false });
-      el.addEventListener('touchstart', (e) => { try { prevent(e); log('Scope tap…'); } catch {} }, { passive:false });
+      // iOS fires multiple events (touchend + click). Debounce so scope doesn't instantly flip back.
+      let lastScopeAt = 0;
+      const fireOnce = (e) => {
+        const now = Date.now();
+        if (now - lastScopeAt < 450) return;
+        lastScopeAt = now;
+        fire(e);
+      };
 
-      el.addEventListener('click', fire);
-      // Use pointerup to avoid iOS pointerdown being swallowed.
-      el.addEventListener('pointerup', fire, { passive:false });
-      el.addEventListener('touchend', fire, { passive:false });
+      // Debug taps (keep minimal)
+      el.addEventListener('pointerdown', (e) => { try { prevent(e); log('Scope tap…'); } catch {} }, { passive:false });
+
+      // Prefer pointerup/touchend; skip click to avoid double-trigger.
+      el.addEventListener('pointerup', fireOnce, { passive:false });
+      el.addEventListener('touchend', fireOnce, { passive:false });
     })();
 
     // Join
