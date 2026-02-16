@@ -49,6 +49,10 @@
         <label style="font-size:12px; opacity:.8;">Look</label>
         <input id="sens" type="range" min="0.6" max="3.0" step="0.1" value="2.2" style="width:140px;" />
       </div>
+      <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+        <label style="font-size:12px; opacity:.8;">Auto-fire</label>
+        <input id="autofire" type="checkbox" />
+      </div>
       <div id="log">Tip: same Wi‑Fi, open this page on each iPhone.</div>
     </div>
 
@@ -68,6 +72,15 @@
     </div>
 
     <div id="score"></div>
+    <div id="status" style="position:absolute; left:50%; transform:translateX(-50%); bottom:14px; width:min(520px, 92vw); pointer-events:none;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="flex:1; height:10px; border-radius:999px; background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.14); overflow:hidden;">
+          <div id="hpFill" style="height:100%; width:100%; background: rgba(80,255,140,0.85);"></div>
+        </div>
+        <div id="hpText" style="font-weight:900; font-size:12px; opacity:.9;">HP 100</div>
+      </div>
+      <div id="hitToast" style="margin-top:10px; text-align:center; font-weight:900; font-size:18px; opacity:0; transition: opacity 120ms ease; color: rgba(255,240,120,0.95); text-shadow: 0 2px 10px rgba(0,0,0,0.6);">HIT!</div>
+    </div>
 
     <div id="moveStick" class="stick"><div id="moveNub" class="nub"></div></div>
     <div id="lookPad" class="stick"></div>
@@ -155,9 +168,17 @@
         lobby.style.display = 'none';
       }
 
-      // respawn UI
+      // respawn UI + HP bar
       const meP = s.players.find(pp => pp.id === myId);
       const respawn = document.getElementById('respawn');
+      if (meP) {
+        const hp = Math.max(0, Math.min(100, meP.hp));
+        document.getElementById('hpText').textContent = `HP ${hp}`;
+        const fill = document.getElementById('hpFill');
+        fill.style.width = `${hp}%`;
+        fill.style.background = hp > 60 ? 'rgba(80,255,140,0.85)' : (hp > 30 ? 'rgba(255,220,100,0.85)' : 'rgba(255,80,80,0.85)');
+      }
+
       if (meP && meP.hp <= 0) {
         respawn.style.display = 'flex';
         const secs = Math.ceil((meP.respawnInMs || 0) / 1000);
@@ -191,6 +212,7 @@
           mat.diffuseColor = BABYLON.Color3.FromHexString(rgbToHex(cssToRgb(p.color)));
           mat.emissiveColor = mat.diffuseColor.scale(0.25);
           mesh.material = mat;
+          mesh.metadata = { target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z), targetYaw: p.yaw };
           players.set(p.id, mesh);
         }
 
@@ -202,10 +224,22 @@
           mesh.isVisible = true;
         }
 
-        mesh.position.x = p.x;
-        mesh.position.y = (p.y || 1.8) - 0.8;
-        mesh.position.z = p.z;
-        mesh.rotation.y = p.yaw;
+        // Smooth other players (reduce jitter)
+        if (mesh.metadata) {
+          mesh.metadata.target.x = p.x;
+          mesh.metadata.target.y = (p.y || 1.8) - 0.8;
+          mesh.metadata.target.z = p.z;
+          mesh.metadata.targetYaw = p.yaw;
+        }
+
+        if (p.id !== myId) {
+          // actual lerp happens in render loop
+        } else {
+          mesh.position.x = p.x;
+          mesh.position.y = (p.y || 1.8) - 0.8;
+          mesh.position.z = p.z;
+          mesh.rotation.y = p.yaw;
+        }
 
         if (p.id === myId) {
           camera.position.x = p.x;
@@ -363,6 +397,40 @@
       setTimeout(() => { ret.color = orig; }, 80);
     }
 
+    // Tiny sound FX (no external assets)
+    const SFX = (() => {
+      let ctx = null;
+      function ensure() {
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
+        return ctx;
+      }
+      function beep(freq, durMs, gainVal) {
+        try {
+          const c = ensure();
+          const o = c.createOscillator();
+          const g = c.createGain();
+          o.type = 'square';
+          o.frequency.value = freq;
+          g.gain.value = gainVal;
+          o.connect(g).connect(c.destination);
+          o.start();
+          setTimeout(() => { o.stop(); }, durMs);
+        } catch {}
+      }
+      return {
+        shoot: () => beep(520, 40, 0.02),
+        hit: () => beep(760, 60, 0.03),
+      };
+    })();
+
+    function showHitToast() {
+      const el = document.getElementById('hitToast');
+      el.style.opacity = '1';
+      clearTimeout(showHitToast._t);
+      showHitToast._t = setTimeout(() => { el.style.opacity = '0'; }, 180);
+    }
+
     function renderShot(s) {
       // Tracer line (very short-lived)
       const color = s.hit ? new BABYLON.Color3(1.0, 0.35, 0.35) : new BABYLON.Color3(1.0, 0.9, 0.45);
@@ -382,6 +450,8 @@
           fpRig.muzzleFlash.isVisible = true;
           setTimeout(() => { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; }, 60);
         }
+        SFX.shoot();
+        if (s.hit) { showHitToast(); SFX.hit(); }
       }
     }
 
@@ -571,7 +641,18 @@
       el.addEventListener('pointercancel', (e)=>{ prevent(e); on(false); }, { passive:false });
       el.addEventListener('pointerleave', (e)=>{ prevent(e); on(false); }, { passive:false });
     }
-    holdButton(document.getElementById('btnShoot'), (v)=> state.shoot = v);
+    // Shoot: hold-to-fire by default; optional tap-to-toggle (autofire)
+    const autoFireEl = document.getElementById('autofire');
+    const shootEl = document.getElementById('btnShoot');
+    let shootToggled = false;
+    holdButton(shootEl, (v)=> {
+      if (autoFireEl.checked) {
+        if (v) { shootToggled = !shootToggled; state.shoot = shootToggled; }
+      } else {
+        state.shoot = v;
+        if (!v) shootToggled = false;
+      }
+    });
     holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
 
     // Join
@@ -606,13 +687,23 @@
     let seq = 0;
     let lastSend = performance.now();
     engine.runRenderLoop(() => {
+      // Smooth remote players
+      for (const [id, mesh] of players.entries()) {
+        if (id === myId) continue;
+        if (!mesh.metadata?.target) continue;
+        const lerp = 0.22;
+        mesh.position.x += (mesh.metadata.target.x - mesh.position.x) * lerp;
+        mesh.position.y += (mesh.metadata.target.y - mesh.position.y) * lerp;
+        mesh.position.z += (mesh.metadata.target.z - mesh.position.z) * lerp;
+        mesh.rotation.y += (mesh.metadata.targetYaw - mesh.rotation.y) * 0.25;
+      }
+
       scene.render();
+
       if (socket && socket.readyState === 1 && state.joined) {
-        // disable gameplay input until started; still allow camera look to feel responsive
-        if (!state.started) {
-          // but don't spam server
-          return;
-        }
+        // disable gameplay input until started
+        if (!state.started) return;
+
         const t = performance.now();
         const dt = Math.min(0.2, (t - lastSend) / 1000);
         if (t - lastSend > 50) {
