@@ -705,11 +705,36 @@
     // Sound FX (procedural WebAudio; no external files)
     const SFX = (() => {
       let ctx = null;
+      let unlockPromise = null;
+
       function ensure() {
         if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
         return ctx;
       }
+
+      function unlockIfNeeded() {
+        const c = ensure();
+        if (c.state !== 'suspended') return Promise.resolve();
+        if (!unlockPromise) {
+          unlockPromise = c.resume().catch(()=>{}).finally(() => { unlockPromise = null; });
+        }
+        return unlockPromise;
+      }
+
+      function play(fn) {
+        const c = ensure();
+        if (c.state === 'suspended') {
+          // iOS will sometimes suspend audio again; resume, then play.
+          unlockIfNeeded().then(() => { try { fn(c); } catch {} });
+          return;
+        }
+        try { fn(c); } catch {}
+      }
+
+      // Proactively unlock audio on the first real gesture.
+      // (Otherwise iOS will drop some early/occasional SFX.)
+      window.addEventListener('pointerdown', () => { unlockIfNeeded(); }, { passive: true });
+      window.addEventListener('touchstart', () => { unlockIfNeeded(); }, { passive: true });
 
       function noiseBuffer(c, seconds = 0.15) {
         const len = Math.floor(c.sampleRate * seconds);
@@ -720,9 +745,8 @@
       }
 
       function gunshot() {
-        try {
-          const c = ensure();
-          const t0 = c.currentTime;
+        play((c) => {
+          const t0 = c.currentTime + 0.001;
 
           // Noise burst
           const src = c.createBufferSource();
@@ -773,12 +797,11 @@
           src.stop(t0 + 0.14);
           o.start(t0);
           o.stop(t0 + 0.11);
-        } catch {}
+        });
       }
 
       function tick(freq, durMs, gainVal) {
-        try {
-          const c = ensure();
+        play((c) => {
           const o = c.createOscillator();
           const g = c.createGain();
           o.type = 'square';
@@ -786,8 +809,8 @@
           g.gain.value = gainVal;
           o.connect(g).connect(c.destination);
           o.start();
-          setTimeout(() => { o.stop(); }, durMs);
-        } catch {}
+          setTimeout(() => { try { o.stop(); } catch {} }, durMs);
+        });
       }
 
       return {
