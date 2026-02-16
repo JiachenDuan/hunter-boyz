@@ -221,31 +221,44 @@
       handMat.diffuseColor = new BABYLON.Color3(0.85, 0.72, 0.62);
       handMat.specularColor = new BABYLON.Color3(0,0,0);
 
-      const leftHand = BABYLON.MeshBuilder.CreateBox('leftHand', { width:0.18, height:0.18, depth:0.32 }, scene);
+      // Smaller hands (less bulky)
+      const leftHand = BABYLON.MeshBuilder.CreateBox('leftHand', { width:0.12, height:0.12, depth:0.22 }, scene);
       leftHand.material = handMat;
       leftHand.parent = root;
-      leftHand.position.set(-0.18, -0.18, 0.55);
+      leftHand.position.set(-0.16, -0.22, 0.62);
 
-      const rightHand = BABYLON.MeshBuilder.CreateBox('rightHand', { width:0.18, height:0.18, depth:0.32 }, scene);
+      const rightHand = BABYLON.MeshBuilder.CreateBox('rightHand', { width:0.12, height:0.12, depth:0.22 }, scene);
       rightHand.material = handMat;
       rightHand.parent = root;
-      rightHand.position.set(0.22, -0.20, 0.55);
+      rightHand.position.set(0.18, -0.24, 0.62);
 
-      // Gun
+      // Gun (smaller + more pistol-like)
       const gunMat = new BABYLON.StandardMaterial('gunMat', scene);
       gunMat.diffuseColor = new BABYLON.Color3(0.10, 0.12, 0.16);
       gunMat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.03);
       gunMat.specularColor = new BABYLON.Color3(0,0,0);
 
-      const gunBody = BABYLON.MeshBuilder.CreateBox('gunBody', { width:0.22, height:0.14, depth:0.55 }, scene);
+      const gunBody = BABYLON.MeshBuilder.CreateBox('gunBody', { width:0.14, height:0.10, depth:0.32 }, scene);
       gunBody.material = gunMat;
       gunBody.parent = root;
-      gunBody.position.set(0.12, -0.22, 0.62);
+      gunBody.position.set(0.10, -0.28, 0.74);
 
-      const gunBarrel = BABYLON.MeshBuilder.CreateBox('gunBarrel', { width:0.10, height:0.10, depth:0.30 }, scene);
+      // Barrel/slide
+      const gunBarrel = BABYLON.MeshBuilder.CreateBox('gunBarrel', { width:0.07, height:0.07, depth:0.22 }, scene);
       gunBarrel.material = gunMat;
       gunBarrel.parent = root;
-      gunBarrel.position.set(0.12, -0.20, 0.92);
+      gunBarrel.position.set(0.10, -0.28, 0.92);
+
+      // Grip
+      const gunGrip = BABYLON.MeshBuilder.CreateBox('gunGrip', { width:0.08, height:0.14, depth:0.10 }, scene);
+      gunGrip.material = gunMat;
+      gunGrip.parent = root;
+      gunGrip.position.set(0.12, -0.35, 0.70);
+      gunGrip.rotation.x = 0.25;
+
+      // Slight tilt so it feels more like a held gun
+      root.rotation.x = 0.02;
+      root.rotation.y = 0.0;
 
       // Muzzle flash (hidden most of the time)
       const flashMat = new BABYLON.StandardMaterial('flashMat', scene);
@@ -253,13 +266,13 @@
       flashMat.diffuseColor = new BABYLON.Color3(0,0,0);
       flashMat.alpha = 0.95;
 
-      const muzzleFlash = BABYLON.MeshBuilder.CreatePlane('muzzleFlash', { size:0.22 }, scene);
+      const muzzleFlash = BABYLON.MeshBuilder.CreatePlane('muzzleFlash', { size:0.12 }, scene);
       muzzleFlash.material = flashMat;
       muzzleFlash.parent = root;
-      muzzleFlash.position.set(0.12, -0.20, 1.10);
+      muzzleFlash.position.set(0.10, -0.28, 1.05);
       muzzleFlash.isVisible = false;
 
-      fpRig = { root, leftHand, rightHand, gunBody, gunBarrel, muzzleFlash };
+      fpRig = { root, leftHand, rightHand, gunBody, gunBarrel, gunGrip, muzzleFlash };
       return fpRig;
     }
 
