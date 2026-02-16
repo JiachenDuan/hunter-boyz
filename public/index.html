@@ -452,7 +452,7 @@
       const lines = BABYLON.MeshBuilder.CreateLines('shot', { points: pts }, scene);
       lines.color = color;
       lines.alpha = 0.9;
-      setTimeout(() => lines.dispose(), 70);
+      setTimeout(() => lines.dispose(), 260);
 
       if (s.from === myId) {
         flashReticle(s.hit ? 'hit' : 'shoot');
