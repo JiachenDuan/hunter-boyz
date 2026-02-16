@@ -38,7 +38,7 @@
     #log { margin-top:8px; font-size:12px; color: rgba(230,237,243,0.75); }
 
     /* Touch controls */
-    .stick { position:absolute; bottom: var(--move-bottom); width:140px; height:140px; border-radius:999px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); pointer-events:auto; touch-action:none; }
+    .stick { position:absolute; bottom: var(--move-bottom); width:140px; height:140px; border-radius:999px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); pointer-events:auto; touch-action:none; z-index: 10; }
     #moveStick { left: var(--pad); }
     #lookPad { right: var(--pad); width: calc(var(--btn) * 2.1); height: calc(var(--btn) * 2.1); border-radius: 18px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); }
     .nub { position:absolute; left:50%; top:50%; width:64px; height:64px; margin-left:-32px; margin-top:-32px; border-radius:999px; background: rgba(124,92,255,0.25); border:1px solid rgba(124,92,255,0.55); }
@@ -50,7 +50,7 @@
       --bottom: calc(20px + env(safe-area-inset-bottom));
       --move-bottom: calc(var(--bottom) + 18px);
     }
-    #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; }
+    #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; z-index: 11; }
     #btnShoot { right: calc(var(--pad) + var(--btn) + var(--btn-gap)); background: rgba(255,80,80,0.25); border-color: rgba(255,80,80,0.6); }
     #btnJump { right: calc(var(--pad) + (var(--btn) + var(--btn-gap)) * 2); background: rgba(80,200,255,0.18); border-color: rgba(80,200,255,0.55); }
 
@@ -84,7 +84,7 @@
     #score { position:absolute; top:10px; right:10px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:none; font-size:12px; min-width: 140px; }
 
     /* Extra buttons (sprint/reload) sit above jump/shoot */
-    #btnSprint, #btnReload { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); }
+    #btnSprint, #btnReload { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 11; }
     #btnSprint { right: calc(var(--pad) + (var(--btn) + var(--btn-gap)) * 2); background: rgba(140,140,255,0.16); border-color: rgba(140,140,255,0.55); }
     #btnReload { right: calc(var(--pad) + var(--btn) + var(--btn-gap)); background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.35); }
 
