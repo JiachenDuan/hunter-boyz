@@ -1101,24 +1101,49 @@
           pump.position.set(0.02, -0.02, 0.34);
         }
 
-        // Rocket launcher extras: tube + tip
+        // Rocket launcher extras: big tube + fins + rear cap so it's unmistakable
         if (kind === 'rocket') {
-          const tube = BABYLON.MeshBuilder.CreateCylinder(`rk_tube_${kind}`, { diameter: 0.12, height: 0.62, tessellation: 12 }, scene);
+          // Main tube
+          const tube = BABYLON.MeshBuilder.CreateCylinder(`rk_tube_${kind}`, { diameter: 0.18, height: 0.82, tessellation: 14 }, scene);
           tube.material = accM;
           tube.parent = g;
           tube.rotation.x = Math.PI / 2;
-          tube.position.set(0.02, 0.04, 0.34);
+          tube.position.set(0.02, 0.06, 0.40);
 
-          // Babylon doesn't have CreateCone in all builds; emulate with a tapered cylinder.
+          // Front tip (tapered)
           const tip = BABYLON.MeshBuilder.CreateCylinder(
             `rk_tip_${kind}`,
-            { height: 0.14, diameterTop: 0.001, diameterBottom: 0.10, tessellation: 12 },
+            { height: 0.18, diameterTop: 0.001, diameterBottom: 0.16, tessellation: 14 },
             scene
           );
           tip.material = bodyM;
           tip.parent = g;
           tip.rotation.x = Math.PI / 2;
-          tip.position.set(0.02, 0.04, 0.70);
+          tip.position.set(0.02, 0.06, 0.86);
+
+          // Rear cap
+          const cap = BABYLON.MeshBuilder.CreateCylinder(`rk_cap_${kind}`, { diameter: 0.19, height: 0.06, tessellation: 14 }, scene);
+          cap.material = bodyM;
+          cap.parent = g;
+          cap.rotation.x = Math.PI / 2;
+          cap.position.set(0.02, 0.06, -0.02);
+
+          // Fins (4)
+          for (let i = 0; i < 4; i++) {
+            const fin = BABYLON.MeshBuilder.CreateBox(`rk_fin_${kind}_${i}`, { width: 0.03, height: 0.09, depth: 0.14 }, scene);
+            fin.material = accM;
+            fin.parent = g;
+            fin.position.set(0.02, 0.06, 0.70);
+            fin.rotation.z = (Math.PI / 2) * i;
+            fin.position.x += Math.cos(fin.rotation.z) * 0.10;
+            fin.position.y += Math.sin(fin.rotation.z) * 0.10;
+          }
+
+          // Simple sight block on top
+          const sight = BABYLON.MeshBuilder.CreateBox(`rk_sight_${kind}`, { width: 0.08, height: 0.05, depth: 0.10 }, scene);
+          sight.material = bodyM;
+          sight.parent = g;
+          sight.position.set(0.02, 0.14, 0.28);
         }
 
         // Fart gun extras: a "tank" + nozzle so it's obvious.
