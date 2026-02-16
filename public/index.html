@@ -401,31 +401,64 @@
         return BABYLON.MeshBuilder.CreateCapsule(name, { radius, height, subdivisions: 6 }, scene);
       }
 
+      function makeHand(name, side /* -1 left, +1 right */, parent) {
+        const handRoot = new BABYLON.TransformNode(name, scene);
+        handRoot.parent = parent;
+
+        // Palm
+        const palm = BABYLON.MeshBuilder.CreateBox(name + '_palm', { width: 0.09, height: 0.03, depth: 0.12 }, scene);
+        palm.material = skinMat;
+        palm.parent = handRoot;
+        palm.position.set(0, 0, 0);
+
+        // Fingers (4 capsules) curled around grip
+        const fingerOffsets = [-0.030, -0.010, 0.010, 0.030];
+        const fingers = [];
+        for (let i = 0; i < 4; i++) {
+          const f = capsule(`${name}_f${i}`, 0.012, 0.08);
+          f.material = skinMat;
+          f.parent = handRoot;
+          f.position.set(fingerOffsets[i], -0.018, 0.055);
+          f.rotation.x = 1.15; // curl
+          fingers.push(f);
+        }
+
+        // Thumb
+        const thumb = capsule(name + '_thumb', 0.012, 0.07);
+        thumb.material = skinMat;
+        thumb.parent = handRoot;
+        thumb.position.set(0.05 * side, -0.005, 0.010);
+        thumb.rotation.z = -0.9 * side;
+        thumb.rotation.x = 0.6;
+
+        return { handRoot, palm, fingers, thumb };
+      }
+
       // Left forearm + hand
-      const lFore = capsule('lFore', 0.055, 0.28);
+      const lFore = capsule('lFore', 0.055, 0.30);
       lFore.material = skinMat;
       lFore.parent = root;
-      lFore.position.set(-0.18, -0.25, 0.62);
+      lFore.position.set(-0.20, -0.24, 0.60);
       lFore.rotation.x = 0.35;
-      lFore.rotation.z = 0.15;
+      lFore.rotation.z = 0.18;
 
-      const lHand = BABYLON.MeshBuilder.CreateSphere('lHand', { diameter: 0.12, segments: 8 }, scene);
-      lHand.material = skinMat;
-      lHand.parent = root;
-      lHand.position.set(-0.18, -0.33, 0.74);
+      const leftHand = makeHand('leftHand', -1, root);
+      leftHand.handRoot.position.set(-0.20, -0.34, 0.76);
+      leftHand.handRoot.rotation.x = 0.15;
+      leftHand.handRoot.rotation.z = 0.10;
 
       // Right forearm + hand
-      const rFore = capsule('rFore', 0.055, 0.28);
+      const rFore = capsule('rFore', 0.055, 0.30);
       rFore.material = skinMat;
       rFore.parent = root;
-      rFore.position.set(0.20, -0.26, 0.62);
-      rFore.rotation.x = 0.38;
-      rFore.rotation.z = -0.12;
+      rFore.position.set(0.22, -0.24, 0.60);
+      rFore.rotation.x = 0.40;
+      rFore.rotation.z = -0.15;
 
-      const rHand = BABYLON.MeshBuilder.CreateSphere('rHand', { diameter: 0.12, segments: 8 }, scene);
-      rHand.material = skinMat;
-      rHand.parent = root;
-      rHand.position.set(0.20, -0.34, 0.74);
+      const rightHand = makeHand('rightHand', +1, root);
+      rightHand.handRoot.position.set(0.22, -0.35, 0.78);
+      rightHand.handRoot.rotation.x = 0.12;
+      rightHand.handRoot.rotation.z = -0.08;
 
       // Gun (more rifle-ish silhouette)
       const gunMat = new BABYLON.StandardMaterial('gunMat', scene);
@@ -476,7 +509,7 @@
       muzzleFlash.rotation.y = Math.PI; // face camera
       muzzleFlash.isVisible = false;
 
-      fpRig = { root, lFore, lHand, rFore, rHand, gunRoot, receiver, barrel, stock, grip, muzzleFlash };
+      fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, receiver, barrel, stock, grip, muzzleFlash };
       return fpRig;
     }
 
