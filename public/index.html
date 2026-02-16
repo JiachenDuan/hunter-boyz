@@ -414,7 +414,7 @@
     const DEFAULT_FOV = 0.9;
     const SCOPE_FOV = 0.35;
     // More colorful vibe
-    scene.clearColor = new BABYLON.Color4(0.02, 0.03, 0.06, 1);
+    scene.clearColor = new BABYLON.Color4(0.72, 0.86, 0.98, 1);
 
     const light = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0, 1, 0), scene);
     light.intensity = 0.95;
@@ -432,12 +432,13 @@
     skyMat.disableLighting = true;
     skyMat.diffuseColor = new BABYLON.Color3(0,0,0);
     // Fake gradient by using emissive color + vertex colors-like effect via fresnel
-    skyMat.emissiveColor = new BABYLON.Color3(0.10, 0.15, 0.35);
+    // Light-blue sky vibe
+    skyMat.emissiveColor = new BABYLON.Color3(0.55, 0.75, 0.95);
     skyMat.emissiveFresnelParameters = new BABYLON.FresnelParameters();
-    skyMat.emissiveFresnelParameters.bias = 0.1;
-    skyMat.emissiveFresnelParameters.power = 1.8;
-    skyMat.emissiveFresnelParameters.leftColor = new BABYLON.Color3(0.55, 0.20, 0.65);
-    skyMat.emissiveFresnelParameters.rightColor = new BABYLON.Color3(0.10, 0.25, 0.60);
+    skyMat.emissiveFresnelParameters.bias = 0.15;
+    skyMat.emissiveFresnelParameters.power = 1.6;
+    skyMat.emissiveFresnelParameters.leftColor = new BABYLON.Color3(0.82, 0.92, 1.00);
+    skyMat.emissiveFresnelParameters.rightColor = new BABYLON.Color3(0.35, 0.70, 0.98);
     sky.material = skyMat;
 
     const camera = new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(0, 2, -5), scene);
@@ -458,9 +459,9 @@
     gridMat.minorUnitVisibility = 0.25;
     gridMat.gridRatio = 2;
     gridMat.backFaceCulling = false;
-    gridMat.mainColor = new BABYLON.Color3(0.10, 0.18, 0.25);
-    gridMat.lineColor = new BABYLON.Color3(0.55, 0.20, 0.65);
-    gridMat.opacity = 0.28;
+    gridMat.mainColor = new BABYLON.Color3(0.78, 0.92, 0.98);
+    gridMat.lineColor = new BABYLON.Color3(0.12, 0.45, 0.85);
+    gridMat.opacity = 0.22;
     ground.material = gridMat;
 
     function ensureFirstPersonRig() {
