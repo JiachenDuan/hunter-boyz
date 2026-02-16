@@ -817,7 +817,7 @@ setInterval(() => {
   }
 
   // AFK cleanup
-  for (const p of listPlayers()) {
+  for (const p of players.values()) {
     const li = p.lastInputAt || 0;
     if (li && (t - li) > AFK_MS) {
       players.delete(p.id);
