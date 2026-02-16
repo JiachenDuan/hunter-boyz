@@ -433,6 +433,8 @@
             const np = mesh?.metadata?.namePlate;
             if (np?.plane) { try { np.plane.dispose(); } catch {} }
             if (np?.dt) { try { np.dt.dispose(); } catch {} }
+            const fx = mesh?.metadata?.fartFx;
+            if (fx?.cloud) { try { fx.cloud.dispose(); } catch {} }
           } catch {}
           mesh.dispose();
           players.delete(id);
@@ -523,7 +525,24 @@
             namePlate = { plane, dt };
           } catch {}
 
-          root.metadata = { target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z), targetYaw: p.yaw, namePlate };
+          // Fart cloud FX (hidden by default)
+          let fartFx = null;
+          try {
+            const cloud = BABYLON.MeshBuilder.CreateSphere(`fart_${p.id}`, { diameter: 0.55, segments: 8 }, scene);
+            cloud.parent = root;
+            cloud.position.y = 2.05;
+            cloud.isPickable = false;
+
+            const cm = new BABYLON.StandardMaterial(`fart_m_${p.id}`, scene);
+            cm.diffuseColor = new BABYLON.Color3(0.55, 1.0, 0.55);
+            cm.emissiveColor = new BABYLON.Color3(0.10, 0.20, 0.10);
+            cm.alpha = 0.0;
+            cloud.material = cm;
+
+            fartFx = { cloud, mat: cm, on: false };
+          } catch {}
+
+          root.metadata = { target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z), targetYaw: p.yaw, namePlate, fartFx };
           players.set(p.id, root);
           mesh = root;
         }
@@ -545,6 +564,22 @@
           mesh.metadata.target.y = (p.y || 1.8) - 0.8;
           mesh.metadata.target.z = p.z;
           mesh.metadata.targetYaw = p.yaw;
+
+          // Fart cloud above head when fart debuff is active
+          try {
+            const fx = mesh.metadata.fartFx;
+            const active = (p.fartInMs || 0) > 0;
+            if (fx?.mat) {
+              if (active) {
+                fx.mat.alpha = 0.55;
+                // gentle pulse
+                const pulse = 0.45 + 0.10 * Math.sin(Date.now() / 120);
+                fx.mat.alpha = pulse;
+              } else {
+                fx.mat.alpha = 0.0;
+              }
+            }
+          } catch {}
         }
 
         if (p.id !== myId) {
