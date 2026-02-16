@@ -184,7 +184,7 @@ function respawn(p) {
 }
 
 function rayHit(shooter, maxDist = 30, yawOverride = null) {
-  // Simple hitscan in XZ plane + pitch ignored for MVP.
+  // Simple hitscan in XZ plane + pitch ignored (used by rifle/shotgun).
   const yaw = (typeof yawOverride === 'number') ? yawOverride : shooter.yaw;
   const dirX = Math.sin(yaw);
   const dirZ = Math.cos(yaw);
@@ -212,6 +212,74 @@ function rayHit(shooter, maxDist = 30, yawOverride = null) {
   }
   if (!best) return { target: null, endX: shooter.x + dirX * maxDist, endZ: shooter.z + dirZ * maxDist };
   return { target: best.target, endX: shooter.x + dirX * best.proj, endZ: shooter.z + dirZ * best.proj };
+}
+
+function rayHit3D(shooter, maxDist = 80) {
+  // 3D hitscan using yaw + pitch.
+  // Convention: in our client, pitch increases when dragging finger downward (look down).
+  const yaw = shooter.yaw;
+  const pitch = shooter.pitch || 0;
+  const cosP = Math.cos(pitch);
+
+  const dirX = Math.sin(yaw) * cosP;
+  const dirZ = Math.cos(yaw) * cosP;
+  const dirY = -Math.sin(pitch);
+
+  // Normalize (close enough; but do it anyway)
+  const len = Math.hypot(dirX, dirY, dirZ) || 1;
+  const dx = dirX / len;
+  const dy = dirY / len;
+  const dz = dirZ / len;
+
+  let best = null; // { target, t, part }
+
+  for (const p of players.values()) {
+    if (p.id === shooter.id) continue;
+    if (p.hp <= 0) continue;
+
+    // Two-sphere approximation: head + body.
+    // Player eye height is ~1.8; client model head center ends up around y+0.75.
+    const head = { x: p.x, y: (p.y || 1.8) + 0.75, z: p.z, r: 0.35, part: 'head' };
+    const body = { x: p.x, y: (p.y || 1.8) + 0.15, z: p.z, r: 0.75, part: 'body' };
+
+    for (const s of [head, body]) {
+      const vx = s.x - shooter.x;
+      const vy = s.y - shooter.y;
+      const vz = s.z - shooter.z;
+
+      const t = vx * dx + vy * dy + vz * dz; // projection onto ray
+      if (t < 0 || t > maxDist) continue;
+
+      const px = vx - t * dx;
+      const py = vy - t * dy;
+      const pz = vz - t * dz;
+      const d2 = px*px + py*py + pz*pz;
+
+      if (d2 <= s.r * s.r) {
+        if (!best || t < best.t || (t === best.t && s.part === 'head')) {
+          best = { target: p, t, part: s.part };
+        }
+      }
+    }
+  }
+
+  if (!best) {
+    return {
+      target: null,
+      part: null,
+      endX: shooter.x + dx * maxDist,
+      endY: shooter.y + dy * maxDist,
+      endZ: shooter.z + dz * maxDist,
+    };
+  }
+
+  return {
+    target: best.target,
+    part: best.part,
+    endX: shooter.x + dx * best.t,
+    endY: shooter.y + dy * best.t,
+    endZ: shooter.z + dz * best.t,
+  };
 }
 
 function doDamage({ shooter, target, amount }) {
@@ -389,11 +457,9 @@ wss.on('connection', (ws) => {
           let hitId = null;
           let hitHp = null;
 
-          if (weapon === 'rifle' || weapon === 'sniper') {
-            const maxDist = weapon === 'sniper' ? 70 : 30;
-            const dmgAmt = weapon === 'sniper' ? 80 : 25;
-            const hit = rayHit(p, maxDist);
-            const dmg = doDamage({ shooter: p, target: hit.target, amount: dmgAmt });
+          if (weapon === 'rifle') {
+            const hit = rayHit(p, 30);
+            const dmg = doDamage({ shooter: p, target: hit.target, amount: 25 });
             hitId = dmg.hitId;
             hitHp = dmg.hitHp;
 
@@ -406,6 +472,29 @@ wss.on('connection', (ws) => {
               sz: p.z,
               ex: hit.endX,
               ey: p.y,
+              ez: hit.endZ,
+              hit: hitId,
+              hitHp,
+            });
+          } else if (weapon === 'sniper') {
+            // Sniper: body shot = 50% HP, headshot = instant kill.
+            const hit = rayHit3D(p, 80);
+            const isHead = hit.part === 'head';
+            const dmgAmt = isHead ? 999 : 50;
+            const dmg = doDamage({ shooter: p, target: hit.target, amount: dmgAmt });
+            hitId = dmg.hitId;
+            hitHp = dmg.hitHp;
+
+            broadcast({
+              t: 'shot',
+              weapon,
+              part: hit.part,
+              from: p.id,
+              sx: p.x,
+              sy: p.y,
+              sz: p.z,
+              ex: hit.endX,
+              ey: hit.endY,
               ez: hit.endZ,
               hit: hitId,
               hitHp,

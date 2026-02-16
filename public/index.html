@@ -1204,7 +1204,8 @@
             }
           }
 
-          const weapon = document.getElementById('weapon')?.value === 'shotgun' ? 'shotgun' : 'rifle';
+          const wSel = document.getElementById('weapon')?.value;
+          const weapon = (wSel === 'shotgun' || wSel === 'sniper') ? wSel : 'rifle';
 
           socket.send(JSON.stringify({
             t:'input',
