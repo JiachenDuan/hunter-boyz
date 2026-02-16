@@ -186,7 +186,7 @@
     <div id="lookPad" class="stick"></div>
     <div id="btnJump"><div class="btnLabel"><div class="btnIcon">⇧</div></div></div>
     <!-- sprint removed -->
-    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35); opacity: 0.85;"><div class="btnLabel"><div class="btnIcon">⌖</div></div></div>
+    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: calc(var(--pad) + var(--btn) + var(--btn-gap)); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35); opacity: 0.92; z-index: 20;"><div class="btnLabel"><div class="btnIcon">⌖</div></div></div>
     <div id="btnReload"><div class="btnLabel"><div class="btnIcon">↻</div></div></div>
     <div id="btnShoot"><div class="btnLabel"><div class="btnIcon">◎</div></div></div>
   </div>
@@ -1251,6 +1251,7 @@
       return {
         enable: () => unlockIfNeeded(),
         shoot: (weapon) => {
+          if (!unlocked) { try { log('Tap screen to enable sound'); } catch {} }
           if (String(weapon) === 'fart') return fart();
           return gunshot(weapon);
         },
