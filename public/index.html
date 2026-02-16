@@ -1205,6 +1205,13 @@
     // Join
     const joinBtn = document.getElementById('joinBtn');
     const nameInput = document.getElementById('name');
+
+    // Persist username locally so re-joining is fast.
+    const NAME_KEY = 'hunterBoyz.name';
+    try {
+      const saved = localStorage.getItem(NAME_KEY);
+      if (saved && !nameInput.value) nameInput.value = saved;
+    } catch {}
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
@@ -1214,6 +1221,13 @@
     function doJoin(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
       if (state.joined) return;
+
+      // Save name before joining.
+      try {
+        const v = (nameInput.value || '').trim();
+        if (v) localStorage.setItem(NAME_KEY, v);
+      } catch {}
+
       connectAndJoin();
       joinBtn.disabled = true;
       nameInput.disabled = true;
