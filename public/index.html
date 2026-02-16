@@ -180,7 +180,7 @@
     <div id="moveStick" class="stick"><div id="moveNub" class="nub"></div></div>
     <div id="lookPad" class="stick"></div>
     <div id="btnJump"><div class="btnLabel"><div class="btnIcon">⇧</div></div></div>
-    <div id="btnSprint"><div class="btnLabel"><div class="btnIcon">⚡</div></div></div>
+    <!-- sprint removed -->
     <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: var(--pad); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35); opacity: 0.85;"><div class="btnLabel"><div class="btnIcon">⌖</div></div></div>
     <div id="btnReload"><div class="btnLabel"><div class="btnIcon">↻</div></div></div>
     <div id="btnShoot"><div class="btnLabel"><div class="btnIcon">◎</div></div></div>
@@ -1391,7 +1391,7 @@
       }
     });
     holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
-    holdButton(document.getElementById('btnSprint'), (v)=> state.sprint = v);
+    // sprint removed
 
     // Reload: tap
     (() => {
