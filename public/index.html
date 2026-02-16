@@ -2116,9 +2116,16 @@ function showKill(text) {
       const pad = document.getElementById('lookPad');
       let active = false;
       let last = null;
-      let sens = parseFloat(document.getElementById('sens').value || '2.2');
-      document.getElementById('sens').addEventListener('input', (e) => {
-        sens = parseFloat(e.target.value || '2.2');
+      let sensTurn = parseFloat(document.getElementById('sensTurn')?.value || '2.2');
+      let sensAim = parseFloat(document.getElementById('sensAim')?.value || '2.2');
+
+      document.getElementById('sensTurn')?.addEventListener('input', (e) => {
+        sensTurn = parseFloat(e.target.value || '2.2');
+        try { localStorage.setItem('hunterBoyz.sensTurn', String(sensTurn)); } catch {}
+      });
+      document.getElementById('sensAim')?.addEventListener('input', (e) => {
+        sensAim = parseFloat(e.target.value || '2.2');
+        try { localStorage.setItem('hunterBoyz.sensAim', String(sensAim)); } catch {}
       });
 
       const prevent = (e) => {
@@ -2512,13 +2519,17 @@ function showKill(text) {
 
     function doScoreboard(e){ if (e) { e.preventDefault(); e.stopPropagation(); } try { scoreModal.style.display = 'flex'; } catch {} }
     function doScoreClose(e){ if (e) { e.preventDefault(); e.stopPropagation(); } try { scoreModal.style.display = 'none'; } catch {} }
-    btnScoreboard.addEventListener('click', doScoreboard);
-    btnScoreboard.addEventListener('pointerdown', doScoreboard, { passive:false });
-    btnScoreboard.addEventListener('touchend', doScoreboard, { passive:false });
-    btnScoreClose.addEventListener('click', doScoreClose);
-    btnScoreClose.addEventListener('pointerdown', doScoreClose, { passive:false });
-    btnScoreClose.addEventListener('touchend', doScoreClose, { passive:false });
-    scoreModal.addEventListener('click', (e)=>{ if (e.target===scoreModal) doScoreClose(e); });
+    if (btnScoreboard) {
+      btnScoreboard.addEventListener('click', doScoreboard);
+      btnScoreboard.addEventListener('pointerdown', doScoreboard, { passive:false });
+      btnScoreboard.addEventListener('touchend', doScoreboard, { passive:false });
+    }
+    if (btnScoreClose) {
+      btnScoreClose.addEventListener('click', doScoreClose);
+      btnScoreClose.addEventListener('pointerdown', doScoreClose, { passive:false });
+      btnScoreClose.addEventListener('touchend', doScoreClose, { passive:false });
+    }
+    if (scoreModal) scoreModal.addEventListener('click', (e)=>{ if (e.target===scoreModal) doScoreClose(e); });
 
     function doEnableSound(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -2563,7 +2574,7 @@ function showKill(text) {
     settingsBtn.addEventListener('touchend', toggleSettings, { passive:false });
 
     // Keep last server state for aim assist
-    let lastServerState = null;
+    var lastServerState = null;
 
     // Network tick
     let seq = 0;
