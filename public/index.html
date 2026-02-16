@@ -139,6 +139,7 @@
         <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <button id="snapBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Send snapshot</button>
           <button id="copyLinkBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Copy link</button>
+          <button id="resetLobbyBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.18); background: rgba(255,80,80,0.12); color:#ffdede; padding:8px 10px; font-weight:800;">Reset lobby</button>
           <div style="font-size:12px; opacity:.75;">(snapshot saves on server)</div>
         </div>
       </div>
@@ -1311,6 +1312,7 @@
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const resetLobbyBtn = document.getElementById('resetLobbyBtn');
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsPanel = document.getElementById('settingsPanel');
 
@@ -1379,6 +1381,16 @@
     copyLinkBtn.addEventListener('click', doCopyLink);
     copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
     copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
+
+    function doResetLobby(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (!socket || socket.readyState !== 1) return;
+      socket.send(JSON.stringify({ t:'resetLobby' }));
+      log('Lobby reset (kicking ghosts)…');
+    }
+    resetLobbyBtn.addEventListener('click', doResetLobby);
+    resetLobbyBtn.addEventListener('pointerdown', doResetLobby, { passive: false });
+    resetLobbyBtn.addEventListener('touchend', doResetLobby, { passive: false });
 
     const hudEl = document.getElementById('hud');
     function syncHudCompact() {

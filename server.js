@@ -370,6 +370,35 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.t === 'resetLobby') {
+      // Kick all other players + reset the match.
+      for (const otherWs of wss.clients) {
+        if (otherWs !== ws) {
+          try { otherWs.terminate(); } catch {}
+        }
+      }
+
+      // Keep only this player.
+      for (const pid of Array.from(players.keys())) {
+        if (pid !== id) {
+          players.delete(pid);
+          playerConn.delete(pid);
+        }
+      }
+
+      // Clear clientId mappings pointing at removed players.
+      for (const [cid, pid] of Array.from(clientToPlayer.entries())) {
+        if (pid !== id) clientToPlayer.delete(cid);
+      }
+
+      // Make this player the host and reset the game.
+      GAME.hostId = id;
+      GAME.started = false;
+
+      broadcast({ t: 'state', state: serializeState() });
+      return;
+    }
+
     if (msg.t === 'reload') {
       if (!GAME.started) return;
       if (p.hp <= 0) return;
