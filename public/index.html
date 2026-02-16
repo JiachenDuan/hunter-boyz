@@ -532,6 +532,14 @@
       rightHand.handRoot.rotation.x = 0.12;
       rightHand.handRoot.rotation.z = -0.08;
 
+      // Jiachen: hide hands/forearms; keep only the gun visible in first-person.
+      try {
+        lFore.isVisible = false;
+        rFore.isVisible = false;
+        leftHand.handRoot.setEnabled(false);
+        rightHand.handRoot.setEnabled(false);
+      } catch {}
+
       // Gun: use Kenney GLB model if available; fall back to simple primitives.
       const gunRoot = new BABYLON.TransformNode('gunRoot', scene);
       gunRoot.parent = root;
