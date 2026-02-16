@@ -143,6 +143,7 @@ function makePlayer(name) {
     ammo: 12,
     reloadUntil: 0,
     autoReload: true,
+    disconnectedAt: 0,
     color: `hsl(${hue} 80% 60%)`,
   };
 }
@@ -165,6 +166,7 @@ function serializeState() {
       reloadInMs: Math.max(0, p.reloadUntil - nowMs()),
       invulnInMs: Math.max(0, p.invulnUntil - nowMs()),
       respawnInMs: p.hp > 0 ? 0 : Math.max(0, p.respawnAt - nowMs()),
+      connected: playerConn.has(p.id),
       color: p.color,
     })),
   };
@@ -608,28 +610,12 @@ wss.on('connection', (ws) => {
     clients.delete(ws);
 
     if (id) {
-      // Only remove the player if this ws is still the active connection.
+      // If this ws is the active connection, mark player as disconnected but keep state
+      // for a short grace period so reconnect (same clientId) doesn't create a "new user".
       if (playerConn.get(id) === ws) {
         playerConn.delete(id);
-        players.delete(id);
-
-        // Clean up any clientId -> playerId mapping pointing at this id
-        for (const [cid, pid] of clientToPlayer.entries()) {
-          if (pid === id) clientToPlayer.delete(cid);
-        }
-
-        // If the host left, reassign host to the next connected player and pause game.
-        if (GAME.hostId === id) {
-          const next = players.keys().next().value || null;
-          GAME.hostId = next;
-          GAME.started = false;
-        }
-
-        // If no players remain, reset game.
-        if (players.size === 0) {
-          GAME.hostId = null;
-          GAME.started = false;
-        }
+        const p = players.get(id);
+        if (p) p.disconnectedAt = nowMs();
       }
     }
 
@@ -638,12 +624,33 @@ wss.on('connection', (ws) => {
 });
 
 setInterval(() => {
-  // Handle respawns + reload completion
+  // Handle respawns + reload completion + cleanup disconnected players
   const t = nowMs();
   for (const p of players.values()) {
     if (p.hp <= 0 && p.respawnAt && t >= p.respawnAt) respawn(p);
     if (p.hp > 0 && p.reloadUntil && t >= p.reloadUntil) { p.ammo = 12; p.reloadUntil = 0; }
   }
+
+  // Reconnect grace window: keep disconnected players briefly so they don't rejoin as "new users".
+  const GRACE_MS = 30_000;
+  for (const [id, p] of Array.from(players.entries())) {
+    if (playerConn.has(id)) continue;
+    if (!p.disconnectedAt) continue;
+    if (t - p.disconnectedAt > GRACE_MS) {
+      players.delete(id);
+      playerConn.delete(id);
+      for (const [cid, pid] of Array.from(clientToPlayer.entries())) {
+        if (pid === id) clientToPlayer.delete(cid);
+      }
+      if (GAME.hostId === id) GAME.hostId = players.keys().next().value || null;
+    }
+  }
+
+  if (players.size === 0) {
+    GAME.hostId = null;
+    GAME.started = false;
+  }
+
   broadcast({ t: 'state', state: serializeState() });
 }, Math.round(1000 / TICK_HZ));
 
