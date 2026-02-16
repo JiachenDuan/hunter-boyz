@@ -1507,6 +1507,10 @@
         try { el.classList.toggle('btnPressed', state.scope); } catch {}
         try { log(`Scope: ${state.scope ? 'ON' : 'OFF'}`); } catch {}
       };
+      // Debug taps (iOS sometimes swallows events depending on overlays)
+      el.addEventListener('pointerdown', (e) => { try { prevent(e); log('Scope tap…'); } catch {} }, { passive:false });
+      el.addEventListener('touchstart', (e) => { try { prevent(e); log('Scope tap…'); } catch {} }, { passive:false });
+
       el.addEventListener('click', fire);
       // Use pointerup to avoid iOS pointerdown being swallowed.
       el.addEventListener('pointerup', fire, { passive:false });
