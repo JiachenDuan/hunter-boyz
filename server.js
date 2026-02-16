@@ -370,8 +370,8 @@ wss.on('connection', (ws) => {
       // shoot
       if (msg.shoot) {
         const t = nowMs();
-        const weapon = msg.weapon === 'shotgun' ? 'shotgun' : 'rifle';
-        const fireCdMs = weapon === 'shotgun' ? 650 : 250;
+        const weapon = (msg.weapon === 'shotgun' || msg.weapon === 'sniper') ? msg.weapon : 'rifle';
+        const fireCdMs = weapon === 'shotgun' ? 650 : (weapon === 'sniper' ? 1100 : 250);
 
         if (t - p.lastShotAt > fireCdMs) {
           // can't shoot while reloading
@@ -389,9 +389,11 @@ wss.on('connection', (ws) => {
           let hitId = null;
           let hitHp = null;
 
-          if (weapon === 'rifle') {
-            const hit = rayHit(p);
-            const dmg = doDamage({ shooter: p, target: hit.target, amount: 25 });
+          if (weapon === 'rifle' || weapon === 'sniper') {
+            const maxDist = weapon === 'sniper' ? 70 : 30;
+            const dmgAmt = weapon === 'sniper' ? 80 : 25;
+            const hit = rayHit(p, maxDist);
+            const dmg = doDamage({ shooter: p, target: hit.target, amount: dmgAmt });
             hitId = dmg.hitId;
             hitHp = dmg.hitHp;
 
@@ -421,7 +423,6 @@ wss.on('connection', (ws) => {
               const dmg = doDamage({ shooter: p, target: hit.target, amount: dmgPerPellet });
               if (dmg.hitId) { hitId = dmg.hitId; hitHp = dmg.hitHp; }
             }
-            // broadcast a single event with multiple tracer segments
             broadcast({
               t: 'shot',
               weapon,

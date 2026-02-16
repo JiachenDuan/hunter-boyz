@@ -79,6 +79,7 @@
           <select id="weapon" class="pill" style="cursor:pointer; padding:8px 10px;">
             <option value="rifle">Rifle</option>
             <option value="shotgun">Shotgun</option>
+            <option value="sniper">Sniper</option>
           </select>
         </div>
         <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
@@ -127,6 +128,7 @@
     <div id="lookPad" class="stick"></div>
     <div id="btnJump"></div>
     <div id="btnSprint"></div>
+    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: var(--pad); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35);"></div>
     <div id="btnReload"></div>
     <div id="btnShoot"></div>
   </div>
@@ -149,6 +151,7 @@
       shoot: false,
       jump: false,
       sprint: false,
+      scope: false,
       joined: false,
       started: false,
       isHost: false,
@@ -243,6 +246,14 @@
         const ammo = (typeof meP.ammo === 'number') ? meP.ammo : 0;
         const rel = (meP.reloadInMs || 0);
         document.getElementById('ammoText').textContent = rel > 0 ? `Reloading…` : `Ammo ${ammo}`;
+
+        // Scope UI (sniper)
+        const weaponSel = document.getElementById('weapon')?.value;
+        const scoped = (weaponSel === 'sniper') && (state.scope === true);
+        camera.fov = scoped ? SCOPE_FOV : DEFAULT_FOV;
+        scope.isVisible = scoped;
+        scopeLines.isVisible = scoped;
+        ret.isVisible = !scoped;
 
         // show spawn protection by tinting HP bar
         const inv = (meP.invulnInMs || 0);
@@ -400,6 +411,8 @@
 
     // Scene
     const scene = new BABYLON.Scene(engine);
+    const DEFAULT_FOV = 0.9;
+    const SCOPE_FOV = 0.35;
     // More colorful vibe
     scene.clearColor = new BABYLON.Color4(0.02, 0.03, 0.06, 1);
 
@@ -428,7 +441,7 @@
     sky.material = skyMat;
 
     const camera = new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(0, 2, -5), scene);
-    camera.fov = 0.9;
+    camera.fov = DEFAULT_FOV;
     camera.minZ = 0.05;
 
     // Ground + some blocks
@@ -629,6 +642,23 @@
     ret.color = 'rgba(255,255,255,0.65)';
     ret.background = 'transparent';
     advancedTexture.addControl(ret);
+
+    // Scope overlay (sniper)
+    const scope = new BABYLON.GUI.Ellipse();
+    scope.width = '82%';
+    scope.height = '82%';
+    scope.thickness = 4;
+    scope.color = 'rgba(0,0,0,0.65)';
+    scope.background = 'transparent';
+    scope.isVisible = false;
+    advancedTexture.addControl(scope);
+
+    const scopeLines = new BABYLON.GUI.TextBlock();
+    scopeLines.text = '+';
+    scopeLines.color = 'rgba(255,255,255,0.65)';
+    scopeLines.fontSize = 44;
+    scopeLines.isVisible = false;
+    advancedTexture.addControl(scopeLines);
 
     function flashReticle(kind) {
       const orig = ret.color;
@@ -1017,6 +1047,19 @@
         prevent(e);
         if (!socket || socket.readyState !== 1) return;
         socket.send(JSON.stringify({ t:'reload' }));
+      };
+      el.addEventListener('click', fire);
+      el.addEventListener('pointerdown', fire, { passive:false });
+      el.addEventListener('touchend', fire, { passive:false });
+    })();
+
+    // Scope: toggle (only affects sniper)
+    (() => {
+      const el = document.getElementById('btnScope');
+      const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+      const fire = (e) => {
+        prevent(e);
+        state.scope = !state.scope;
       };
       el.addEventListener('click', fire);
       el.addEventListener('pointerdown', fire, { passive:false });
