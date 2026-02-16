@@ -15,9 +15,15 @@
       overscroll-behavior: none;
     }
     #ui { position: fixed; inset: 0; pointer-events:none; }
-    #hud { position:absolute; top:10px; left:10px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:auto; }
+    #hud { position:absolute; top:10px; left:10px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:auto; max-width: min(72vw, 420px); }
     #hud input { border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color:#e6edf3; padding:8px 10px; width: 160px; }
     #hud button { margin-left:6px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(124,92,255,0.9); color:white; padding:8px 10px; }
+
+    /* Compact HUD to avoid overlapping the score box when Settings are closed */
+    #hud.hudCompact { padding: 8px 10px; }
+    #hud.hudCompact #log { display:none; }
+    #hud.hudCompact button, #hud.hudCompact input, #hud.hudCompact select { padding: 6px 8px; }
+    #hud.hudCompact #settingsBtn { padding: 6px 8px !important; }
     #log { margin-top:8px; font-size:12px; color: rgba(230,237,243,0.75); }
 
     /* Touch controls */
@@ -1281,6 +1287,7 @@
       // Hide settings while playing; you can reopen via Settings.
       state.settingsOpen = false;
       settingsPanel.style.display = 'none';
+      try { syncHudCompact(); } catch {}
     }
 
     function doStart(e) {
@@ -1329,6 +1336,13 @@
     copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
     copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
 
+    const hudEl = document.getElementById('hud');
+    function syncHudCompact() {
+      // Compact whenever settings are closed.
+      try { hudEl.classList.toggle('hudCompact', !state.settingsOpen); } catch {}
+    }
+    syncHudCompact();
+
     let lastSettingsToggleAt = 0;
     function toggleSettings(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -1338,6 +1352,7 @@
       lastSettingsToggleAt = now;
       state.settingsOpen = !state.settingsOpen;
       settingsPanel.style.display = state.settingsOpen ? 'block' : 'none';
+      syncHudCompact();
     }
     settingsBtn.addEventListener('click', toggleSettings);
     settingsBtn.addEventListener('pointerdown', toggleSettings, { passive:false });
