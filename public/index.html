@@ -45,7 +45,26 @@
         <input id="name" placeholder="Name" maxlength="16" />
         <button id="joinBtn">Join</button>
       </div>
+      <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+        <label style="font-size:12px; opacity:.8;">Look</label>
+        <input id="sens" type="range" min="0.6" max="3.0" step="0.1" value="2.2" style="width:140px;" />
+      </div>
       <div id="log">Tip: same Wi‑Fi, open this page on each iPhone.</div>
+    </div>
+
+    <div id="lobby" style="position:absolute; inset:0; display:none; align-items:center; justify-content:center; pointer-events:auto; background: rgba(0,0,0,0.45);">
+      <div style="width:min(520px, 92vw); background: rgba(10,14,26,0.92); border:1px solid rgba(255,255,255,0.14); border-radius:16px; padding:14px;">
+        <div style="font-weight:900; font-size:18px;">Lobby</div>
+        <div id="lobbyPlayers" style="margin-top:10px; font-size:13px; opacity:.9;"></div>
+        <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+          <button id="startBtn" style="border-radius:12px; border:1px solid rgba(255,255,255,0.15); background: rgba(124,92,255,0.95); color:white; padding:10px 12px; font-weight:800;">Start</button>
+          <div id="waitMsg" style="font-size:12px; opacity:.85;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="respawn" style="position:absolute; inset:0; display:none; align-items:center; justify-content:center; pointer-events:none; background: rgba(0,0,0,0.25);">
+      <div style="background: rgba(10,14,26,0.85); border:1px solid rgba(255,255,255,0.14); border-radius:16px; padding:14px 16px; font-weight:900;">Respawning…</div>
     </div>
 
     <div id="score"></div>
@@ -70,7 +89,10 @@
       move: { x: 0, z: 0 },
       look: { yaw: 0, pitch: 0 },
       shoot: false,
+      jump: false,
       joined: false,
+      started: false,
+      isHost: false,
     };
 
     const players = new Map(); // id -> mesh
@@ -112,6 +134,38 @@
     }
 
     function applyState(s) {
+      // game flags
+      state.started = !!s.game?.started;
+      state.isHost = (s.game?.hostId && myId) ? (s.game.hostId === myId) : false;
+
+      // lobby UI
+      const lobby = document.getElementById('lobby');
+      const lobbyPlayers = document.getElementById('lobbyPlayers');
+      const startBtn = document.getElementById('startBtn');
+      const waitMsg = document.getElementById('waitMsg');
+      if (state.joined && !state.started) {
+        lobby.style.display = 'flex';
+        lobbyPlayers.innerHTML = s.players.map(p => {
+          const tag = p.id === s.game?.hostId ? ' <span style="opacity:.75">(host)</span>' : '';
+          return `<div style="margin:6px 0;"><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${p.name}${tag}</div>`;
+        }).join('');
+        startBtn.style.display = state.isHost ? 'inline-block' : 'none';
+        waitMsg.textContent = state.isHost ? 'Tap Start when ready.' : 'Waiting for host to start…';
+      } else {
+        lobby.style.display = 'none';
+      }
+
+      // respawn UI
+      const meP = s.players.find(pp => pp.id === myId);
+      const respawn = document.getElementById('respawn');
+      if (meP && meP.hp <= 0) {
+        respawn.style.display = 'flex';
+        const secs = Math.ceil((meP.respawnInMs || 0) / 1000);
+        respawn.firstElementChild.textContent = `Respawning… ${secs}s`;
+      } else {
+        respawn.style.display = 'none';
+      }
+
       // score
       const scoreDiv = document.getElementById('score');
       scoreDiv.innerHTML = '<div style="font-weight:800; margin-bottom:6px;">Score</div>' +
@@ -149,11 +203,13 @@
         }
 
         mesh.position.x = p.x;
+        mesh.position.y = (p.y || 1.8) - 0.8;
         mesh.position.z = p.z;
         mesh.rotation.y = p.yaw;
 
         if (p.id === myId) {
           camera.position.x = p.x;
+          camera.position.y = (p.y || 1.8);
           camera.position.z = p.z;
           camera.rotation.y = p.yaw;
           camera.rotation.x = p.pitch;
@@ -386,9 +442,15 @@
       document.getElementById('moveStick'),
       document.getElementById('moveNub'),
       (nx, ny) => {
-        // stick up = forward
-        state.move.x = nx;
-        state.move.z = -ny;
+        // stick up = forward; add small deadzone so it's easier to control
+        const dz = 0.14;
+        const mag = Math.hypot(nx, ny);
+        if (mag < dz) { state.move.x = 0; state.move.z = 0; return; }
+        const scale = (mag - dz) / (1 - dz);
+        const ux = nx / mag;
+        const uy = ny / mag;
+        state.move.x = ux * scale;
+        state.move.z = -uy * scale;
       }
     );
 
@@ -400,7 +462,10 @@
       const pad = document.getElementById('lookPad');
       let active = false;
       let last = null;
-      const sens = 2.2;
+      let sens = parseFloat(document.getElementById('sens').value || '2.2');
+      document.getElementById('sens').addEventListener('input', (e) => {
+        sens = parseFloat(e.target.value || '2.2');
+      });
 
       const prevent = (e) => {
         if (!e) return;
@@ -507,11 +572,13 @@
       el.addEventListener('pointerleave', (e)=>{ prevent(e); on(false); }, { passive:false });
     }
     holdButton(document.getElementById('btnShoot'), (v)=> state.shoot = v);
-    holdButton(document.getElementById('btnJump'), (v)=>{/* jump later */});
+    holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
 
     // Join
     const joinBtn = document.getElementById('joinBtn');
     const nameInput = document.getElementById('name');
+    const startBtn = document.getElementById('startBtn');
+
     function doJoin(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
       if (state.joined) return;
@@ -519,10 +586,21 @@
       joinBtn.disabled = true;
       nameInput.disabled = true;
     }
+
+    function doStart(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      if (!socket || socket.readyState !== 1) return;
+      socket.send(JSON.stringify({ t:'start' }));
+    }
+
     // iOS Safari can be flaky with click depending on viewport/overlays; wire multiple events.
     joinBtn.addEventListener('click', doJoin);
     joinBtn.addEventListener('pointerdown', doJoin, { passive: false });
     joinBtn.addEventListener('touchend', doJoin, { passive: false });
+
+    startBtn.addEventListener('click', doStart);
+    startBtn.addEventListener('pointerdown', doStart, { passive: false });
+    startBtn.addEventListener('touchend', doStart, { passive: false });
 
     // Network tick
     let seq = 0;
@@ -530,6 +608,11 @@
     engine.runRenderLoop(() => {
       scene.render();
       if (socket && socket.readyState === 1 && state.joined) {
+        // disable gameplay input until started; still allow camera look to feel responsive
+        if (!state.started) {
+          // but don't spam server
+          return;
+        }
         const t = performance.now();
         const dt = Math.min(0.2, (t - lastSend) / 1000);
         if (t - lastSend > 50) {
@@ -541,6 +624,7 @@
             move: state.move,
             look: state.look,
             shoot: !!state.shoot,
+            jump: !!state.jump,
           }));
         }
       }

@@ -29,6 +29,17 @@ const WORLD = {
     { x: 10, y: 1.8, z: -10 },
     { x: 0, y: 1.8, z: 12 },
   ],
+  // Must roughly match client scene blocks for collision.
+  obstacles: [
+    { x: 0, y: 1.5, z: 0, w: 3, h: 3, d: 3 },
+    { x: -8, y: 1, z: 6, w: 4, h: 2, d: 6 },
+    { x: 10, y: 1.5, z: -6, w: 6, h: 3, d: 3 },
+  ],
+};
+
+const GAME = {
+  started: false,
+  hostId: null,
 };
 
 let nextId = 1;
@@ -48,11 +59,13 @@ function makePlayer(name) {
     x: sp.x,
     y: sp.y,
     z: sp.z,
+    vy: 0,
     yaw: 0,
     pitch: 0,
     hp: 100,
     score: 0,
     lastShotAt: 0,
+    respawnAt: 0,
     color: `hsl(${hue} 80% 60%)`,
   };
 }
@@ -60,6 +73,7 @@ function makePlayer(name) {
 function serializeState() {
   return {
     ts: nowMs(),
+    game: { started: GAME.started, hostId: GAME.hostId },
     players: Array.from(players.values()).map(p => ({
       id: p.id,
       name: p.name,
@@ -70,6 +84,7 @@ function serializeState() {
       pitch: p.pitch,
       hp: p.hp,
       score: p.score,
+      respawnInMs: p.hp > 0 ? 0 : Math.max(0, p.respawnAt - nowMs()),
       color: p.color,
     })),
   };
@@ -85,7 +100,9 @@ function broadcast(obj) {
 function respawn(p) {
   const sp = WORLD.spawnPoints[Math.floor(Math.random() * WORLD.spawnPoints.length)];
   p.x = sp.x; p.y = sp.y; p.z = sp.z;
+  p.vy = 0;
   p.hp = 100;
+  p.respawnAt = 0;
 }
 
 function rayHit(shooter, maxDist = 30) {
@@ -127,6 +144,9 @@ wss.on('connection', (ws) => {
       const p = makePlayer(msg.name);
       clients.set(ws, p.id);
       players.set(p.id, p);
+
+      if (!GAME.hostId) GAME.hostId = p.id;
+
       ws.send(JSON.stringify({ t: 'welcome', id: p.id, state: serializeState(), world: WORLD }));
       broadcast({ t: 'state', state: serializeState() });
       return;
@@ -137,7 +157,21 @@ wss.on('connection', (ws) => {
     const p = players.get(id);
     if (!p) return;
 
+    if (msg.t === 'start') {
+      if (id === GAME.hostId) {
+        GAME.started = true;
+        broadcast({ t: 'state', state: serializeState() });
+      }
+      return;
+    }
+
     if (msg.t === 'input') {
+      // Ignore gameplay until host starts.
+      if (!GAME.started) return;
+
+      // Dead players can't move/shoot.
+      if (p.hp <= 0) return;
+
       const dt = clamp(Number(msg.dt || 0.05), 0, 0.2);
       const mv = msg.move || { x: 0, z: 0 };
       const speed = 8; // units/sec
@@ -155,15 +189,45 @@ wss.on('connection', (ws) => {
       const mx = clamp(Number(mv.x || 0), -1, 1);
       const mz = clamp(Number(mv.z || 0), -1, 1);
 
-      p.x += (rightX * mx + fwdX * mz) * speed * dt;
-      p.z += (rightZ * mx + fwdZ * mz) * speed * dt;
+      // collision (simple capsule in XZ)
+      const radius = 0.7;
+      const nextX = p.x + (rightX * mx + fwdX * mz) * speed * dt;
+      const nextZ = p.z + (rightZ * mx + fwdZ * mz) * speed * dt;
 
-      p.x = clamp(p.x, WORLD.bounds.minX, WORLD.bounds.maxX);
-      p.z = clamp(p.z, WORLD.bounds.minZ, WORLD.bounds.maxZ);
+      function collides(x, z) {
+        for (const o of WORLD.obstacles) {
+          const minX = o.x - o.w/2 - radius;
+          const maxX = o.x + o.w/2 + radius;
+          const minZ = o.z - o.d/2 - radius;
+          const maxZ = o.z + o.d/2 + radius;
+          if (x >= minX && x <= maxX && z >= minZ && z <= maxZ) return true;
+        }
+        return false;
+      }
 
+      // try x, then z (axis-separable)
+      let xTry = clamp(nextX, WORLD.bounds.minX, WORLD.bounds.maxX);
+      let zTry = clamp(nextZ, WORLD.bounds.minZ, WORLD.bounds.maxZ);
+
+      if (!collides(xTry, p.z)) p.x = xTry;
+      if (!collides(p.x, zTry)) p.z = zTry;
+
+      // look
       p.yaw = yaw;
       p.pitch = clamp(Number(msg.look?.pitch ?? p.pitch), -1.2, 1.2);
 
+      // jump/gravity
+      const groundY = 1.8;
+      const gravity = -18;
+      const jumpV = 7.5;
+      const wantJump = !!msg.jump;
+      const onGround = p.y <= groundY + 1e-3;
+      if (wantJump && onGround) p.vy = jumpV;
+      p.vy += gravity * dt;
+      p.y += p.vy * dt;
+      if (p.y < groundY) { p.y = groundY; p.vy = 0; }
+
+      // shoot
       if (msg.shoot) {
         const t = nowMs();
         if (t - p.lastShotAt > 250) {
@@ -171,15 +235,15 @@ wss.on('connection', (ws) => {
           const hit = rayHit(p);
           const target = hit.target;
 
-          if (target) {
+          if (target && target.hp > 0) {
             target.hp -= 25;
             if (target.hp <= 0) {
+              target.hp = 0;
+              target.respawnAt = nowMs() + 2000;
               p.score += 1;
-              respawn(target);
             }
           }
 
-          // Broadcast a lightweight visual event so clients can render a tracer.
           broadcast({
             t: 'shot',
             from: p.id,
@@ -189,7 +253,7 @@ wss.on('connection', (ws) => {
             ex: hit.endX,
             ey: p.y,
             ez: hit.endZ,
-            hit: target ? target.id : null,
+            hit: target && target.hp > 0 ? target.id : (target ? target.id : null),
           });
         }
       }
@@ -207,6 +271,11 @@ wss.on('connection', (ws) => {
 });
 
 setInterval(() => {
+  // Handle respawns
+  const t = nowMs();
+  for (const p of players.values()) {
+    if (p.hp <= 0 && p.respawnAt && t >= p.respawnAt) respawn(p);
+  }
   broadcast({ t: 'state', state: serializeState() });
 }, Math.round(1000 / TICK_HZ));
 
