@@ -1161,15 +1161,31 @@
 
     function renderShot(s) {
       const color = s.hit ? new BABYLON.Color3(1.0, 0.35, 0.35) : new BABYLON.Color3(1.0, 0.9, 0.45);
-      const sy = (s.sy || 1.8) - 0.2;
+      // Start tracer from gun muzzle (approx) instead of player center.
+      // For first-person (you), use camera forward; for others, use yaw.
+      const gunStart = (() => {
+        const baseY = (s.sy || 1.8) - 0.15;
+        if (s.from === myId && camera) {
+          const fwd = camera.getDirection(BABYLON.Axis.Z);
+          return new BABYLON.Vector3(
+            camera.position.x + fwd.x * 0.65,
+            camera.position.y - 0.25,
+            camera.position.z + fwd.z * 0.65
+          );
+        }
+        const yaw = (typeof s.yaw === 'number') ? s.yaw : 0;
+        const dirX = Math.sin(yaw);
+        const dirZ = Math.cos(yaw);
+        return new BABYLON.Vector3((s.sx || 0) + dirX * 0.6, baseY, (s.sz || 0) + dirZ * 0.6);
+      })();
 
       const segments = [];
       if (Array.isArray(s.traces) && s.traces.length) {
         for (const tr of s.traces) {
-          segments.push([new BABYLON.Vector3(s.sx, sy, s.sz), new BABYLON.Vector3(tr.ex, sy, tr.ez)]);
+          segments.push([gunStart, new BABYLON.Vector3(tr.ex, (s.sy || 1.8) - 0.2, tr.ez)]);
         }
       } else {
-        segments.push([new BABYLON.Vector3(s.sx, sy, s.sz), new BABYLON.Vector3(s.ex, sy, s.ez)]);
+        segments.push([gunStart, new BABYLON.Vector3(s.ex, (s.sy || 1.8) - 0.2, s.ez)]);
       }
 
       for (const pts of segments) {
