@@ -1162,10 +1162,53 @@
         });
       }
 
+      function fart() {
+        // A silly "pbbbt" using filtered noise + a low wobble tone.
+        play((c) => {
+          const t0 = c.currentTime + 0.001;
+
+          const src = c.createBufferSource();
+          src.buffer = noiseBuffer(c, 0.28);
+
+          const lp = c.createBiquadFilter();
+          lp.type = 'lowpass';
+          lp.frequency.setValueAtTime(420, t0);
+          lp.frequency.exponentialRampToValueAtTime(220, t0 + 0.25);
+
+          const wob = c.createOscillator();
+          wob.type = 'sine';
+          wob.frequency.setValueAtTime(70, t0);
+          wob.frequency.exponentialRampToValueAtTime(45, t0 + 0.22);
+
+          const wg = c.createGain();
+          wg.gain.setValueAtTime(0.0001, t0);
+          wg.gain.exponentialRampToValueAtTime(0.10, t0 + 0.01);
+          wg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28);
+
+          const g = c.createGain();
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.06, t0 + 0.12);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28);
+
+          src.connect(lp).connect(g).connect(c.destination);
+          wob.connect(wg).connect(c.destination);
+
+          src.start(t0);
+          src.stop(t0 + 0.28);
+          wob.start(t0);
+          wob.stop(t0 + 0.26);
+        });
+      }
+
       return {
-        shoot: (weapon) => gunshot(weapon),
+        shoot: (weapon) => {
+          if (String(weapon) === 'fart') return fart();
+          return gunshot(weapon);
+        },
         hit: () => tick(760, 60, 0.02),
         kill: () => tick(320, 120, 0.02),
+        fart,
       };
     })();
 
