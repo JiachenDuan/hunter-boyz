@@ -2151,12 +2151,13 @@ function showKill(text) {
       } catch {}
     }
 
-function spawnDent(pos, size, kind) {
+function spawnDent(pos, normal, size, kind) {
       try {
         if (!scene || !pos) return;
         // Keep dents slightly above surface to reduce z-fighting.
         const p = pos.clone();
-        p.y += 0.01;
+        const n = (normal && normal.length && normal.length() > 0.1) ? normal.normalize() : new BABYLON.Vector3(0,1,0);
+        p.addInPlace(n.scale(0.012));
 
         const dent = BABYLON.MeshBuilder.CreateCylinder(`dent_${Date.now()}`, {
           height: 0.01,
@@ -2165,8 +2166,29 @@ function spawnDent(pos, size, kind) {
         }, scene);
         dent.isPickable = false;
         dent.position.copyFrom(p);
-        // Billboard so it reads on mobile on any surface (wall/floor/ceiling).
-        dent.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+
+        // Align cylinder Y axis to normal
+        try {
+          const a = new BABYLON.Vector3(0, 1, 0);
+          const b = n;
+          const dot = BABYLON.Vector3.Dot(a, b);
+          if (dot < -0.999999) {
+            dent.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1,0,0), Math.PI);
+          } else if (dot > 0.999999) {
+            dent.rotationQuaternion = BABYLON.Quaternion.Identity();
+          } else {
+            const axis = BABYLON.Vector3.Cross(a, b);
+            const s = Math.sqrt((1 + dot) * 2);
+            const invs = 1 / s;
+            dent.rotationQuaternion = new BABYLON.Quaternion(axis.x * invs, axis.y * invs, axis.z * invs, s * 0.5);
+          }
+          // Random spin around normal so it doesn't look stamped
+          const spin = BABYLON.Quaternion.RotationAxis(b, Math.random() * Math.PI * 2);
+          dent.rotationQuaternion = spin.multiply(dent.rotationQuaternion);
+        } catch {}
+
+        // Orient dent to the surface normal (true 3D mark, not floating).
+        dent.billboardMode = BABYLON.Mesh.BILLBOARDMODE_NONE;
         dent.rotation.y = Math.random() * Math.PI * 2;
 
         const mat = new BABYLON.StandardMaterial(`dentm_${Date.now()}`, scene);
@@ -2190,7 +2212,8 @@ function spawnDent(pos, size, kind) {
           craterRing = BABYLON.MeshBuilder.CreateTorus(`dent_ring_${Date.now()}`, { diameter: size * 1.35, thickness: Math.max(0.06, size * 0.10), tessellation: 28 }, scene);
           craterRing.isPickable = false;
           craterRing.position.copyFrom(p);
-          craterRing.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+          craterRing.billboardMode = BABYLON.Mesh.BILLBOARDMODE_NONE;
+          try { craterRing.rotationQuaternion = dent.rotationQuaternion ? dent.rotationQuaternion.clone() : null; } catch {}
           rmat = new BABYLON.StandardMaterial(`dent_ringm_${Date.now()}`, scene);
           rmat.diffuseColor = new BABYLON.Color3(0.12, 0.08, 0.04);
           rmat.emissiveColor = new BABYLON.Color3(0.06, 0.03, 0.01);
@@ -2251,9 +2274,13 @@ function spawnDent(pos, size, kind) {
             if (mesh.name && (mesh.name.startsWith('p_') || mesh.name.includes('nameplate') || mesh.name.includes('shot'))) return false;
             return true;
           });
-          if (hit && hit.hit && hit.pickedPoint) return hit.pickedPoint;
+          if (hit && hit.hit && hit.pickedPoint) {
+            let n = null;
+            try { n = hit.getNormal(true); } catch {}
+            return { p: hit.pickedPoint, n };
+          }
         } catch {}
-        return to;
+        return { p: to, n: null };
       }
 
       // Tracers (skip for rocket; rocket has a projectile)
@@ -2274,15 +2301,15 @@ function spawnDent(pos, size, kind) {
           if (Array.isArray(s.traces) && s.traces.length) {
             for (const tr of s.traces) {
               const raw = new BABYLON.Vector3(tr.ex, (s.ey || (s.sy || 1.8) - 0.2), tr.ez);
-              const pp = pickImpact(gunStart, raw);
-              spawnDent(pp, dentSize, wpn);
-              if (wpn !== 'rocket') spawnSparks(pp, wpn === 'shotgun' ? 0.8 : 1.0);
+              const hit = pickImpact(gunStart, raw);
+              spawnDent(hit.p, hit.n, dentSize, wpn);
+              if (wpn !== 'rocket') spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
             }
           } else {
             const raw = new BABYLON.Vector3(s.ex, (s.ey || (s.sy || 1.8) - 0.2), s.ez);
-            const pp = pickImpact(gunStart, raw);
-            spawnDent(pp, dentSize, wpn);
-            if (wpn !== 'rocket') spawnSparks(pp, wpn === 'shotgun' ? 0.8 : 1.0);
+            const hit = pickImpact(gunStart, raw);
+            spawnDent(hit.p, hit.n, dentSize, wpn);
+            if (wpn !== 'rocket') spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
           }
         } catch {}
       }
