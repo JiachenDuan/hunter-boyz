@@ -246,14 +246,55 @@
       for (const p of s.players) {
         let mesh = players.get(p.id);
         if (!mesh) {
-          mesh = BABYLON.MeshBuilder.CreateBox(`p_${p.id}`, { size: 1.2 }, scene);
-          mesh.position.y = 1.0;
+          // Player model (simple low-poly humanoid)
+          const root = new BABYLON.TransformNode(`p_${p.id}_root`, scene);
+
           const mat = new BABYLON.StandardMaterial(`m_${p.id}`, scene);
           mat.diffuseColor = BABYLON.Color3.FromHexString(rgbToHex(cssToRgb(p.color)));
-          mat.emissiveColor = mat.diffuseColor.scale(0.25);
-          mesh.material = mat;
-          mesh.metadata = { target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z), targetYaw: p.yaw };
-          players.set(p.id, mesh);
+          mat.emissiveColor = mat.diffuseColor.scale(0.15);
+          mat.specularColor = new BABYLON.Color3(0,0,0);
+
+          const body = BABYLON.MeshBuilder.CreateCapsule(`p_${p.id}_body`, { radius: 0.35, height: 1.2, subdivisions: 6 }, scene);
+          body.parent = root;
+          body.position.y = 0.65;
+          body.material = mat;
+
+          const head = BABYLON.MeshBuilder.CreateSphere(`p_${p.id}_head`, { diameter: 0.55, segments: 8 }, scene);
+          head.parent = root;
+          head.position.y = 1.55;
+          head.material = mat;
+
+          const armMat = new BABYLON.StandardMaterial(`ma_${p.id}`, scene);
+          armMat.diffuseColor = mat.diffuseColor.scale(0.95);
+          armMat.emissiveColor = mat.emissiveColor.scale(0.7);
+          armMat.specularColor = new BABYLON.Color3(0,0,0);
+
+          const lArm = BABYLON.MeshBuilder.CreateBox(`p_${p.id}_larm`, { width: 0.18, height: 0.5, depth: 0.18 }, scene);
+          lArm.parent = root;
+          lArm.position.set(-0.42, 1.05, 0.0);
+          lArm.rotation.z = 0.15;
+          lArm.material = armMat;
+
+          const rArm = BABYLON.MeshBuilder.CreateBox(`p_${p.id}_rarm`, { width: 0.18, height: 0.5, depth: 0.18 }, scene);
+          rArm.parent = root;
+          rArm.position.set(0.42, 1.05, 0.0);
+          rArm.rotation.z = -0.15;
+          rArm.material = armMat;
+
+          // A tiny gun block on right arm so others see a weapon
+          const gunMat = new BABYLON.StandardMaterial(`mg_${p.id}`, scene);
+          gunMat.diffuseColor = new BABYLON.Color3(0.08, 0.09, 0.11);
+          gunMat.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.01);
+          gunMat.specularColor = new BABYLON.Color3(0,0,0);
+
+          const gun = BABYLON.MeshBuilder.CreateBox(`p_${p.id}_gun`, { width: 0.12, height: 0.10, depth: 0.30 }, scene);
+          gun.parent = root;
+          gun.position.set(0.32, 1.05, 0.38);
+          gun.material = gunMat;
+
+          root.metadata = { target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z), targetYaw: p.yaw };
+          players.set(p.id, root);
+          mesh = root;
         }
 
         // Hide your own body in first-person (otherwise you see yourself when turning)
