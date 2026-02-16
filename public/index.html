@@ -1267,7 +1267,8 @@
       function applyDelta(dx, dy) {
         // Slow down turning a bit (was too twitchy on iPhone).
         state.look.yaw += dx * 0.003 * sens;
-        state.look.pitch += dy * 0.0022 * sens;
+        // Up/down look ~25% slower
+        state.look.pitch += dy * 0.00165 * sens;
         // Limit looking up/down so you don't get lost on mobile.
         // (radians) ~ -35° down to +20° up
         const MIN_PITCH = -0.55;
