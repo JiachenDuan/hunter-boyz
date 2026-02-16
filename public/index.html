@@ -155,6 +155,7 @@
       joined: false,
       started: false,
       isHost: false,
+      settingsOpen: true,
     };
 
     const players = new Map(); // id -> mesh
@@ -217,6 +218,7 @@
       if (state.joined && !state.started) {
         lobby.style.display = 'flex';
         // show settings before game starts
+        state.settingsOpen = true;
         settingsPanel.style.display = 'block';
         lobbyPlayers.innerHTML = s.players.map(p => {
           const tag = p.id === s.game?.hostId ? ' <span style="opacity:.75">(host)</span>' : '';
@@ -229,8 +231,8 @@
         waitMsg.textContent = state.isHost ? 'Tap Start when ready.' : 'Waiting for host to start…';
       } else {
         lobby.style.display = 'none';
-        // hide settings while playing to avoid blocking vision
-        if (state.started) settingsPanel.style.display = 'none';
+        // hide settings while playing unless user explicitly opened it
+        if (state.started && !state.settingsOpen) settingsPanel.style.display = 'none';
       }
 
       // respawn UI + HP bar
@@ -621,8 +623,9 @@
     }
 
     const blockMat = new BABYLON.StandardMaterial('bm', scene);
-    blockMat.diffuseColor = new BABYLON.Color3(0.25,0.30,0.55);
-    blockMat.emissiveColor = blockMat.diffuseColor.scale(0.08);
+    // Wall/obstacle color different from floor
+    blockMat.diffuseColor = new BABYLON.Color3(0.95, 0.70, 0.22);
+    blockMat.emissiveColor = new BABYLON.Color3(0.08, 0.05, 0.01);
 
     function addBlock(x,y,z,w=2,h=2,d=2) {
       const b = BABYLON.MeshBuilder.CreateBox('b', { width:w, height:h, depth:d }, scene);
@@ -1132,8 +1135,8 @@
 
     function toggleSettings(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
-      const on = settingsPanel.style.display !== 'none';
-      settingsPanel.style.display = on ? 'none' : 'block';
+      state.settingsOpen = !state.settingsOpen;
+      settingsPanel.style.display = state.settingsOpen ? 'block' : 'none';
     }
     settingsBtn.addEventListener('click', toggleSettings);
     settingsBtn.addEventListener('pointerdown', toggleSettings, { passive:false });
