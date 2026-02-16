@@ -14,7 +14,15 @@ app.use((req, res, next) => {
   res.setHeader('Surrogate-Control', 'no-store');
   next();
 });
+// Also version static assets so clients *must* fetch the latest.
+app.use((req, res, next) => {
+  if (req.url.startsWith('/index.html?v=')) req.url = '/index.html';
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Redirect root to a cache-busting URL so iOS doesn't reuse a stale HTML.
+app.get('/', (req, res) => res.redirect(302, `/index.html?v=${Date.now()}`));
 
 // Debug endpoints (localhost only) to support automated screenshots.
 function isLocalReq(req) {
