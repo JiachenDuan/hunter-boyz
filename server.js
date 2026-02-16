@@ -183,10 +183,11 @@ function respawn(p) {
   p.reloadUntil = 0;
 }
 
-function rayHit(shooter, maxDist = 30) {
+function rayHit(shooter, maxDist = 30, yawOverride = null) {
   // Simple hitscan in XZ plane + pitch ignored for MVP.
-  const dirX = Math.sin(shooter.yaw);
-  const dirZ = Math.cos(shooter.yaw);
+  const yaw = (typeof yawOverride === 'number') ? yawOverride : shooter.yaw;
+  const dirX = Math.sin(yaw);
+  const dirZ = Math.cos(yaw);
 
   let best = null;
   for (const p of players.values()) {
@@ -211,6 +212,21 @@ function rayHit(shooter, maxDist = 30) {
   }
   if (!best) return { target: null, endX: shooter.x + dirX * maxDist, endZ: shooter.z + dirZ * maxDist };
   return { target: best.target, endX: shooter.x + dirX * best.proj, endZ: shooter.z + dirZ * best.proj };
+}
+
+function doDamage({ shooter, target, amount }) {
+  const t = nowMs();
+  if (!target || target.hp <= 0) return { hitId: null, hitHp: null, killed: false };
+  if (t < (target.invulnUntil || 0)) return { hitId: null, hitHp: null, killed: false };
+  target.hp -= amount;
+  if (target.hp <= 0) {
+    target.hp = 0;
+    target.respawnAt = t + 2000;
+    shooter.score += 1;
+    broadcast({ t: 'kill', killer: shooter.id, killerName: shooter.name, victim: target.id, victimName: target.name });
+    return { hitId: target.id, hitHp: target.hp, killed: true };
+  }
+  return { hitId: target.id, hitHp: target.hp, killed: false };
 }
 
 wss.on('connection', (ws) => {
@@ -349,7 +365,9 @@ wss.on('connection', (ws) => {
       // shoot
       if (msg.shoot) {
         const t = nowMs();
-        const fireCdMs = 250;
+        const weapon = msg.weapon === 'shotgun' ? 'shotgun' : 'rifle';
+        const fireCdMs = weapon === 'shotgun' ? 650 : 250;
+
         if (t - p.lastShotAt > fireCdMs) {
           // can't shoot while reloading
           if (t < p.reloadUntil) return;
@@ -363,40 +381,54 @@ wss.on('connection', (ws) => {
           p.lastShotAt = t;
           p.ammo -= 1;
 
-          const hit = rayHit(p);
-          const target = hit.target;
-
           let hitId = null;
           let hitHp = null;
 
-          if (target && target.hp > 0) {
-            // spawn protection
-            if (t >= (target.invulnUntil || 0)) {
-              target.hp -= 25;
-              if (target.hp <= 0) {
-                target.hp = 0;
-                target.respawnAt = nowMs() + 2000;
-                // note: invuln is set on respawn
-                p.score += 1;
-                broadcast({ t: 'kill', killer: p.id, killerName: p.name, victim: target.id, victimName: target.name });
-              }
-              hitId = target.id;
-              hitHp = target.hp;
-            }
-          }
+          if (weapon === 'rifle') {
+            const hit = rayHit(p);
+            const dmg = doDamage({ shooter: p, target: hit.target, amount: 25 });
+            hitId = dmg.hitId;
+            hitHp = dmg.hitHp;
 
-          broadcast({
-            t: 'shot',
-            from: p.id,
-            sx: p.x,
-            sy: p.y,
-            sz: p.z,
-            ex: hit.endX,
-            ey: p.y,
-            ez: hit.endZ,
-            hit: hitId,
-            hitHp,
-          });
+            broadcast({
+              t: 'shot',
+              weapon,
+              from: p.id,
+              sx: p.x,
+              sy: p.y,
+              sz: p.z,
+              ex: hit.endX,
+              ey: p.y,
+              ez: hit.endZ,
+              hit: hitId,
+              hitHp,
+            });
+          } else {
+            // Shotgun: multiple pellets with small yaw spread.
+            const pellets = 6;
+            const spread = 0.14; // radians
+            const dmgPerPellet = 10;
+            const traces = [];
+            for (let i = 0; i < pellets; i++) {
+              const off = (Math.random() * 2 - 1) * spread;
+              const hit = rayHit(p, 22, p.yaw + off);
+              traces.push({ ex: hit.endX, ez: hit.endZ, hit: hit.target ? hit.target.id : null });
+              const dmg = doDamage({ shooter: p, target: hit.target, amount: dmgPerPellet });
+              if (dmg.hitId) { hitId = dmg.hitId; hitHp = dmg.hitHp; }
+            }
+            // broadcast a single event with multiple tracer segments
+            broadcast({
+              t: 'shot',
+              weapon,
+              from: p.id,
+              sx: p.x,
+              sy: p.y,
+              sz: p.z,
+              traces,
+              hit: hitId,
+              hitHp,
+            });
+          }
         }
       }
 

@@ -53,6 +53,17 @@
         <label style="font-size:12px; opacity:.8;">Auto-fire</label>
         <input id="autofire" type="checkbox" />
       </div>
+      <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+        <label style="font-size:12px; opacity:.8;">Weapon</label>
+        <select id="weapon" class="pill" style="cursor:pointer; padding:8px 10px;">
+          <option value="rifle">Rifle</option>
+          <option value="shotgun">Shotgun</option>
+        </select>
+      </div>
+      <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+        <label style="font-size:12px; opacity:.8;">Aim assist</label>
+        <input id="aimAssist" type="checkbox" checked />
+      </div>
       <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
         <button id="snapBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Send snapshot</button>
         <button id="copyLinkBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Copy link</button>
@@ -163,6 +174,7 @@
     }
 
     function applyState(s) {
+      lastServerState = s;
       // game flags
       state.started = !!s.game?.started;
       state.isHost = (s.game?.hostId && myId) ? (s.game.hostId === myId) : false;
@@ -474,20 +486,27 @@
     }
 
     function renderShot(s) {
-      // Tracer line (very short-lived)
       const color = s.hit ? new BABYLON.Color3(1.0, 0.35, 0.35) : new BABYLON.Color3(1.0, 0.9, 0.45);
-      const pts = [
-        new BABYLON.Vector3(s.sx, (s.sy || 1.8) - 0.2, s.sz),
-        new BABYLON.Vector3(s.ex, (s.ey || 1.8) - 0.2, s.ez),
-      ];
-      const lines = BABYLON.MeshBuilder.CreateLines('shot', { points: pts }, scene);
-      lines.color = color;
-      lines.alpha = 0.9;
-      setTimeout(() => lines.dispose(), 260);
+      const sy = (s.sy || 1.8) - 0.2;
+
+      const segments = [];
+      if (Array.isArray(s.traces) && s.traces.length) {
+        for (const tr of s.traces) {
+          segments.push([new BABYLON.Vector3(s.sx, sy, s.sz), new BABYLON.Vector3(tr.ex, sy, tr.ez)]);
+        }
+      } else {
+        segments.push([new BABYLON.Vector3(s.sx, sy, s.sz), new BABYLON.Vector3(s.ex, sy, s.ez)]);
+      }
+
+      for (const pts of segments) {
+        const lines = BABYLON.MeshBuilder.CreateLines('shot', { points: pts }, scene);
+        lines.color = color;
+        lines.alpha = 0.9;
+        setTimeout(() => lines.dispose(), 260);
+      }
 
       if (s.from === myId) {
         flashReticle(s.hit ? 'hit' : 'shoot');
-        // simple muzzle flash in first-person
         if (fpRig?.muzzleFlash) {
           fpRig.muzzleFlash.isVisible = true;
           setTimeout(() => { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; }, 60);
@@ -502,12 +521,10 @@
         }
       }
 
-      // If YOU got hit, flash your screen reticle too.
       if (s.hit && s.hit === myId && s.from !== myId) {
         flashReticle('hit');
       }
 
-      // Flash the hit player's mesh red briefly so it's obvious.
       if (s.hit && players.has(s.hit)) {
         const m = players.get(s.hit);
         const mat = m?.material;
@@ -795,6 +812,9 @@
     copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
     copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
 
+    // Keep last server state for aim assist
+    let lastServerState = null;
+
     // Network tick
     let seq = 0;
     let lastSend = performance.now();
@@ -824,6 +844,34 @@
         const dt = Math.min(0.2, (t - lastSend) / 1000);
         if (t - lastSend > 50) {
           lastSend = t;
+          // Aim assist: nudge yaw slightly toward closest enemy within a small cone.
+          const aimAssistOn = document.getElementById('aimAssist')?.checked;
+          if (aimAssistOn && state.shoot && lastServerState && myId) {
+            const me = lastServerState.players.find(p => p.id === myId);
+            if (me) {
+              let best = null;
+              for (const p of lastServerState.players) {
+                if (p.id === myId) continue;
+                if (p.hp <= 0) continue;
+                const dx = p.x - me.x;
+                const dz = p.z - me.z;
+                const dist = Math.hypot(dx, dz);
+                if (dist < 0.1 || dist > 18) continue;
+                const targetYaw = Math.atan2(dx, dz);
+                let dy = targetYaw - state.look.yaw;
+                while (dy > Math.PI) dy -= Math.PI*2;
+                while (dy < -Math.PI) dy += Math.PI*2;
+                const cone = 0.25;
+                if (Math.abs(dy) > cone) continue;
+                const score = Math.abs(dy) + dist * 0.02;
+                if (!best || score < best.score) best = { dy, score };
+              }
+              if (best) state.look.yaw += best.dy * 0.18; // small nudge
+            }
+          }
+
+          const weapon = document.getElementById('weapon')?.value === 'shotgun' ? 'shotgun' : 'rifle';
+
           socket.send(JSON.stringify({
             t:'input',
             seq: seq++,
@@ -833,6 +881,7 @@
             shoot: !!state.shoot,
             jump: !!state.jump,
             sprint: !!state.sprint,
+            weapon,
           }));
         }
       }
