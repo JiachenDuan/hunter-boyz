@@ -1453,14 +1453,16 @@
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
       const fire = (e) => {
         prevent(e);
-        try { el.classList.add('btnPressed'); setTimeout(() => el.classList.remove('btnPressed'), 90); } catch {}
         // Only toggle scope when sniper is selected
         const w = document.getElementById('weapon')?.value;
         if (w !== 'sniper') return;
         state.scope = !state.scope;
+        try { el.classList.toggle('btnPressed', state.scope); } catch {}
+        try { log(`Scope: ${state.scope ? 'ON' : 'OFF'}`); } catch {}
       };
       el.addEventListener('click', fire);
-      el.addEventListener('pointerdown', fire, { passive:false });
+      // Use pointerup to avoid iOS pointerdown being swallowed.
+      el.addEventListener('pointerup', fire, { passive:false });
       el.addEventListener('touchend', fire, { passive:false });
     })();
 
@@ -1495,6 +1497,8 @@
     // Swap first-person gun model when weapon changes
     weaponEl?.addEventListener('change', () => {
       try { ensureFirstPersonRig()?.setGun?.(weaponEl.value); } catch {}
+      // If switching away from sniper, force scope off.
+      if (weaponEl.value !== 'sniper') state.scope = false;
     });
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
