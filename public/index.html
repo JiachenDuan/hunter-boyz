@@ -84,7 +84,7 @@
     #score { position:absolute; top:10px; right:10px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:none; font-size:12px; min-width: 140px; }
 
     /* Extra buttons (sprint/reload) sit above jump/shoot */
-    #btnReload { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 11; }
+    #btnReload, #btnScope { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 11; }
     #btnReload { right: calc(var(--pad) + var(--btn) + var(--btn-gap)); background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.35); }
 
     /* Responsive tuning */
@@ -181,7 +181,7 @@
     <div id="lookPad" class="stick"></div>
     <div id="btnJump"><div class="btnLabel"><div class="btnIcon">⇧</div></div></div>
     <!-- sprint removed -->
-    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: var(--pad); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35); opacity: 0.85;"><div class="btnLabel"><div class="btnIcon">⌖</div></div></div>
+    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: var(--pad); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35); opacity: 0.85; z-index: 12;"><div class="btnLabel"><div class="btnIcon">⌖</div></div></div>
     <div id="btnReload"><div class="btnLabel"><div class="btnIcon">↻</div></div></div>
     <div id="btnShoot"><div class="btnLabel"><div class="btnIcon">◎</div></div></div>
   </div>
