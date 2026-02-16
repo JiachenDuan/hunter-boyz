@@ -1625,17 +1625,34 @@
         whoosh: () => (function(){
           play((c)=>{
             const t0=c.currentTime+0.001;
+
+            // Low thump
             const o=c.createOscillator();
             const g=c.createGain();
-            o.type='triangle';
-            o.frequency.setValueAtTime(180,t0);
-            o.frequency.exponentialRampToValueAtTime(520,t0+0.12);
+            o.type='sine';
+            o.frequency.setValueAtTime(130,t0);
+            o.frequency.exponentialRampToValueAtTime(65,t0+0.20);
             g.gain.setValueAtTime(0.0001,t0);
-            g.gain.exponentialRampToValueAtTime(0.10,t0+0.01);
-            g.gain.exponentialRampToValueAtTime(0.0001,t0+0.18);
+            g.gain.exponentialRampToValueAtTime(0.18,t0+0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001,t0+0.26);
             o.connect(g).connect(c.destination);
             o.start(t0);
-            o.stop(t0+0.20);
+            o.stop(t0+0.28);
+
+            // Air whoosh (noise)
+            const n=c.createBufferSource();
+            n.buffer=noiseBuffer(c,0.14);
+            const bp=c.createBiquadFilter();
+            bp.type='bandpass';
+            bp.frequency.setValueAtTime(650,t0);
+            bp.Q.setValueAtTime(0.9,t0);
+            const ng=c.createGain();
+            ng.gain.setValueAtTime(0.0001,t0);
+            ng.gain.exponentialRampToValueAtTime(0.14,t0+0.01);
+            ng.gain.exponentialRampToValueAtTime(0.0001,t0+0.16);
+            n.connect(bp).connect(ng).connect(c.destination);
+            n.start(t0);
+            n.stop(t0+0.16);
           });
         })(),
         boom: () => (function(){
@@ -1710,7 +1727,7 @@
         document.body.appendChild(d);
         const trailPuffs = [];
         const start = performance.now();
-        const dur = 260;
+        const dur = 340;
         let lastPuffAt = 0;
         const tick = () => {
           const t = performance.now()-start;
@@ -1833,7 +1850,7 @@ function showWinner(msg) {
         // Rocket body
         const rocket = BABYLON.MeshBuilder.CreateCylinder(
           `rk_${Date.now()}`,
-          { height: 0.34, diameterTop: 0.05, diameterBottom: 0.08, tessellation: 10 },
+          { height: 0.44, diameterTop: 0.07, diameterBottom: 0.11, tessellation: 10 },
           scene
         );
         rocket.isPickable = false;
@@ -1846,7 +1863,22 @@ function showWinner(msg) {
 
         // Cylinder points up (Y). Rotate so Y aligns to forward.
         const up = new BABYLON.Vector3(0, 1, 0);
-        rocket.rotationQuaternion = BABYLON.Quaternion.RotationAlignToRef(up, fwd, new BABYLON.Quaternion());
+        // Robust orientation without relying on RotationAlignToRef (not present in all Babylon builds).
+        try {
+          const a = new BABYLON.Vector3(0, 1, 0);
+          const b = fwd;
+          const dot = BABYLON.Vector3.Dot(a, b);
+          if (dot < -0.999999) {
+            rocket.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1,0,0), Math.PI);
+          } else if (dot > 0.999999) {
+            rocket.rotationQuaternion = BABYLON.Quaternion.Identity();
+          } else {
+            const axis = BABYLON.Vector3.Cross(a, b);
+            const s = Math.sqrt((1 + dot) * 2);
+            const invs = 1 / s;
+            rocket.rotationQuaternion = new BABYLON.Quaternion(axis.x * invs, axis.y * invs, axis.z * invs, s * 0.5);
+          }
+        } catch {}
 
         // Flame
         const flame = BABYLON.MeshBuilder.CreateSphere(`rkf_${Date.now()}`, { diameter: 0.11, segments: 6 }, scene);
@@ -1860,7 +1892,7 @@ function showWinner(msg) {
 
         const trailPuffs = [];
         const start = performance.now();
-        const dur = 260;
+        const dur = 340;
         let lastPuffAt = 0;
         const tick = () => {
           const t = performance.now() - start;
@@ -1911,8 +1943,19 @@ function spawnExplosion(msg) {
         const x = +msg.x, y = +msg.y, z = +msg.z;
         const r = +msg.r || 6;
 
-        // Visual: expanding orange sphere + a few streak lines
+        // Visual: expanding fireball + flash + smoke
         const sphere = BABYLON.MeshBuilder.CreateSphere(`ex_${Date.now()}`, { diameter: 0.6, segments: 10 }, scene);
+
+        const flash = BABYLON.MeshBuilder.CreateSphere(`exFlash_${Date.now()}`, { diameter: 0.35, segments: 8 }, scene);
+        flash.position.set(x, y, z);
+        flash.isPickable = false;
+        const fmat = new BABYLON.StandardMaterial(`exFlashM_${Date.now()}`, scene);
+        fmat.diffuseColor = new BABYLON.Color3(1,1,1);
+        fmat.emissiveColor = new BABYLON.Color3(1,1,1);
+        fmat.alpha = 0.9;
+        fmat.disableLighting = true;
+        flash.material = fmat;
+
 
         const ring = BABYLON.MeshBuilder.CreateTorus(`exr_${Date.now()}`, { diameter: 0.8, thickness: 0.05, tessellation: 28 }, scene);
         ring.position.set(x, y + 0.05, z);
@@ -1974,6 +2017,7 @@ function spawnExplosion(msg) {
             sphere.scaling.setAll(scale);
             try { ring.scaling.setAll(1 + k * (r * 0.22)); rmat.alpha = 0.65 * (1 - k); } catch {}
             mat.alpha = 0.85 * (1 - k);
+            try { fmat.alpha = 0.9 * (1 - Math.min(1, k*3)); flash.scaling.setAll(1 + k*2.2); } catch {}
             for (const sp of smokePuffs) {
               try {
                 sp.puff.scaling.setAll(1 + k * 2.4);
@@ -1987,6 +2031,7 @@ function spawnExplosion(msg) {
           if (k < 1) requestAnimationFrame(tick);
           else {
             try { sphere.dispose(); } catch {}
+            try { flash.dispose(); } catch {}
             try { ring.dispose(); } catch {}
             for (const line of streaks) { try { line.dispose(); } catch {} }
             for (const sp of smokePuffs) { try { sp.puff.dispose(); } catch {} }
