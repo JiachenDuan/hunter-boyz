@@ -103,6 +103,7 @@
     <div id="hud">
       <div style="display:flex; align-items:center; gap:10px;">
         <div style="font-weight:800; letter-spacing:0.2px;">Hunter Boyz</div>
+        <div id="conn" style="margin-left:8px; font-size:12px; opacity:.75;">offline</div>
         <button id="settingsBtn" style="margin-left:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:800;">Settings</button>
       </div>
 
@@ -217,7 +218,12 @@
     let fpRig = null;
 
     function log(msg) {
-      document.getElementById('log').textContent = msg;
+      const el = document.getElementById('log');
+      if (el) el.textContent = msg;
+    }
+    function setConn(msg) {
+      const el = document.getElementById('conn');
+      if (el) el.textContent = msg;
     }
 
     function connectAndJoin() {
@@ -244,6 +250,7 @@
         if (reconnectTimer) return;
         reconnectAttempts = Math.min(reconnectAttempts + 1, 8);
         const delay = Math.min(500 * Math.pow(1.6, reconnectAttempts), 6000);
+        setConn(`reconnecting… #${reconnectAttempts}`);
         log(`Reconnecting… (${Math.round(delay)}ms)`);
         reconnectTimer = setTimeout(() => {
           reconnectTimer = null;
@@ -253,10 +260,12 @@
 
       function openSocket() {
         try { socket?.close(); } catch {}
+        setConn('connecting…');
         socket = new WebSocket(url);
 
         socket.addEventListener('open', () => {
           reconnectAttempts = 0;
+          setConn('connected');
           socket.send(JSON.stringify({ t:'join', name, clientId }));
           log('Connected.');
         });
@@ -279,6 +288,7 @@
 
         socket.addEventListener('close', () => {
           state.joined = false;
+          setConn('offline');
           try {
             joinBtn.disabled = false;
             nameInput.disabled = false;
@@ -296,23 +306,27 @@
 
       // Best-effort: when the tab is backgrounded/closed, close the socket so the server
       // removes the player immediately (prevents "ghost host" lingering).
-      const closeSock = () => {
-        intentionalClose = true;
-        try { socket?.close(); } catch {}
-      };
-      window.addEventListener('pagehide', closeSock, { passive: true });
-      window.addEventListener('beforeunload', closeSock, { passive: true });
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') {
-          closeSock();
-        } else {
-          // Coming back from background: reconnect.
-          if (!socket || socket.readyState > 1) {
-            intentionalClose = false;
-            try { openSocket(); } catch {}
+      // NOTE: register these listeners once.
+      if (!window.__hbConnListeners) {
+        window.__hbConnListeners = true;
+        const closeSock = () => {
+          intentionalClose = true;
+          try { socket?.close(); } catch {}
+        };
+        window.addEventListener('pagehide', closeSock, { passive: true });
+        window.addEventListener('beforeunload', closeSock, { passive: true });
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'hidden') {
+            closeSock();
+          } else {
+            // Coming back from background: reconnect.
+            if (!socket || socket.readyState > 1) {
+              intentionalClose = false;
+              try { openSocket(); } catch {}
+            }
           }
-        }
-      }, { passive: true });
+        }, { passive: true });
+      }
     }
 
     function applyState(s) {
