@@ -53,9 +53,10 @@
         <label style="font-size:12px; opacity:.8;">Auto-fire</label>
         <input id="autofire" type="checkbox" />
       </div>
-      <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+      <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
         <button id="snapBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Send snapshot</button>
-        <div style="font-size:12px; opacity:.75;">(saves an in-game screenshot)</div>
+        <button id="copyLinkBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Copy link</button>
+        <div style="font-size:12px; opacity:.75;">(snapshot saves on server)</div>
       </div>
       <div id="log">Tip: same Wi‑Fi, open this page on each iPhone.</div>
     </div>
@@ -693,6 +694,7 @@
     const nameInput = document.getElementById('name');
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
 
     function doJoin(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -720,6 +722,17 @@
       log('Snapshot sent (saving on server)…');
     }
 
+    async function doCopyLink(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      const link = location.href;
+      try {
+        await navigator.clipboard.writeText(link);
+        log('Link copied. Paste into the other phone.');
+      } catch {
+        log('Copy failed. Link: ' + link);
+      }
+    }
+
     // iOS Safari can be flaky with click depending on viewport/overlays; wire multiple events.
     joinBtn.addEventListener('click', doJoin);
     joinBtn.addEventListener('pointerdown', doJoin, { passive: false });
@@ -733,6 +746,10 @@
     snapBtn.addEventListener('pointerdown', doSnap, { passive: false });
     snapBtn.addEventListener('touchend', doSnap, { passive: false });
 
+    copyLinkBtn.addEventListener('click', doCopyLink);
+    copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
+    copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
+
     // Network tick
     let seq = 0;
     let lastSend = performance.now();
@@ -745,7 +762,11 @@
         mesh.position.x += (mesh.metadata.target.x - mesh.position.x) * lerp;
         mesh.position.y += (mesh.metadata.target.y - mesh.position.y) * lerp;
         mesh.position.z += (mesh.metadata.target.z - mesh.position.z) * lerp;
-        mesh.rotation.y += (mesh.metadata.targetYaw - mesh.rotation.y) * 0.25;
+        // shortest-angle yaw lerp (avoid spinning the long way around)
+        let dy = (mesh.metadata.targetYaw - mesh.rotation.y);
+        while (dy > Math.PI) dy -= Math.PI * 2;
+        while (dy < -Math.PI) dy += Math.PI * 2;
+        mesh.rotation.y += dy * 0.25;
       }
 
       scene.render();
