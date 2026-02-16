@@ -135,6 +135,9 @@ function makePlayer(name) {
     score: 0,
     lastShotAt: 0,
     respawnAt: 0,
+    invulnUntil: 0,
+    ammo: 12,
+    reloadUntil: 0,
     color: `hsl(${hue} 80% 60%)`,
   };
 }
@@ -153,6 +156,9 @@ function serializeState() {
       pitch: p.pitch,
       hp: p.hp,
       score: p.score,
+      ammo: p.ammo,
+      reloadInMs: Math.max(0, p.reloadUntil - nowMs()),
+      invulnInMs: Math.max(0, p.invulnUntil - nowMs()),
       respawnInMs: p.hp > 0 ? 0 : Math.max(0, p.respawnAt - nowMs()),
       color: p.color,
     })),
@@ -172,6 +178,9 @@ function respawn(p) {
   p.vy = 0;
   p.hp = 100;
   p.respawnAt = 0;
+  p.invulnUntil = nowMs() + 1000;
+  p.ammo = 12;
+  p.reloadUntil = 0;
 }
 
 function rayHit(shooter, maxDist = 30) {
@@ -234,6 +243,16 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.t === 'reload') {
+      if (!GAME.started) return;
+      if (p.hp <= 0) return;
+      const t = nowMs();
+      if (t < p.reloadUntil) return;
+      if (p.ammo >= 12) return;
+      p.reloadUntil = t + 900;
+      return;
+    }
+
     if (msg.t === 'snap') {
       // Client can send a canvas snapshot (data URL). We'll store it and (optionally) notify.
       try {
@@ -263,7 +282,9 @@ wss.on('connection', (ws) => {
 
       const dt = clamp(Number(msg.dt || 0.05), 0, 0.2);
       const mv = msg.move || { x: 0, z: 0 };
-      const speed = 8; // units/sec
+      const wantSprint = !!msg.sprint;
+      const baseSpeed = 8;
+      const speed = wantSprint ? 11.5 : baseSpeed; // units/sec
 
       // movement in camera yaw space
       const yaw = Number(msg.look?.yaw ?? p.yaw);
@@ -316,11 +337,32 @@ wss.on('connection', (ws) => {
       p.y += p.vy * dt;
       if (p.y < groundY) { p.y = groundY; p.vy = 0; }
 
+      // resolve reload completion
+      {
+        const t = nowMs();
+        if (p.reloadUntil && t >= p.reloadUntil) {
+          p.ammo = 12;
+          p.reloadUntil = 0;
+        }
+      }
+
       // shoot
       if (msg.shoot) {
         const t = nowMs();
-        if (t - p.lastShotAt > 250) {
+        const fireCdMs = 250;
+        if (t - p.lastShotAt > fireCdMs) {
+          // can't shoot while reloading
+          if (t < p.reloadUntil) return;
+
+          // auto-reload if empty
+          if (p.ammo <= 0) {
+            p.reloadUntil = t + 900;
+            return;
+          }
+
           p.lastShotAt = t;
+          p.ammo -= 1;
+
           const hit = rayHit(p);
           const target = hit.target;
 
@@ -328,14 +370,19 @@ wss.on('connection', (ws) => {
           let hitHp = null;
 
           if (target && target.hp > 0) {
-            target.hp -= 25;
-            if (target.hp <= 0) {
-              target.hp = 0;
-              target.respawnAt = nowMs() + 2000;
-              p.score += 1;
+            // spawn protection
+            if (t >= (target.invulnUntil || 0)) {
+              target.hp -= 25;
+              if (target.hp <= 0) {
+                target.hp = 0;
+                target.respawnAt = nowMs() + 2000;
+                // note: invuln is set on respawn
+                p.score += 1;
+                broadcast({ t: 'kill', killer: p.id, killerName: p.name, victim: target.id, victimName: target.name });
+              }
+              hitId = target.id;
+              hitHp = target.hp;
             }
-            hitId = target.id;
-            hitHp = target.hp;
           }
 
           broadcast({
@@ -380,10 +427,11 @@ wss.on('connection', (ws) => {
 });
 
 setInterval(() => {
-  // Handle respawns
+  // Handle respawns + reload completion
   const t = nowMs();
   for (const p of players.values()) {
     if (p.hp <= 0 && p.respawnAt && t >= p.respawnAt) respawn(p);
+    if (p.hp > 0 && p.reloadUntil && t >= p.reloadUntil) { p.ammo = 12; p.reloadUntil = 0; }
   }
   broadcast({ t: 'state', state: serializeState() });
 }, Math.round(1000 / TICK_HZ));

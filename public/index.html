@@ -83,6 +83,7 @@
           <div id="hpFill" style="height:100%; width:100%; background: rgba(80,255,140,0.85);"></div>
         </div>
         <div id="hpText" style="font-weight:900; font-size:12px; opacity:.9;">HP 100</div>
+        <div id="ammoText" style="font-weight:900; font-size:12px; opacity:.85;">Ammo 12</div>
       </div>
       <div id="hitToast" style="margin-top:10px; text-align:center; font-weight:900; font-size:18px; opacity:0; transition: opacity 120ms ease; color: rgba(255,240,120,0.95); text-shadow: 0 2px 10px rgba(0,0,0,0.6);">HIT!</div>
       <div id="hitDetail" style="margin-top:6px; text-align:center; font-weight:800; font-size:13px; opacity:0; transition: opacity 120ms ease; color: rgba(230,237,243,0.9);">—</div>
@@ -91,6 +92,8 @@
     <div id="moveStick" class="stick"><div id="moveNub" class="nub"></div></div>
     <div id="lookPad" class="stick"></div>
     <div id="btnJump"></div>
+    <div id="btnSprint" style="position:absolute; bottom: 124px; right: 318px; width: 86px; height: 86px; border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(140,140,255,0.16); border-color: rgba(140,140,255,0.55);"></div>
+    <div id="btnReload" style="position:absolute; bottom: 124px; right: 122px; width: 86px; height: 86px; border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.35);"></div>
     <div id="btnShoot"></div>
   </div>
 
@@ -109,6 +112,7 @@
       look: { yaw: 0, pitch: 0 },
       shoot: false,
       jump: false,
+      sprint: false,
       joined: false,
       started: false,
       isHost: false,
@@ -143,6 +147,9 @@
         }
         if (msg.t === 'shot') {
           renderShot(msg);
+        }
+        if (msg.t === 'kill') {
+          showKill(`${msg.killerName || msg.killer} eliminated ${msg.victimName || msg.victim}`);
         }
         if (msg.t === 'snapSaved') {
           log(`Snapshot saved: ${msg.file}`);
@@ -186,6 +193,18 @@
         const fill = document.getElementById('hpFill');
         fill.style.width = `${hp}%`;
         fill.style.background = hp > 60 ? 'rgba(80,255,140,0.85)' : (hp > 30 ? 'rgba(255,220,100,0.85)' : 'rgba(255,80,80,0.85)');
+
+        const ammo = (typeof meP.ammo === 'number') ? meP.ammo : 0;
+        const rel = (meP.reloadInMs || 0);
+        document.getElementById('ammoText').textContent = rel > 0 ? `Reloading…` : `Ammo ${ammo}`;
+
+        // show spawn protection by tinting HP bar
+        const inv = (meP.invulnInMs || 0);
+        if (inv > 0) {
+          fill.style.filter = 'saturate(0.5) brightness(1.2)';
+        } else {
+          fill.style.filter = 'none';
+        }
       }
 
       if (meP && meP.hp <= 0) {
@@ -430,8 +449,19 @@
       return {
         shoot: () => beep(520, 40, 0.02),
         hit: () => beep(760, 60, 0.03),
+        kill: () => beep(320, 120, 0.03),
       };
     })();
+
+    function showKill(text) {
+      // reuse hit toast area for now
+      const d = document.getElementById('hitDetail');
+      d.textContent = text;
+      d.style.opacity = '1';
+      clearTimeout(showKill._t);
+      showKill._t = setTimeout(() => { d.style.opacity = '0'; }, 1200);
+      SFX.kill();
+    }
 
     function showHitToast(detail) {
       const el = document.getElementById('hitToast');
@@ -688,6 +718,21 @@
       }
     });
     holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
+    holdButton(document.getElementById('btnSprint'), (v)=> state.sprint = v);
+
+    // Reload: tap
+    (() => {
+      const el = document.getElementById('btnReload');
+      const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+      const fire = (e) => {
+        prevent(e);
+        if (!socket || socket.readyState !== 1) return;
+        socket.send(JSON.stringify({ t:'reload' }));
+      };
+      el.addEventListener('click', fire);
+      el.addEventListener('pointerdown', fire, { passive:false });
+      el.addEventListener('touchend', fire, { passive:false });
+    })();
 
     // Join
     const joinBtn = document.getElementById('joinBtn');
@@ -787,6 +832,7 @@
             look: state.look,
             shoot: !!state.shoot,
             jump: !!state.jump,
+            sprint: !!state.sprint,
           }));
         }
       }
