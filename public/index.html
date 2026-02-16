@@ -168,8 +168,24 @@
         </div>
         <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
           <label style="font-size:12px; opacity:.8;">Look</label>
-          <input id="sens" type="range" min="0.6" max="3.0" step="0.1" value="2.2" style="width:140px;" />
+          <input id="sensTurn" type="range" min="0.6" max="3.0" step="0.1" value="2.2" style="width:140px;" />
         </div>
+
+        <div style=\"margin-top:10px;\">
+          <label style=\"opacity:.85; font-weight:800;\">Aim (vertical) sensitivity</label>
+          <input id=\"sensAim\" type=\"range\" min=\"0.8\" max=\"4.0\" step=\"0.1\" value=\"2.2\" style=\"width:100%;\">
+        </div>
+
+        <div style=\"margin-top:10px;\">
+          <label style=\"opacity:.85; font-weight:800;\">Move stick deadzone</label>
+          <input id=\"deadzone\" type=\"range\" min=\"0.05\" max=\"0.30\" step=\"0.01\" value=\"0.14\" style=\"width:100%;\">
+        </div>
+
+        <div style=\"margin-top:10px; display:flex; align-items:center; gap:10px;\">
+          <input id=\"autoRun\" type=\"checkbox\">
+          <label for=\"autoRun\" style=\"opacity:.9; font-weight:900;\">Auto-run</label>
+        </div>
+
         <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
           <label style="font-size:12px; opacity:.8;">Auto-fire</label>
           <input id="autofire" type="checkbox" />
@@ -233,7 +249,9 @@
       <div id="hitDetail" style="margin-top:6px; text-align:center; font-weight:800; font-size:13px; opacity:0; transition: opacity 120ms ease; color: rgba(230,237,243,0.9);">—</div>
     </div>
 
-    <!-- Winner banner -->
+        <div id="dmgVignette" style="position:fixed; inset:0; pointer-events:none; z-index:94; opacity:0; transition: opacity 120ms ease; background: radial-gradient(circle at center, rgba(0,0,0,0) 55%, rgba(255,0,0,0.22) 100%);"></div>
+
+<!-- Winner banner -->
     <div id="winnerBanner" style="position:fixed; top:18%; left:50%; transform:translateX(-50%); padding:12px 14px; border-radius:14px; background: rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18); color:#e6edf3; font-weight:900; font-size:18px; letter-spacing:0.4px; opacity:0; transition: opacity 120ms ease; pointer-events:none; z-index:95;">WINNER: —    <!-- Round countdown timer (top center) -->
     <div id="roundTimer" style="position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:96; pointer-events:none; font-weight:900; font-size:14px; letter-spacing:0.6px; color: rgba(230,237,243,0.95); background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:999px; padding:8px 12px; min-width: 86px; text-align:center;">02:00</div>
 
@@ -260,6 +278,17 @@
     <div id="btnWeaponPick"><div class="btnLabel"><div class="btnIcon">🔫</div></div></div>
 
     <!-- Weapon picker modal -->
+
+    <div id="scoreModal" style="position:fixed; inset:0; display:none; align-items:flex-end; justify-content:center; z-index:120; background: rgba(0,0,0,0.35);">
+      <div id="scoreModalInner" style="width:min(520px, 96vw); max-height: 60vh; overflow:auto; background: rgba(0,0,0,0.78); border:1px solid rgba(255,255,255,0.16); border-radius:18px; padding:14px; margin: 0 0 14px 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="font-weight:900; letter-spacing:0.4px;">SCOREBOARD</div>
+          <button id="btnScoreClose" style="border-radius:12px; border:1px solid rgba(255,255,255,0.22); background: rgba(0,0,0,0.18); color:#e6edf3; padding:8px 10px; font-weight:900;">Close</button>
+        </div>
+        <div id="scoreboardBody" style="font-size:13px; line-height:1.45;"></div>
+      </div>
+    </div>
+
     <div id="weaponModal">
       <div id="weaponModalInner">
         <div class="wm-header">
@@ -409,6 +438,7 @@
           if (msg.t === 'fartPuff') spawnFartPuff(msg.to);
           if (msg.t === 'fartDot') spawnFartDot(msg.to, msg.dmg || 5);
           if (msg.t === 'explosion') spawnExplosion(msg);
+          if (msg.t === 'dmg') onDamageMsg(msg);
           if (msg.t === 'snapSaved') {
             const url = `${location.origin}/snaps/${msg.file}`;
             log(`Snapshot saved: ${url}`);
@@ -463,8 +493,14 @@
       lastServerState = s;
       // game flags
       state.started = !!s.game?.started;
-      if (state.started && !roundEndsAtMs) roundEndsAtMs = Date.now() + 120000;
-      if (!state.started) roundEndsAtMs = 0;
+      // Server-driven round timer (fallback to local if missing)
+      if (state.started) {
+        const se = (typeof s.game?.roundEndsAt === 'number') ? s.game.roundEndsAt : 0;
+        if (se) roundEndsAtMs = se;
+        else if (!roundEndsAtMs) roundEndsAtMs = Date.now() + 120000;
+      } else {
+        roundEndsAtMs = 0;
+      }
       state.isHost = (s.game?.hostId && myId) ? (s.game.hostId === myId) : false;
       // Build id removed (no longer displayed).
 
@@ -541,7 +577,7 @@
       scoreDiv.innerHTML = '<div style="font-weight:800; margin-bottom:6px;">Score</div>' +
         s.players.sort((a,b)=>b.score-a.score).map(p => {
           const me = p.id === myId ? ' (you)' : '';
-          return `<div><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${p.name}${me}: ${p.score} <span style="opacity:.7">HP ${p.hp}</span></div>`;
+          return `<div><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${p.name}${me}: ${p.score} <span style="opacity:.8">D ${p.deaths||0}</span> <span style="opacity:.65">HP ${p.hp}</span></div>`;
         }).join('');
 
       const liveIds = new Set(s.players.map(p => p.id));
@@ -1572,7 +1608,44 @@
     })();
 
     
-    function showWinner(msg) {
+    
+    function onDamageMsg(msg) {
+      try {
+        if (String(msg.to) !== String(state.me)) return;
+        const el = document.getElementById('dmgVignette');
+        if (el) {
+          el.style.opacity = '1';
+          clearTimeout(onDamageMsg._t);
+          onDamageMsg._t = setTimeout(()=>{ try { el.style.opacity = '0'; } catch {} }, 160);
+        }
+        const d = document.createElement('div');
+        d.textContent = `-${Math.round(msg.amount||0)}`;
+        d.style.position = 'fixed';
+        d.style.left = '50%';
+        d.style.top = '46%';
+        d.style.transform = 'translate(-50%, -50%)';
+        d.style.fontWeight = '900';
+        d.style.fontSize = '16px';
+        d.style.color = 'rgba(255,90,90,0.95)';
+        d.style.textShadow = '0 2px 10px rgba(0,0,0,0.55)';
+        d.style.zIndex = '97';
+        d.style.pointerEvents = 'none';
+        document.body.appendChild(d);
+        const start = performance.now();
+        const dur = 260;
+        const tick = () => {
+          const t = performance.now()-start;
+          const k = Math.min(1, t/dur);
+          d.style.opacity = String(1-k);
+          d.style.transform = `translate(-50%, ${-50 - k*18}%)`;
+          if (k<1) requestAnimationFrame(tick);
+          else { try { d.remove(); } catch {} }
+        };
+        requestAnimationFrame(tick);
+      } catch {}
+    }
+
+function showWinner(msg) {
       try {
         const el = document.getElementById('winnerBanner');
         if (!el) return;
@@ -1676,6 +1749,11 @@
 
         // Visual: expanding orange sphere + a few streak lines
         const sphere = BABYLON.MeshBuilder.CreateSphere(`ex_${Date.now()}`, { diameter: 0.6, segments: 10 }, scene);
+
+        const ring = BABYLON.MeshBuilder.CreateTorus(`exr_${Date.now()}`, { diameter: 0.8, thickness: 0.05, tessellation: 28 }, scene);
+        ring.position.set(x, y + 0.05, z);
+        ring.rotation.x = Math.PI / 2;
+        ring.isPickable = false;
         sphere.position.set(x, y, z);
         sphere.isPickable = false;
 
@@ -1687,6 +1765,13 @@
         sphere.material = mat;
 
         const streaks = [];
+
+        const rmat = new BABYLON.StandardMaterial(`exrm_${Date.now()}`, scene);
+        rmat.diffuseColor = new BABYLON.Color3(1.0, 0.70, 0.20);
+        rmat.emissiveColor = new BABYLON.Color3(1.0, 0.45, 0.08);
+        rmat.alpha = 0.65;
+        rmat.disableLighting = true;
+        ring.material = rmat;
         for (let i = 0; i < 6; i++) {
           const ang = Math.random() * Math.PI * 2;
           const len = 0.7 + Math.random() * 1.0;
@@ -1709,6 +1794,7 @@
           try {
             const scale = 1 + k * (r * 0.35);
             sphere.scaling.setAll(scale);
+            try { ring.scaling.setAll(1 + k * (r * 0.22)); rmat.alpha = 0.65 * (1 - k); } catch {}
             mat.alpha = 0.85 * (1 - k);
           } catch {}
           for (const line of streaks) {
@@ -1717,6 +1803,7 @@
           if (k < 1) requestAnimationFrame(tick);
           else {
             try { sphere.dispose(); } catch {}
+            try { ring.dispose(); } catch {}
             for (const line of streaks) { try { line.dispose(); } catch {} }
           }
         };
@@ -1724,6 +1811,23 @@
       } catch {}
     }
 
+
+
+    function updateScoreboardModal(s) {
+      try {
+        const body = document.getElementById('scoreboardBody');
+        if (!body) return;
+        const meId = String(state.me || '');
+        const rows = (s.players || []).slice().sort((a,b)=> (b.score||0)-(a.score||0));
+        body.innerHTML = rows.map((p,i) => {
+          const isMe = String(p.id) === meId;
+          return `<div style="display:flex; justify-content:space-between; padding:8px 6px; border-radius:12px; ${isMe?'background: rgba(124,92,255,0.16); border:1px solid rgba(124,92,255,0.28);':'border:1px solid rgba(255,255,255,0.10);'} margin-bottom:8px;">
+            <div><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span><span style="font-weight:900;">${i+1}. ${p.name}${isMe?' (you)':''}</span></div>
+            <div style="font-weight:900;">K ${p.score||0} <span style="opacity:.8;">D ${p.deaths||0}</span></div>
+          </div>`;
+        }).join('') || '<div style="opacity:.8;">No players.</div>';
+      } catch {}
+    }
 
 function showKill(text) {
       // reuse hit toast area for now
@@ -1878,9 +1982,14 @@ function showKill(text) {
       document.getElementById('moveNub'),
       (nx, ny) => {
         // stick up = forward; add small deadzone so it's easier to control
-        const dz = 0.14;
+        const dz = parseFloat(document.getElementById('deadzone')?.value || "0.14");
         const mag = Math.hypot(nx, ny);
-        if (mag < dz) { state.move.x = 0; state.move.z = 0; return; }
+        if (mag < dz) {
+          const autoRun = !!document.getElementById('autoRun')?.checked;
+          state.move.x = 0;
+          state.move.z = autoRun ? 1 : 0;
+          return;
+        }
         const scale = (mag - dz) / (1 - dz);
         const ux = nx / mag;
         const uy = ny / mag;
@@ -1910,9 +2019,9 @@ function showKill(text) {
 
       function applyDelta(dx, dy) {
         // Slow down turning a bit (was too twitchy on iPhone).
-        state.look.yaw += dx * 0.0024 * sens;
+        state.look.yaw += dx * 0.0024 * sensTurn;
         // Up/down look ~25% slower
-        state.look.pitch += dy * 0.00165 * sens;
+        state.look.pitch += dy * 0.00165 * sensAim;
         // Limit looking up/down so you don't get lost on mobile.
         // (radians) ~ -35° down to +20° up
         const MIN_PITCH = -0.55;
@@ -2175,6 +2284,9 @@ function showKill(text) {
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const btnScoreboard = document.getElementById('btnScoreboard');
+    const scoreModal = document.getElementById('scoreModal');
+    const btnScoreClose = document.getElementById('btnScoreClose');
     const soundBtn = document.getElementById('soundBtn');
     const resetLobbyBtn = document.getElementById('resetLobbyBtn');
     const settingsBtn = document.getElementById('settingsBtn');
@@ -2287,6 +2399,16 @@ function showKill(text) {
     copyLinkBtn.addEventListener('click', doCopyLink);
     copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
     copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
+
+    function doScoreboard(e){ if (e) { e.preventDefault(); e.stopPropagation(); } try { scoreModal.style.display = 'flex'; } catch {} }
+    function doScoreClose(e){ if (e) { e.preventDefault(); e.stopPropagation(); } try { scoreModal.style.display = 'none'; } catch {} }
+    btnScoreboard.addEventListener('click', doScoreboard);
+    btnScoreboard.addEventListener('pointerdown', doScoreboard, { passive:false });
+    btnScoreboard.addEventListener('touchend', doScoreboard, { passive:false });
+    btnScoreClose.addEventListener('click', doScoreClose);
+    btnScoreClose.addEventListener('pointerdown', doScoreClose, { passive:false });
+    btnScoreClose.addEventListener('touchend', doScoreClose, { passive:false });
+    scoreModal.addEventListener('click', (e)=>{ if (e.target===scoreModal) doScoreClose(e); });
 
     function doEnableSound(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }

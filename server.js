@@ -126,11 +126,14 @@ const WORLD = {
 
 const BUILD = String(Date.now());
 const WIN_SCORE = 10;
+const ROUND_MS = 120_000;
+const AFK_MS = 90_000;
 
 const GAME = {
   started: false,
   hostId: null,
   roundOverAt: 0,
+  roundEndsAt: 0,
 };
 
 let nextId = 1;
@@ -159,7 +162,9 @@ function makePlayer(name) {
     pitch: 0,
     hp: 100,
     score: 0,
+    deaths: 0,
     lastShotAt: 0,
+    lastInputAt: nowMs(),
     respawnAt: 0,
     invulnUntil: 0,
     ammo: 12,
@@ -176,7 +181,7 @@ function serializeState() {
   return {
     ts: nowMs(),
     build: BUILD,
-    game: { started: GAME.started, hostId: GAME.hostId },
+    game: { started: GAME.started, hostId: GAME.hostId, roundEndsAt: GAME.roundEndsAt },
     players: Array.from(players.values()).map(p => ({
       id: p.id,
       name: p.name,
@@ -187,6 +192,7 @@ function serializeState() {
       pitch: p.pitch,
       hp: p.hp,
       score: p.score,
+      deaths: p.deaths,
       ammo: p.ammo,
       reloadInMs: Math.max(0, p.reloadUntil - nowMs()),
       invulnInMs: Math.max(0, p.invulnUntil - nowMs()),
@@ -339,10 +345,12 @@ function doDamage({ shooter, target, amount }) {
         try {
           for (const p of players.values()) {
             p.score = 0;
+            p.deaths = 0;
             respawn(p);
           }
           GAME.started = false;
           GAME.roundOverAt = 0;
+          GAME.roundEndsAt = 0;
           broadcast({ t: 'state', state: serializeState() });
         } catch {}
       }, 5000);
@@ -783,6 +791,39 @@ setInterval(() => {
 // Drop stale/ghost connections (mobile Safari tabs can linger).
 setInterval(() => {
   const t = nowMs();
+
+  // Time-based round end
+  if (GAME.started && GAME.roundEndsAt && t >= GAME.roundEndsAt && !GAME.roundOverAt) {
+    let best = null;
+    for (const p of players.values()) {
+      if (!best || (p.score||0) > (best.score||0)) best = p;
+    }
+    GAME.roundOverAt = t;
+    broadcast({ t: 'winner', winnerId: best ? best.id : null, winnerName: best ? best.name : '—' });
+
+    setTimeout(() => {
+      try {
+        for (const p of players.values()) {
+          p.score = 0;
+          p.deaths = 0;
+          respawn(p);
+        }
+        GAME.started = false;
+        GAME.roundOverAt = 0;
+        GAME.roundEndsAt = 0;
+        broadcast({ t: 'state', state: serializeState() });
+      } catch {}
+    }, 5000);
+  }
+
+  // AFK cleanup
+  for (const p of listPlayers()) {
+    const li = p.lastInputAt || 0;
+    if (li && (t - li) > AFK_MS) {
+      players.delete(p.id);
+      broadcast({ t: 'leave', id: p.id });
+    }
+  }
   for (const ws of wss.clients) {
     // If we haven't heard anything in a while, kill it.
     // Kill truly dead/ghost tabs quickly (mobile browsers sometimes leave sockets half-open).
