@@ -232,6 +232,9 @@
       <div id="hitDetail" style="margin-top:6px; text-align:center; font-weight:800; font-size:13px; opacity:0; transition: opacity 120ms ease; color: rgba(230,237,243,0.9);">—</div>
     </div>
 
+    <!-- Winner banner -->
+    <div id="winnerBanner" style="position:fixed; top:18%; left:50%; transform:translateX(-50%); padding:12px 14px; border-radius:14px; background: rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18); color:#e6edf3; font-weight:900; font-size:18px; letter-spacing:0.4px; opacity:0; transition: opacity 120ms ease; pointer-events:none; z-index:95;">WINNER: —</div>
+
     <!-- Hitmarker overlay (centered X) -->
     <div id="hitmarker" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; opacity:0; z-index:90;">
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -372,6 +375,9 @@
           if (msg.t === 'state') applyState(msg.state);
           if (msg.t === 'shot') renderShot(msg);
           if (msg.t === 'kill') showKill(`${msg.killerName || msg.killer} eliminated ${msg.victimName || msg.victim}`);
+          if (msg.t === 'winner') showWinner(msg);
+          if (msg.t === 'fartPuff') spawnFartPuff(msg.to);
+          if (msg.t === 'fartDot') spawnFartDot(msg.to, msg.dmg || 5);
           if (msg.t === 'snapSaved') {
             const url = `${location.origin}/snaps/${msg.file}`;
             log(`Snapshot saved: ${url}`);
@@ -1127,12 +1133,38 @@
       try {
         const weaponSel = document.getElementById('weapon')?.value;
         const scoped = (weaponSel === 'sniper') && (state.scope === true);
-        camera.fov = scoped ? SCOPE_FOV : DEFAULT_FOV;
+        const targetFov = scoped ? SCOPE_FOV : DEFAULT_FOV;
+
+        // Smooth FOV transition (~150ms)
+        const SCOPE_LERP_MS = 150;
+        if (typeof updateScopeUI._fovTarget !== 'number' || updateScopeUI._fovTarget !== targetFov) {
+          updateScopeUI._fovFrom = camera.fov;
+          updateScopeUI._fovTarget = targetFov;
+          updateScopeUI._fovStart = performance.now();
+        }
+        const t = performance.now();
+        const k = Math.min(1, (t - (updateScopeUI._fovStart || t)) / SCOPE_LERP_MS);
+        camera.fov = (updateScopeUI._fovFrom ?? camera.fov) + (updateScopeUI._fovTarget - (updateScopeUI._fovFrom ?? camera.fov)) * k;
+        if (k < 1) requestAnimationFrame(updateScopeUI);
+
         scope.isVisible = scoped;
         scopeLines.isVisible = scoped;
         ret.isVisible = !scoped;
+
         const scopeBtn = document.getElementById('btnScope');
-        if (scopeBtn) scopeBtn.style.display = (weaponSel === 'sniper') ? 'flex' : 'none';
+        if (scopeBtn) {
+          scopeBtn.style.display = (weaponSel === 'sniper') ? 'flex' : 'none';
+          // scoped glow
+          if (scoped) {
+            scopeBtn.style.boxShadow = '0 0 0 2px rgba(124,92,255,0.35), 0 0 22px rgba(124,92,255,0.35)';
+            scopeBtn.style.borderColor = 'rgba(124,92,255,0.65)';
+            scopeBtn.style.background = 'rgba(124,92,255,0.18)';
+          } else {
+            scopeBtn.style.boxShadow = 'none';
+            scopeBtn.style.borderColor = 'rgba(255,255,255,0.35)';
+            scopeBtn.style.background = 'rgba(0,0,0,0.18)';
+          }
+        }
       } catch {}
     }
 
@@ -1435,7 +1467,105 @@
       };
     })();
 
-    function showKill(text) {
+    
+    function showWinner(msg) {
+      try {
+        const el = document.getElementById('winnerBanner');
+        if (!el) return;
+        el.textContent = `WINNER: ${msg.winnerName || msg.winnerId}`;
+        el.style.opacity = '1';
+        clearTimeout(showWinner._t);
+        showWinner._t = setTimeout(() => { try { el.style.opacity = '0'; } catch {} }, 3000);
+      } catch {}
+    }
+
+    function spawnFartPuff(targetId) {
+      try {
+        const root = players.get(String(targetId));
+        if (!root) return;
+        const base = root.position.clone();
+        base.y += 2.05;
+        const meshes = [];
+        for (let i = 0; i < 5; i++) {
+          const m = BABYLON.MeshBuilder.CreateSphere(`puff_${targetId}_${Date.now()}_${i}`, { diameter: 0.18, segments: 6 }, scene);
+          m.position = base.add(new BABYLON.Vector3((Math.random()-0.5)*0.28, (Math.random()-0.5)*0.18, (Math.random()-0.5)*0.28));
+          m.isPickable = false;
+          const mat = new BABYLON.StandardMaterial(`puffm_${targetId}_${Date.now()}_${i}`, scene);
+          mat.diffuseColor = new BABYLON.Color3(0.25, 0.95, 0.35);
+          mat.emissiveColor = new BABYLON.Color3(0.05, 0.18, 0.07);
+          mat.alpha = 0.75;
+          mat.disableLighting = true;
+          m.material = mat;
+          meshes.push({ m, mat });
+        }
+        const start = performance.now();
+        const dur = 330;
+        const tick = () => {
+          const t = performance.now() - start;
+          const k = Math.min(1, t / dur);
+          for (const it of meshes) {
+            try {
+              it.m.scaling.setAll(1 + k * 1.6);
+              it.mat.alpha = 0.75 * (1 - k);
+            } catch {}
+          }
+          if (k < 1) requestAnimationFrame(tick);
+          else {
+            for (const it of meshes) { try { it.m.dispose(); } catch {} }
+          }
+        };
+        requestAnimationFrame(tick);
+      } catch {}
+    }
+
+    function spawnFartDot(targetId, dmg) {
+      try {
+        const root = players.get(String(targetId));
+        if (!root) return;
+        const plane = BABYLON.MeshBuilder.CreatePlane(`dot_${targetId}_${Date.now()}`, { width: 0.55, height: 0.25 }, scene);
+        plane.position = root.position.clone();
+        plane.position.y += 2.35;
+        plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+        plane.isPickable = false;
+
+        const dt = new BABYLON.DynamicTexture(`dot_dt_${targetId}_${Date.now()}`, { width: 256, height: 128 }, scene, true);
+        dt.hasAlpha = true;
+        const ctx = dt.getContext();
+        ctx.clearRect(0, 0, 256, 128);
+        ctx.fillStyle = 'rgba(0,0,0,0.0)';
+        ctx.fillRect(0, 0, 256, 128);
+        ctx.font = '900 72px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillStyle = 'rgba(120,255,160,0.95)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`-${dmg || 5}`, 128, 70);
+        dt.update();
+
+        const mat = new BABYLON.StandardMaterial(`dot_mat_${targetId}_${Date.now()}`, scene);
+        mat.diffuseTexture = dt;
+        mat.opacityTexture = dt;
+        mat.emissiveColor = new BABYLON.Color3(1,1,1);
+        mat.disableLighting = true;
+        plane.material = mat;
+
+        const start = performance.now();
+        const dur = 300;
+        const y0 = plane.position.y;
+        const tick = () => {
+          const t = performance.now() - start;
+          const k = Math.min(1, t / dur);
+          try {
+            plane.position.y = y0 + k * 0.35;
+            mat.alpha = 1 - k;
+          } catch {}
+          if (k < 1) requestAnimationFrame(tick);
+          else { try { plane.dispose(); dt.dispose(); } catch {} }
+        };
+        requestAnimationFrame(tick);
+      } catch {}
+    }
+
+function showKill(text) {
       // reuse hit toast area for now
       const d = document.getElementById('hitDetail');
       d.textContent = text;
@@ -1784,9 +1914,6 @@
         lastScopeAt = now;
         fire(e);
       };
-
-      // Debug taps (keep minimal)
-      el.addEventListener('pointerdown', (e) => { try { prevent(e); log('Scope tap…'); } catch {} }, { passive:false });
 
       // Prefer pointerup/touchend; skip click to avoid double-trigger.
       el.addEventListener('pointerup', fireOnce, { passive:false });

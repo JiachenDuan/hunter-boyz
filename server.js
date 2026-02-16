@@ -125,10 +125,12 @@ const WORLD = {
 };
 
 const BUILD = String(Date.now());
+const WIN_SCORE = 10;
 
 const GAME = {
   started: false,
   hostId: null,
+  roundOverAt: 0,
 };
 
 let nextId = 1;
@@ -212,6 +214,9 @@ function respawn(p) {
   p.invulnUntil = nowMs() + 1000;
   p.ammo = 12;
   p.reloadUntil = 0;
+  p.fartUntil = 0;
+  p.fartTickAt = 0;
+  p.disconnectedAt = 0;
 }
 
 function rayHit(shooter, maxDist = 30, yawOverride = null) {
@@ -323,6 +328,26 @@ function doDamage({ shooter, target, amount }) {
     target.respawnAt = t + 2000;
     shooter.score += 1;
     broadcast({ t: 'kill', killer: shooter.id, killerName: shooter.name, victim: target.id, victimName: target.name });
+
+    // First-to-10 wins the round
+    if (!GAME.roundOverAt && shooter.score >= WIN_SCORE) {
+      GAME.roundOverAt = t;
+      broadcast({ t: 'winner', winnerId: shooter.id, winnerName: shooter.name });
+
+      // After 5s, reset scores + respawn all + return to lobby
+      setTimeout(() => {
+        try {
+          for (const p of players.values()) {
+            p.score = 0;
+            respawn(p);
+          }
+          GAME.started = false;
+          GAME.roundOverAt = 0;
+          broadcast({ t: 'state', state: serializeState() });
+        } catch {}
+      }, 5000);
+    }
+
     return { hitId: target.id, hitHp: target.hp, killed: true };
   }
   return { hitId: target.id, hitHp: target.hp, killed: false };
@@ -629,6 +654,7 @@ wss.on('connection', (ws) => {
               hit.target.fartUntil = tNow + 5000;
               hit.target.fartTickAt = tNow; // tick immediately on next loop
               broadcast({ t: 'fart', from: p.id, to: hit.target.id, until: hit.target.fartUntil });
+              broadcast({ t: 'fartPuff', to: hit.target.id });
             }
 
             broadcast({
@@ -717,6 +743,7 @@ setInterval(() => {
         p.fartTickAt = t;
         // Apply damage without awarding a kill to a specific shooter.
         p.hp = Math.max(0, p.hp - 5);
+        broadcast({ t: 'fartDot', to: p.id, dmg: 5 });
         if (p.hp <= 0) {
           p.hp = 0;
           p.respawnAt = t + 2000;
