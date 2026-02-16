@@ -255,6 +255,9 @@ wss.on('connection', (ws) => {
           const hit = rayHit(p);
           const target = hit.target;
 
+          let hitId = null;
+          let hitHp = null;
+
           if (target && target.hp > 0) {
             target.hp -= 25;
             if (target.hp <= 0) {
@@ -262,6 +265,8 @@ wss.on('connection', (ws) => {
               target.respawnAt = nowMs() + 2000;
               p.score += 1;
             }
+            hitId = target.id;
+            hitHp = target.hp;
           }
 
           broadcast({
@@ -273,7 +278,8 @@ wss.on('connection', (ws) => {
             ex: hit.endX,
             ey: p.y,
             ez: hit.endZ,
-            hit: target && target.hp > 0 ? target.id : (target ? target.id : null),
+            hit: hitId,
+            hitHp,
           });
         }
       }

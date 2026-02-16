@@ -84,6 +84,7 @@
         <div id="hpText" style="font-weight:900; font-size:12px; opacity:.9;">HP 100</div>
       </div>
       <div id="hitToast" style="margin-top:10px; text-align:center; font-weight:900; font-size:18px; opacity:0; transition: opacity 120ms ease; color: rgba(255,240,120,0.95); text-shadow: 0 2px 10px rgba(0,0,0,0.6);">HIT!</div>
+      <div id="hitDetail" style="margin-top:6px; text-align:center; font-weight:800; font-size:13px; opacity:0; transition: opacity 120ms ease; color: rgba(230,237,243,0.9);">—</div>
     </div>
 
     <div id="moveStick" class="stick"><div id="moveNub" class="nub"></div></div>
@@ -431,11 +432,14 @@
       };
     })();
 
-    function showHitToast() {
+    function showHitToast(detail) {
       const el = document.getElementById('hitToast');
+      const d = document.getElementById('hitDetail');
       el.style.opacity = '1';
+      d.textContent = detail || '';
+      d.style.opacity = detail ? '1' : '0';
       clearTimeout(showHitToast._t);
-      showHitToast._t = setTimeout(() => { el.style.opacity = '0'; }, 180);
+      showHitToast._t = setTimeout(() => { el.style.opacity = '0'; d.style.opacity = '0'; }, 260);
     }
 
     function renderShot(s) {
@@ -458,7 +462,29 @@
           setTimeout(() => { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; }, 60);
         }
         SFX.shoot();
-        if (s.hit) { showHitToast(); SFX.hit(); }
+        if (s.hit) {
+          const target = s.hit;
+          const hp = (typeof s.hitHp === 'number') ? s.hitHp : null;
+          const detail = hp === null ? `Hit ${target}` : `Hit ${target} (HP ${hp})`;
+          showHitToast(detail);
+          SFX.hit();
+        }
+      }
+
+      // If YOU got hit, flash your screen reticle too.
+      if (s.hit && s.hit === myId && s.from !== myId) {
+        flashReticle('hit');
+      }
+
+      // Flash the hit player's mesh red briefly so it's obvious.
+      if (s.hit && players.has(s.hit)) {
+        const m = players.get(s.hit);
+        const mat = m?.material;
+        if (mat && mat.emissiveColor) {
+          const prev = mat.emissiveColor.clone();
+          mat.emissiveColor = new BABYLON.Color3(0.8, 0.1, 0.1);
+          setTimeout(() => { try { mat.emissiveColor = prev; } catch {} }, 120);
+        }
       }
     }
 
