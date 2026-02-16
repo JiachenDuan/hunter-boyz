@@ -48,13 +48,10 @@
 
     .btnLabel {
       display:flex;
-      flex-direction: column;
       align-items:center;
       justify-content:center;
-      gap: 2px;
       font-weight: 900;
       letter-spacing: 0.6px;
-      font-size: 11px;
       line-height: 1;
       color: rgba(230,237,243,0.92);
       text-shadow: 0 2px 10px rgba(0,0,0,0.65);
@@ -63,15 +60,11 @@
       pointer-events: none;
     }
     .btnIcon {
-      font-size: 18px;
+      font-size: 26px;
       line-height: 1;
       opacity: 0.95;
     }
-    .btnText {
-      font-size: 9px;
-      opacity: 0.80;
-      letter-spacing: 0.8px;
-    }
+    .btnText { display:none; }
 
     .btnPressed {
       transform: scale(0.94);
@@ -174,11 +167,11 @@
 
     <div id="moveStick" class="stick"><div id="moveNub" class="nub"></div></div>
     <div id="lookPad" class="stick"></div>
-    <div id="btnJump"><div class="btnLabel"><div class="btnIcon">⇧</div><div class="btnText">JUMP</div></div></div>
-    <div id="btnSprint"><div class="btnLabel"><div class="btnIcon">⚡</div><div class="btnText">RUN</div></div></div>
-    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: var(--pad); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35);"><div class="btnLabel"><div class="btnIcon">⌖</div><div class="btnText">SCOPE</div></div></div>
-    <div id="btnReload"><div class="btnLabel"><div class="btnIcon">↻</div><div class="btnText">RLD</div></div></div>
-    <div id="btnShoot"><div class="btnLabel"><div class="btnIcon">◎</div><div class="btnText">FIRE</div></div></div>
+    <div id="btnJump"><div class="btnLabel"><div class="btnIcon">⇧</div></div></div>
+    <div id="btnSprint"><div class="btnLabel"><div class="btnIcon">⚡</div></div></div>
+    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: var(--pad); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35);"><div class="btnLabel"><div class="btnIcon">⌖</div></div></div>
+    <div id="btnReload"><div class="btnLabel"><div class="btnIcon">↻</div></div></div>
+    <div id="btnShoot"><div class="btnLabel"><div class="btnIcon">◎</div></div></div>
   </div>
 
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
