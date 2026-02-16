@@ -434,7 +434,8 @@
             if (np?.plane) { try { np.plane.dispose(); } catch {} }
             if (np?.dt) { try { np.dt.dispose(); } catch {} }
             const fx = mesh?.metadata?.fartFx;
-            if (fx?.cloud) { try { fx.cloud.dispose(); } catch {} }
+            if (fx?.parts) { for (const m of fx.parts) { try { m.dispose(); } catch {} } }
+            if (fx?.poop) { try { fx.poop.dispose(); } catch {} }
           } catch {}
           mesh.dispose();
           players.delete(id);
@@ -528,18 +529,37 @@
           // Fart cloud FX (hidden by default)
           let fartFx = null;
           try {
-            const cloud = BABYLON.MeshBuilder.CreateSphere(`fart_${p.id}`, { diameter: 0.55, segments: 8 }, scene);
-            cloud.parent = root;
-            cloud.position.y = 2.05;
-            cloud.isPickable = false;
+            const poop = new BABYLON.TransformNode(`poop_${p.id}`, scene);
+            poop.parent = root;
+            poop.position.y = 2.05;
 
-            const cm = new BABYLON.StandardMaterial(`fart_m_${p.id}`, scene);
-            cm.diffuseColor = new BABYLON.Color3(0.55, 1.0, 0.55);
-            cm.emissiveColor = new BABYLON.Color3(0.10, 0.20, 0.10);
+            const cm = new BABYLON.StandardMaterial(`poop_m_${p.id}`, scene);
+            cm.diffuseColor = new BABYLON.Color3(0.45, 0.28, 0.12);
+            cm.emissiveColor = new BABYLON.Color3(0.05, 0.03, 0.01);
+            cm.specularColor = new BABYLON.Color3(0.10, 0.08, 0.06);
+            cm.specularPower = 16;
             cm.alpha = 0.0;
-            cloud.material = cm;
 
-            fartFx = { cloud, mat: cm, on: false };
+            // Simple "poop" shape: 3 stacked spheres
+            const s1 = BABYLON.MeshBuilder.CreateSphere(`poop1_${p.id}`, { diameter: 0.46, segments: 8 }, scene);
+            s1.parent = poop;
+            s1.position.y = 0.00;
+            s1.material = cm;
+            s1.isPickable = false;
+
+            const s2 = BABYLON.MeshBuilder.CreateSphere(`poop2_${p.id}`, { diameter: 0.34, segments: 8 }, scene);
+            s2.parent = poop;
+            s2.position.y = 0.20;
+            s2.material = cm;
+            s2.isPickable = false;
+
+            const s3 = BABYLON.MeshBuilder.CreateSphere(`poop3_${p.id}`, { diameter: 0.22, segments: 8 }, scene);
+            s3.parent = poop;
+            s3.position.y = 0.36;
+            s3.material = cm;
+            s3.isPickable = false;
+
+            fartFx = { poop, mat: cm, parts: [s1,s2,s3] };
           } catch {}
 
           root.metadata = { target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z), targetYaw: p.yaw, namePlate, fartFx };
@@ -571,10 +591,10 @@
             const active = (p.fartInMs || 0) > 0;
             if (fx?.mat) {
               if (active) {
-                fx.mat.alpha = 0.55;
-                // gentle pulse
-                const pulse = 0.45 + 0.10 * Math.sin(Date.now() / 120);
+                // gentle pulse + tiny wobble
+                const pulse = 0.55 + 0.10 * Math.sin(Date.now() / 120);
                 fx.mat.alpha = pulse;
+                if (fx.poop) fx.poop.rotation.y = Date.now() / 800;
               } else {
                 fx.mat.alpha = 0.0;
               }
