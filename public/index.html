@@ -298,9 +298,9 @@
           return `<div style="margin:6px 0;"><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${label}${tag}</div>`;
         }).join('');
         startBtn.style.display = 'inline-block';
-        startBtn.disabled = !state.isHost;
-        startBtn.style.opacity = state.isHost ? '1' : '0.5';
-        waitMsg.textContent = state.isHost ? 'Tap Start when ready.' : 'Waiting for host to start…';
+        startBtn.disabled = false;
+        startBtn.style.opacity = '1';
+        waitMsg.textContent = 'Anyone can tap Start.';
       } else {
         lobby.style.display = 'none';
         // hide settings while playing unless user explicitly opened it

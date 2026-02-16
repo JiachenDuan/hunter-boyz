@@ -364,10 +364,9 @@ wss.on('connection', (ws) => {
     if (!p) return;
 
     if (msg.t === 'start') {
-      if (id === GAME.hostId) {
-        GAME.started = true;
-        broadcast({ t: 'state', state: serializeState() });
-      }
+      // Anyone can start (LAN party vibe).
+      GAME.started = true;
+      broadcast({ t: 'state', state: serializeState() });
       return;
     }
 
