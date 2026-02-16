@@ -493,6 +493,9 @@
       lastServerState = s;
       // game flags
       state.started = !!s.game?.started;
+      const _prevStarted = !!applyState._started;
+      applyState._started = state.started;
+      if (_prevStarted && !state.started) { try { clearDents(); } catch {} }
       // Server-driven round timer (fallback to local if missing)
       if (state.started) {
         const se = (typeof s.game?.roundEndsAt === 'number') ? s.game.roundEndsAt : 0;
@@ -2095,7 +2098,7 @@ function showKill(text) {
 
     // Bullet dents (lightweight decals)
     const _dents = [];
-    const MAX_DENTS = 90;
+    const MAX_DENTS = 300;
 
     
     function spawnSparks(pos, intensity=1) {
@@ -2133,6 +2136,15 @@ function showKill(text) {
           else for (const l of lines) { try { l.dispose(); } catch {} }
         };
         requestAnimationFrame(tick);
+      } catch {}
+    }
+
+
+    function clearDents() {
+      try {
+        while (_dents.length) {
+          try { _dents.pop().dispose(); } catch {}
+        }
       } catch {}
     }
 
@@ -2189,19 +2201,7 @@ function spawnDent(pos, size, kind) {
         while (_dents.length > MAX_DENTS) {
           try { _dents.shift().dispose(); } catch {}
         }
-
-        // Fade out slowly (so walls don't get permanently dirty)
-        const born = performance.now();
-        const life = (kind === 'rocket') ? 18_000 : 12_000;
-        const tick = () => {
-          const t = performance.now() - born;
-          const k = Math.min(1, t / life);
-          try { mat.alpha = (kind === 'rocket' ? 0.78 : 0.72) * (1 - k); } catch {}
-          try { if (rmat) rmat.alpha = 0.55 * (1 - k); } catch {}
-          if (k < 1) requestAnimationFrame(tick);
-          else { try { dent.dispose(); } catch {} }
-        };
-        requestAnimationFrame(tick);
+        // Permanent until round reset / page reload (capped by MAX_DENTS)
       } catch {}
     }
 
@@ -2236,6 +2236,25 @@ function spawnDent(pos, size, kind) {
       const weaponNoTracer = ((s.weapon || 'rifle') === 'rocket');
       if (!weaponNoTracer) {
 
+
+
+      // Use client-side picking so dents appear on ALL geometry (walls, blocks, floor, ceiling).
+      function pickImpact(from, to) {
+        try {
+          const dir = to.subtract(from);
+          const len = dir.length();
+          if (len < 0.001) return to;
+          const ray = new BABYLON.Ray(from, dir.normalize(), len);
+          const hit = scene.pickWithRay(ray, (mesh) => {
+            if (!mesh) return false;
+            // ignore player meshes (they're stored in players map, plus names etc)
+            if (mesh.name && (mesh.name.startsWith('p_') || mesh.name.includes('nameplate') || mesh.name.includes('shot'))) return false;
+            return mesh.isPickable === true;
+          });
+          if (hit && hit.hit && hit.pickedPoint) return hit.pickedPoint;
+        } catch {}
+        return to;
+      }
       for (const pts of segments) {
         const lines = BABYLON.MeshBuilder.CreateLines('shot', { points: pts }, scene);
         lines.color = color;
