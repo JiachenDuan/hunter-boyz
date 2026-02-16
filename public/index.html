@@ -1505,9 +1505,24 @@
       }
 
       return {
-        enable: () => unlockIfNeeded(),
+        enable: async () => {
+          try { await unlockIfNeeded(); } catch {}
+          // iOS/iPadOS: sometimes resume() succeeds but audio still doesn't route until
+          // a (near-)silent buffer is played.
+          try {
+            const c = ensure();
+            const b = c.createBuffer(1, 1, c.sampleRate);
+            const src = c.createBufferSource();
+            src.buffer = b;
+            const g = c.createGain();
+            g.gain.value = 0.00001;
+            src.connect(g).connect(c.destination);
+            src.start();
+            src.stop(c.currentTime + 0.01);
+          } catch {}
+        },
         shoot: (weapon) => {
-          if (!unlocked) { try { log('Tap screen to enable sound'); } catch {} }
+          if (!unlocked) { try { log('Tap Enable sound'); } catch {} }
           if (String(weapon) === 'fart') return fart();
           return gunshot(weapon);
         },
@@ -2263,9 +2278,9 @@ function showKill(text) {
     copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
     copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
 
-    function doEnableSound(e) {
+    async function doEnableSound(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
-      try { SFX.enable(); } catch {}
+      try { await SFX.enable(); } catch {}
       try { SFX.hit(); } catch {}
       log('Sound enabled.');
     }
