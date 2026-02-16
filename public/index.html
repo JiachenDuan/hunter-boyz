@@ -797,10 +797,24 @@
       gunRoot.parent = root;
       gunRoot.position.set(0.08, -0.30, 0.80);
 
+      // Gun materials (cheap but more realistic: metal + accent)
       const gunMat = new BABYLON.StandardMaterial('gunMat', scene);
-      gunMat.diffuseColor = new BABYLON.Color3(0.10, 0.11, 0.13);
-      gunMat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.025);
-      gunMat.specularColor = new BABYLON.Color3(0.02,0.02,0.02);
+      gunMat.diffuseColor = new BABYLON.Color3(0.14, 0.15, 0.17);
+      gunMat.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.012);
+      gunMat.specularColor = new BABYLON.Color3(0.25, 0.25, 0.28);
+      gunMat.specularPower = 64;
+
+      const accentMat = new BABYLON.StandardMaterial('gunAccentMat', scene);
+      accentMat.diffuseColor = new BABYLON.Color3(0.10, 0.10, 0.11);
+      accentMat.emissiveColor = new BABYLON.Color3(0.005, 0.005, 0.006);
+      accentMat.specularColor = new BABYLON.Color3(0.18, 0.18, 0.20);
+      accentMat.specularPower = 48;
+
+      const gripMat = new BABYLON.StandardMaterial('gunGripMat', scene);
+      gripMat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.065);
+      gripMat.emissiveColor = new BABYLON.Color3(0.003, 0.003, 0.003);
+      gripMat.specularColor = new BABYLON.Color3(0.04, 0.04, 0.04);
+      gripMat.specularPower = 12;
 
       function makeGunVariant(kind) {
         const g = new BABYLON.TransformNode(`gun_${kind}`, scene);
@@ -808,7 +822,7 @@
 
         // Receiver
         const receiver = BABYLON.MeshBuilder.CreateBox(`recv_${kind}`, { width:0.10, height:0.09, depth:0.22 }, scene);
-        receiver.material = gunMat;
+        receiver.material = accentMat;
         receiver.parent = g;
         receiver.position.set(0.02, 0.00, 0.02);
 
@@ -823,13 +837,13 @@
 
         // Stock
         const stock = BABYLON.MeshBuilder.CreateBox(`stk_${kind}`, { width:0.09, height:0.08, depth:0.16 }, scene);
-        stock.material = gunMat;
+        stock.material = accentMat;
         stock.parent = g;
         stock.position.set(0.02, -0.01, -0.16);
 
         // Grip
         const grip = BABYLON.MeshBuilder.CreateBox(`gr_${kind}`, { width:0.05, height:0.10, depth:0.06 }, scene);
-        grip.material = gunMat;
+        grip.material = gripMat;
         grip.parent = g;
         grip.position.set(0.05, -0.08, 0.02);
         grip.rotation.x = 0.25;
@@ -837,7 +851,7 @@
         // Sniper scope tube
         if (kind === 'sniper') {
           const scope = BABYLON.MeshBuilder.CreateCylinder(`sc_${kind}`, { diameter:0.06, height:0.22, tessellation: 12 }, scene);
-          scope.material = gunMat;
+          scope.material = accentMat;
           scope.parent = g;
           scope.rotation.x = Math.PI / 2;
           scope.position.set(0.02, 0.05, 0.34);
@@ -846,7 +860,7 @@
         // Shotgun pump
         if (kind === 'shotgun') {
           const pump = BABYLON.MeshBuilder.CreateBox(`pm_${kind}`, { width:0.10, height:0.06, depth:0.12 }, scene);
-          pump.material = gunMat;
+          pump.material = accentMat;
           pump.parent = g;
           pump.position.set(0.02, -0.02, 0.34);
         }
