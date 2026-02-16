@@ -830,13 +830,31 @@
       gripMat.specularColor = new BABYLON.Color3(0.04, 0.04, 0.04);
       gripMat.specularPower = 12;
 
+      // Fart gun skin ("minion" vibe): bright yellow + green accents
+      const fartBodyMat = new BABYLON.StandardMaterial('fartBodyMat', scene);
+      fartBodyMat.diffuseColor = new BABYLON.Color3(1.00, 0.85, 0.18);
+      fartBodyMat.emissiveColor = new BABYLON.Color3(0.06, 0.05, 0.01);
+      fartBodyMat.specularColor = new BABYLON.Color3(0.30, 0.28, 0.18);
+      fartBodyMat.specularPower = 48;
+
+      const fartAccentMat = new BABYLON.StandardMaterial('fartAccentMat', scene);
+      fartAccentMat.diffuseColor = new BABYLON.Color3(0.20, 0.85, 0.35);
+      fartAccentMat.emissiveColor = new BABYLON.Color3(0.02, 0.08, 0.03);
+      fartAccentMat.specularColor = new BABYLON.Color3(0.20, 0.25, 0.20);
+      fartAccentMat.specularPower = 32;
+
       function makeGunVariant(kind) {
         const g = new BABYLON.TransformNode(`gun_${kind}`, scene);
         g.parent = gunRoot;
 
+        const isFart = (kind === 'fart');
+        const bodyM = isFart ? fartBodyMat : gunMat;
+        const accM = isFart ? fartAccentMat : accentMat;
+        const gripM = isFart ? fartAccentMat : gripMat;
+
         // Receiver
         const receiver = BABYLON.MeshBuilder.CreateBox(`recv_${kind}`, { width:0.10, height:0.09, depth:0.22 }, scene);
-        receiver.material = accentMat;
+        receiver.material = accM;
         receiver.parent = g;
         receiver.position.set(0.02, 0.00, 0.02);
 
@@ -844,20 +862,20 @@
         const barrelLen = (kind === 'sniper') ? 0.78 : (kind === 'shotgun' ? 0.50 : 0.56);
         const barrelDia = (kind === 'shotgun') ? 0.065 : (kind === 'sniper' ? 0.04 : 0.045);
         const barrel = BABYLON.MeshBuilder.CreateCylinder(`bar_${kind}`, { diameter:barrelDia, height:barrelLen, tessellation: 10 }, scene);
-        barrel.material = gunMat;
+        barrel.material = bodyM;
         barrel.parent = g;
         barrel.rotation.x = Math.PI / 2;
         barrel.position.set(0.02, 0.00, 0.24 + barrelLen / 2);
 
         // Stock
         const stock = BABYLON.MeshBuilder.CreateBox(`stk_${kind}`, { width:0.09, height:0.08, depth:0.16 }, scene);
-        stock.material = accentMat;
+        stock.material = accM;
         stock.parent = g;
         stock.position.set(0.02, -0.01, -0.16);
 
         // Grip
         const grip = BABYLON.MeshBuilder.CreateBox(`gr_${kind}`, { width:0.05, height:0.10, depth:0.06 }, scene);
-        grip.material = gripMat;
+        grip.material = gripM;
         grip.parent = g;
         grip.position.set(0.05, -0.08, 0.02);
         grip.rotation.x = 0.25;
@@ -865,7 +883,7 @@
         // Sniper scope tube
         if (kind === 'sniper') {
           const scope = BABYLON.MeshBuilder.CreateCylinder(`sc_${kind}`, { diameter:0.06, height:0.22, tessellation: 12 }, scene);
-          scope.material = accentMat;
+          scope.material = accM;
           scope.parent = g;
           scope.rotation.x = Math.PI / 2;
           scope.position.set(0.02, 0.05, 0.34);
@@ -874,9 +892,24 @@
         // Shotgun pump
         if (kind === 'shotgun') {
           const pump = BABYLON.MeshBuilder.CreateBox(`pm_${kind}`, { width:0.10, height:0.06, depth:0.12 }, scene);
-          pump.material = accentMat;
+          pump.material = accM;
           pump.parent = g;
           pump.position.set(0.02, -0.02, 0.34);
+        }
+
+        // Fart gun extras: a "tank" + nozzle so it's obvious.
+        if (kind === 'fart') {
+          const tank = BABYLON.MeshBuilder.CreateCylinder(`tk_${kind}`, { diameter: 0.14, height: 0.20, tessellation: 12 }, scene);
+          tank.material = accM;
+          tank.parent = g;
+          tank.rotation.x = Math.PI / 2;
+          tank.position.set(-0.06, 0.02, -0.02);
+
+          const nozzle = BABYLON.MeshBuilder.CreateCylinder(`nz_${kind}`, { diameter: 0.09, height: 0.16, tessellation: 12 }, scene);
+          nozzle.material = accM;
+          nozzle.parent = g;
+          nozzle.rotation.x = Math.PI / 2;
+          nozzle.position.set(0.02, 0.02, 0.62);
         }
 
         return g;
@@ -886,10 +919,11 @@
         rifle: makeGunVariant('rifle'),
         shotgun: makeGunVariant('shotgun'),
         sniper: makeGunVariant('sniper'),
+        fart: makeGunVariant('fart'),
       };
 
       function setGun(kind) {
-        const k = (kind === 'shotgun' || kind === 'sniper') ? kind : 'rifle';
+        const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart') ? kind : 'rifle';
         for (const [name, node] of Object.entries(guns)) node.setEnabled(name === k);
       }
       // Default
