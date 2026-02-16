@@ -1370,6 +1370,29 @@
       window.addEventListener('pointerdown', () => { unlockIfNeeded(); }, { passive: true });
       window.addEventListener('touchstart', () => { unlockIfNeeded(); }, { passive: true });
 
+      function primeAudioOnReturn() {
+        try {
+          const c = ensure();
+          // iOS often suspends audio when app backgrounds.
+          if (c.state === 'suspended') {
+            try { c.resume(); } catch {}
+          }
+          // Play a near-silent buffer to re-prime routing.
+          try {
+            const b = c.createBuffer(1, 1, c.sampleRate);
+            const src = c.createBufferSource();
+            src.buffer = b;
+            const g = c.createGain();
+            g.gain.value = 0.00001;
+            src.connect(g).connect(c.destination);
+            const t0 = (c.currentTime || 0) + 0.005;
+            src.start(t0);
+            src.stop(t0 + 0.01);
+          } catch {}
+        } catch {}
+      }
+
+
       function noiseBuffer(c, seconds = 0.15) {
         const len = Math.floor(c.sampleRate * seconds);
         const buf = c.createBuffer(1, len, c.sampleRate);
@@ -1629,8 +1652,21 @@
           });
         })(),
         fart,
+        prime: () => { try { primeAudioOnReturn(); } catch {} },
       };
     })();
+
+    // iOS background/foreground: audio context may get suspended; re-prime on return.
+    const _primeAudio = () => {
+      try { SFX.prime && SFX.prime(); } catch {}
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) _primeAudio();
+    }, { passive: true });
+    window.addEventListener('pageshow', () => { _primeAudio(); }, { passive: true });
+    window.addEventListener('focus', () => { _primeAudio(); }, { passive: true });
+
+
 
     
     
