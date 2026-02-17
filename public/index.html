@@ -1242,38 +1242,50 @@
         const gripMatLocal = toy[kind]?.grip || gripM;
 
         if (kind === 'knife') {
-          // Big cartoon knife: blade + guard + handle
-          const handle = BABYLON.MeshBuilder.CreateBox(`k_h_${kind}`, { width:0.06, height:0.07, depth:0.18 }, scene);
+          // Cartoon dagger: shorter + chunkier so it reads well and doesn't look like a weird plank.
+          const handle = BABYLON.MeshBuilder.CreateBox(`k_h_${kind}`, { width:0.07, height:0.07, depth:0.16 }, scene);
           handle.material = toyBlackMat;
           handle.parent = g;
-          handle.position.set(0.04, -0.05, 0.10);
+          handle.position.set(0.04, -0.06, 0.08);
 
-          const guard = BABYLON.MeshBuilder.CreateBox(`k_g_${kind}`, { width:0.10, height:0.02, depth:0.04 }, scene);
+          const pommel = BABYLON.MeshBuilder.CreateSphere(`k_p_${kind}`, { diameter: 0.06, segments: 10 }, scene);
+          pommel.material = toyBlueMat;
+          pommel.parent = g;
+          pommel.position.set(0.04, -0.05, -0.02);
+
+          const guard = BABYLON.MeshBuilder.CreateBox(`k_g_${kind}`, { width:0.12, height:0.025, depth:0.04 }, scene);
           guard.material = toyWhiteMat;
           guard.parent = g;
-          guard.position.set(0.04, -0.02, 0.20);
+          guard.position.set(0.04, -0.03, 0.16);
 
-          const blade = BABYLON.MeshBuilder.CreateBox(`k_b_${kind}`, { width:0.03, height:0.10, depth:0.44 }, scene);
+          const blade = BABYLON.MeshBuilder.CreateBox(`k_b_${kind}`, { width:0.028, height:0.095, depth:0.30 }, scene);
           blade.material = toyWhiteMat;
           blade.parent = g;
-          blade.position.set(0.04, 0.02, 0.46);
+          blade.position.set(0.04, 0.01, 0.36);
 
-          // tip
-          const tip = BABYLON.MeshBuilder.CreateCylinder(`k_t_${kind}`, { height:0.10, diameterTop:0.001, diameterBottom:0.05, tessellation: 10 }, scene);
+          // Tip (taper)
+          const tip = BABYLON.MeshBuilder.CreateCylinder(`k_t_${kind}`, { height:0.09, diameterTop:0.001, diameterBottom:0.045, tessellation: 10 }, scene);
           tip.material = toyWhiteMat;
           tip.parent = g;
           tip.rotation.x = Math.PI / 2;
-          tip.position.set(0.04, 0.02, 0.72);
+          tip.position.set(0.04, 0.01, 0.52);
 
-          // Small accent stripe
-          const stripe = BABYLON.MeshBuilder.CreateBox(`k_s_${kind}`, { width:0.034, height:0.01, depth:0.20 }, scene);
-          stripe.material = toyBlueMat;
+          // Accent stripe
+          const stripe = BABYLON.MeshBuilder.CreateBox(`k_s_${kind}`, { width:0.032, height:0.01, depth:0.14 }, scene);
+          stripe.material = toyRedMat;
           stripe.parent = g;
-          stripe.position.set(0.04, 0.06, 0.44);
+          stripe.position.set(0.04, 0.05, 0.32);
 
           // Position/tilt in hand
-          g.rotation.x = -0.25;
-          g.rotation.z = 0.22;
+          g.rotation.x = -0.18;
+          g.rotation.z = 0.15;
+          g.position.y -= 0.03;
+          g.position.z -= 0.04;
+
+          // swing animation hook
+          g.metadata = g.metadata || {};
+          g.metadata._swing = 0;
+          g.metadata._swingVel = 0;
 
           return g;
         }
@@ -2645,15 +2657,7 @@ function spawnDent(pos, normal, size, kind) {
           setTimeout(() => { try { arc.dispose(); } catch {} }, 320);
         } catch {}
       } else if (wpn0 === 'knife') {
-        // Knife: no tracer lines; just a quick slash hint near center.
-        try {
-          const p1 = new BABYLON.Vector3(gunStart.x - 0.08, gunStart.y + 0.02, gunStart.z + 0.20);
-          const p2 = new BABYLON.Vector3(gunStart.x + 0.08, gunStart.y + 0.06, gunStart.z + 0.55);
-          const slash = BABYLON.MeshBuilder.CreateLines('kSlash', { points: [p1, p2] }, scene);
-          slash.color = new BABYLON.Color3(0.92, 0.92, 0.95);
-          slash.alpha = 0.9;
-          setTimeout(() => { try { slash.dispose(); } catch {} }, 140);
-        } catch {}
+        // Knife: no tracer/lines. We'll animate the in-hand knife swing instead.
       }
 
       // Bullet marks disabled (no dents). Keep sparks for feedback.
@@ -2686,7 +2690,16 @@ function spawnDent(pos, normal, size, kind) {
         const wpn = s.weapon || 'rifle';
         try { window.__lastShotWeapon = wpn; } catch {}
         const rc = RECOIL[wpn] || RECOIL.rifle;
-        if (fpRig?.muzzleFlash && fpRig._flashBaseSize) {
+        if (wpn === 'knife') {
+          // Knife: animate swing instead of muzzle flash/tracers.
+          try {
+            const k = fpRig?.guns?.knife;
+            if (k) {
+              k.metadata = k.metadata || {};
+              k.metadata._swing = 1.0;
+            }
+          } catch {}
+        } else if (fpRig?.muzzleFlash && fpRig._flashBaseSize) {
           fpRig.muzzleFlash.scaling.setAll(rc.flashScale);
           fpRig.muzzleFlash.isVisible = true;
           applyRecoil(wpn);
@@ -2695,6 +2708,7 @@ function spawnDent(pos, normal, size, kind) {
           }, 55);
         }
         if (wpn === 'rocket') { try { SFX.whoosh(); } catch {} }
+        else if (wpn === 'knife') { try { SFX.shoot('rifle'); } catch {} }
         else SFX.shoot(wpn);
         if (s.hit) {
           showHitmarker();
@@ -3299,6 +3313,20 @@ function spawnDent(pos, normal, size, kind) {
           for (const b of fpRig.guns.minigun.metadata._minigunBarrels) {
             b.rotation.z += rot;
           }
+        }
+      } catch {}
+
+      // Knife swing (cosmetic)
+      try {
+        const k = fpRig?.guns?.knife;
+        if (k && k.isEnabled && k.metadata) {
+          k.metadata._swing = (k.metadata._swing || 0) * 0.82;
+          const amt = k.metadata._swing || 0;
+          // quick forward/down slash
+          k.rotation.x = -0.18 + amt * 0.85;
+          k.rotation.z = 0.15 + amt * 0.35;
+          k.position.y = (-0.03) - amt * 0.06;
+          k.position.z = (-0.04) + amt * 0.06;
         }
       } catch {}
 
