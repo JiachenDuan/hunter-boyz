@@ -1243,8 +1243,8 @@
         // SPECIAL: knife/grenades replace the gun entirely in-hand.
         // Also swap to cartoon colors so each weapon reads differently.
         const toy = {
-          rifle: { body: toyBlueMat, acc: toyWhiteMat, grip: toyBlackMat },
-          shotgun: { body: toyRedMat, acc: toyWhiteMat, grip: toyBlackMat },
+          // Keep the “toy” look for the more arcade-y weapons.
+          // Rifle + shotgun are now CS-ish realistic, so they are NOT in this list.
           sniper: { body: toyPurpleMat, acc: toyWhiteMat, grip: toyBlackMat },
           rocket: { body: toyGreenMat, acc: toyWhiteMat, grip: toyBlackMat },
           minigun: { body: toyBlueMat, acc: toyOrangeMat, grip: toyBlackMat },
@@ -1555,12 +1555,107 @@
           grip.material = sniperStockMat;
         }
 
-        // Shotgun pump
+        // Rifle: CS-ish carbine silhouette (magazine, handguard, rail, irons) + darker tactical materials
+        if (kind === 'rifle') {
+          const rifleDarkMat = new BABYLON.StandardMaterial(`rifleDark_${kind}`, scene);
+          rifleDarkMat.diffuseColor = new BABYLON.Color3(0.07, 0.075, 0.085);
+          rifleDarkMat.emissiveColor = new BABYLON.Color3(0.004, 0.004, 0.005);
+          rifleDarkMat.specularColor = new BABYLON.Color3(0.12, 0.12, 0.14);
+          rifleDarkMat.specularPower = 72;
+
+          const riflePolyMat = new BABYLON.StandardMaterial(`riflePoly_${kind}`, scene);
+          riflePolyMat.diffuseColor = new BABYLON.Color3(0.04, 0.04, 0.045);
+          riflePolyMat.emissiveColor = new BABYLON.Color3(0.002, 0.002, 0.002);
+          riflePolyMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+          riflePolyMat.specularPower = 10;
+
+          // Magazine
+          const mag = BABYLON.MeshBuilder.CreateBox(`mag_${kind}`, { width:0.055, height:0.12, depth:0.09 }, scene);
+          mag.material = riflePolyMat;
+          mag.parent = g;
+          mag.position.set(0.02, -0.10, 0.06);
+          mag.rotation.x = 0.10;
+
+          // Handguard
+          const handguard = BABYLON.MeshBuilder.CreateBox(`hg_${kind}`, { width:0.09, height:0.07, depth:0.20 }, scene);
+          handguard.material = riflePolyMat;
+          handguard.parent = g;
+          handguard.position.set(0.02, -0.02, 0.36);
+
+          // Top rail
+          const rail = BABYLON.MeshBuilder.CreateBox(`rail_${kind}`, { width:0.05, height:0.015, depth:0.24 }, scene);
+          rail.material = rifleDarkMat;
+          rail.parent = g;
+          rail.position.set(0.02, 0.055, 0.10);
+
+          // Front sight post
+          const fs = BABYLON.MeshBuilder.CreateBox(`fs_${kind}`, { width:0.03, height:0.05, depth:0.03 }, scene);
+          fs.material = rifleDarkMat;
+          fs.parent = g;
+          fs.position.set(0.02, 0.04, 0.52);
+
+          // Rear sight block
+          const rs = BABYLON.MeshBuilder.CreateBox(`rs_${kind}`, { width:0.04, height:0.04, depth:0.04 }, scene);
+          rs.material = rifleDarkMat;
+          rs.parent = g;
+          rs.position.set(0.02, 0.04, 0.00);
+
+          // Muzzle device
+          const md = BABYLON.MeshBuilder.CreateCylinder(`md_${kind}`, { diameter:0.055, height:0.06, tessellation: 12 }, scene);
+          md.material = rifleDarkMat;
+          md.parent = g;
+          md.rotation.x = Math.PI / 2;
+          md.position.set(0.02, 0.00, 0.24 + barrelLen / 2 + 0.04);
+
+          receiver.material = rifleDarkMat;
+          barrel.material = rifleDarkMat;
+          stock.material = riflePolyMat;
+          grip.material = riflePolyMat;
+        }
+
+        // Shotgun: more realistic pump shotgun (tube mag, bead sight, darker mats)
         if (kind === 'shotgun') {
-          const pump = BABYLON.MeshBuilder.CreateBox(`pm_${kind}`, { width:0.10, height:0.06, depth:0.12 }, scene);
-          pump.material = acc;
+          const sgDarkMat = new BABYLON.StandardMaterial(`sgDark_${kind}`, scene);
+          sgDarkMat.diffuseColor = new BABYLON.Color3(0.07, 0.07, 0.08);
+          sgDarkMat.emissiveColor = new BABYLON.Color3(0.004, 0.004, 0.004);
+          sgDarkMat.specularColor = new BABYLON.Color3(0.10, 0.10, 0.12);
+          sgDarkMat.specularPower = 56;
+
+          const sgPolyMat = new BABYLON.StandardMaterial(`sgPoly_${kind}`, scene);
+          sgPolyMat.diffuseColor = new BABYLON.Color3(0.045, 0.045, 0.05);
+          sgPolyMat.emissiveColor = new BABYLON.Color3(0.002, 0.002, 0.002);
+          sgPolyMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+          sgPolyMat.specularPower = 10;
+
+          // Pump / fore-end
+          const pump = BABYLON.MeshBuilder.CreateBox(`pm_${kind}`, { width:0.105, height:0.065, depth:0.16 }, scene);
+          pump.material = sgPolyMat;
           pump.parent = g;
-          pump.position.set(0.02, -0.02, 0.34);
+          pump.position.set(0.02, -0.03, 0.33);
+
+          // Tube magazine under barrel
+          const tube = BABYLON.MeshBuilder.CreateCylinder(`sgTube_${kind}`, { diameter:0.040, height: barrelLen * 0.90, tessellation: 12 }, scene);
+          tube.material = sgDarkMat;
+          tube.parent = g;
+          tube.rotation.x = Math.PI / 2;
+          tube.position.set(0.02, -0.055, 0.26 + (barrelLen * 0.90) / 2);
+
+          // Bead sight
+          const bead = BABYLON.MeshBuilder.CreateSphere(`sgBead_${kind}`, { diameter:0.016, segments: 8 }, scene);
+          bead.material = knifeBladeMat;
+          bead.parent = g;
+          bead.position.set(0.02, 0.03, 0.24 + barrelLen / 2 + 0.02);
+
+          // Slightly chunkier stock
+          try {
+            stock.scaling.x = 1.05;
+            stock.scaling.y = 1.10;
+          } catch {}
+
+          receiver.material = sgDarkMat;
+          barrel.material = sgDarkMat;
+          stock.material = sgPolyMat;
+          grip.material = sgPolyMat;
         }
 
         // Rocket launcher extras: big tube + fins + rear cap so it's unmistakable
