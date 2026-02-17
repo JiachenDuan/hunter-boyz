@@ -367,6 +367,26 @@
       if (el) el.textContent = msg;
     }
 
+    // Crash guard: if a runtime error happens on mobile Safari, it can look like a frozen screen.
+    // We surface the error + try to reconnect, instead of silently dying.
+    let _fatalAt = 0;
+    function fatal(msg) {
+      const t = Date.now();
+      if (t - _fatalAt < 1500) return;
+      _fatalAt = t;
+      try { console.error('[FATAL]', msg); } catch {}
+      try { log(`⚠️ ${String(msg).slice(0, 120)} — reconnecting…`); } catch {}
+      try { intentionalClose = false; socket?.close(); } catch {}
+      try { setTimeout(() => { try { openSocket(); } catch {} }, 250); } catch {}
+    }
+
+    window.addEventListener('error', (e) => {
+      try { fatal(e?.message || 'runtime error'); } catch {}
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      try { fatal((e?.reason && (e.reason.message || String(e.reason))) || 'promise rejection'); } catch {}
+    });
+
 
     function fmtMs(ms) {
       const s = Math.max(0, Math.ceil(ms / 1000));
@@ -3108,7 +3128,12 @@ function spawnDent(pos, normal, size, kind) {
         mesh.rotation.y += dy * 0.25;
       }
 
-      scene.render();
+      try {
+        scene.render();
+      } catch (e) {
+        fatal(e && e.message ? e.message : e);
+        return;
+      }
 
       if (socket && socket.readyState === 1 && state.joined) {
         // Keepalive so mobile Safari doesn't silently kill idle websockets in lobby.
