@@ -3,6 +3,9 @@ const http = require('http');
 const express = require('express');
 const WebSocket = require('ws');
 
+// Shared weapon definitions (UMD module in public/weapons.js)
+const { WEAPONS, getWeapon } = require('./public/weapons.js');
+
 const PORT = process.env.PORT || 3030;
 
 const app = express();
@@ -140,6 +143,19 @@ let nextId = 1;
 const clients = new Map(); // ws -> playerId
 const players = new Map(); // id -> player state
 
+
+// Server-simulated grenades
+const grenades = []; // {id, kind, ownerId, x,y,z, vx,vy,vz, bornAt, fuseAt, armAt, exploded}
+let nextGrenadeId = 1;
+
+// Pickup system (currently: minigun)
+const pickupPads = [
+  { id: 'pad_mg_1', type: 'minigun', x: 0, y: 1.8, z: 0, respawnAt: 0, heldBy: null },
+  { id: 'pad_mg_2', type: 'minigun', x: -12, y: 1.8, z: 10, respawnAt: 0, heldBy: null },
+];
+let minigunDrop = null; // {x,y,z, expiresAt}
+
+
 // Connection/session management to prevent duplicate players on reconnect.
 const playerConn = new Map(); // playerId -> ws
 const clientToPlayer = new Map(); // clientId -> playerId
@@ -173,6 +189,14 @@ function makePlayer(name) {
     disconnectedAt: 0,
     fartUntil: 0,
     fartTickAt: 0,
+
+    // Power weapon (pickup-only)
+    powerWeapon: null,
+    powerAmmo: 0,
+    mgSpin: 0,
+    mgHeat: 0,
+    mgOverheat: 0,
+
     color: `hsl(${hue} 80% 60%)`,
   };
 }
@@ -181,7 +205,8 @@ function serializeState() {
   return {
     ts: nowMs(),
     build: BUILD,
-    game: { started: GAME.started, hostId: GAME.hostId, roundEndsAt: GAME.roundEndsAt },
+    game: { started: GAME.started, hostId: GAME.started ? GAME.hostId : GAME.hostId, roundEndsAt: GAME.roundEndsAt },
+    pickups: serializePickups(),
     players: Array.from(players.values()).map(p => ({
       id: p.id,
       name: p.name,
@@ -194,6 +219,11 @@ function serializeState() {
       score: p.score,
       deaths: p.deaths,
       ammo: p.ammo,
+      powerWeapon: p.powerWeapon || null,
+      powerAmmo: p.powerAmmo || 0,
+      mgSpin: p.mgSpin || 0,
+      mgHeat: p.mgHeat || 0,
+      mgOverheat: p.mgOverheat || 0,
       reloadInMs: Math.max(0, p.reloadUntil - nowMs()),
       invulnInMs: Math.max(0, p.invulnUntil - nowMs()),
       respawnInMs: p.hp > 0 ? 0 : Math.max(0, p.respawnAt - nowMs()),
@@ -332,11 +362,29 @@ function doDamage({ shooter, target, amount }) {
   if (target.hp <= 0) {
     target.hp = 0;
     target.respawnAt = t + 2000;
-    shooter.score += 1;
-    broadcast({ t: 'kill', killer: shooter.id, killerName: shooter.name, victim: target.id, victimName: target.name });
+    target.deaths = (target.deaths || 0) + 1;
+
+    // Drop power weapon on death (minigun) for 8s.
+    if (target.powerWeapon === 'minigun' && (target.powerAmmo||0) > 0) {
+      minigunDrop = { x: target.x, y: target.y, z: target.z, expiresAt: t + 8000 };
+      // clear ownership from pads
+      for (const pad of pickupPads) if (pad.heldBy === target.id) { pad.heldBy = null; pad.respawnAt = t + 30_000; }
+      target.powerWeapon = null;
+      target.powerAmmo = 0;
+      target.mgSpin = 0;
+      target.mgHeat = 0;
+      target.mgOverheat = 0;
+    }
+
+    if (shooter) {
+      shooter.score += 1;
+      broadcast({ t: 'kill', killer: shooter.id, killerName: shooter.name, victim: target.id, victimName: target.name });
+    } else {
+      broadcast({ t: 'kill', killer: null, killerName: '—', victim: target.id, victimName: target.name });
+    }
 
     // First-to-10 wins the round
-    if (!GAME.roundOverAt && shooter.score >= WIN_SCORE) {
+    if (!GAME.roundOverAt && shooter && shooter.score >= WIN_SCORE) {
       GAME.roundOverAt = t;
       broadcast({ t: 'winner', winnerId: shooter.id, winnerName: shooter.name });
 
@@ -365,6 +413,73 @@ function dist2D(a, b) {
   const dx = (a.x - b.x);
   const dz = (a.z - b.z);
   return Math.hypot(dx, dz);
+}
+
+
+function serializePickups() {
+  const t = nowMs();
+  const items = [];
+  for (const pad of pickupPads) {
+    const availInMs = Math.max(0, (pad.respawnAt || 0) - t);
+    items.push({ id: pad.id, type: pad.type, x: pad.x, y: pad.y, z: pad.z, kind: 'pad', availInMs, heldBy: pad.heldBy || null });
+  }
+  if (minigunDrop) {
+    items.push({ id: 'drop_minigun', type: 'minigun', kind: 'drop', x: minigunDrop.x, y: minigunDrop.y, z: minigunDrop.z, availInMs: 0, expiresInMs: Math.max(0, (minigunDrop.expiresAt||0) - t) });
+  }
+  return items;
+}
+
+function spawnGrenade({ kind, ownerId, x, y, z, yaw, pitch, now }) {
+  const gDef = getWeapon(kind);
+  const id = String(nextGrenadeId++);
+  // Throw direction (slight upward bias)
+  const dirX = Math.sin(yaw) * Math.cos(pitch);
+  const dirY = Math.sin(pitch);
+  const dirZ = Math.cos(yaw) * Math.cos(pitch);
+
+  const speed = 16;
+  const vx = dirX * speed;
+  const vy = (dirY * speed) + 3.5;
+  const vz = dirZ * speed;
+
+  grenades.push({
+    id,
+    kind,
+    ownerId,
+    x, y, z,
+    vx, vy, vz,
+    bornAt: now,
+    fuseAt: now + (gDef.fuseMs || 1200),
+    armAt: now + (gDef.armMs || 0),
+    exploded: false,
+  });
+  broadcast({ t: 'grenadeSpawn', id, kind, ownerId, x, y, z, vx, vy, vz, fuseAt: now + (gDef.fuseMs || 1200), armAt: now + (gDef.armMs || 0) });
+}
+
+function explodeGrenade(g, ex, ey, ez) {
+  const gDef = getWeapon(g.kind);
+  const R = gDef.splashR || 6;
+  const maxD = gDef.dmgMax || 100;
+  const minD = gDef.dmgMin || 0;
+
+  // Apply radial damage
+  for (const tP of players.values()) {
+    if (tP.hp <= 0) continue;
+    if (tP.id === g.ownerId) {
+      // allow self damage; keep it but slightly reduced for fun
+    }
+    const dx = tP.x - ex;
+    const dy = (tP.y || 1.8) - ey;
+    const dz = tP.z - ez;
+    const dist = Math.hypot(dx, dy, dz);
+    if (dist > R) continue;
+    const tt = Math.min(1, Math.max(0, dist / R));
+    const amt = Math.round(maxD + (minD - maxD) * tt);
+    if (amt <= 0) continue;
+    doDamage({ shooter: players.get(g.ownerId) || null, target: tP, amount: amt });
+  }
+
+  broadcast({ t: 'explosion', kind: 'grenade', x: ex, y: ey, z: ez, r: R });
 }
 
 function damageFalloff(base, dist, { near = 4, far = 30, minMult = 0.45 } = {}) {
@@ -502,7 +617,52 @@ wss.on('connection', (ws) => {
       return;
     }
 
-    if (msg.t === 'input') {
+    
+    if (msg.t === 'pickup') {
+      if (!GAME.started) return;
+      if (p.hp <= 0) return;
+      const t = nowMs();
+
+      const which = String(msg.id || '');
+
+      function grantMinigun() {
+        p.powerWeapon = 'minigun';
+        p.powerAmmo = getWeapon('minigun').ammo || 300;
+        p.mgSpin = 0;
+        p.mgHeat = 0;
+        p.mgOverheat = 0;
+      }
+
+      // Pick up from drop first
+      if (which === 'drop_minigun' && minigunDrop) {
+        const d = Math.hypot((p.x - minigunDrop.x), (p.z - minigunDrop.z));
+        if (d <= 2.2 && t < (minigunDrop.expiresAt||0)) {
+          minigunDrop = null;
+          grantMinigun();
+          broadcast({ t:'pickup', id: p.id, what: 'minigun' });
+          broadcast({ t:'state', state: serializeState() });
+        }
+        return;
+      }
+
+      const pad = pickupPads.find(pp => pp.id === which);
+      if (!pad) return;
+
+      // must be near
+      const d = Math.hypot((p.x - pad.x), (p.z - pad.z));
+      if (d > 2.5) return;
+
+      if ((pad.respawnAt || 0) > t) return;
+      if (pad.heldBy) return;
+
+      pad.heldBy = p.id;
+      grantMinigun();
+      broadcast({ t:'pickup', id: p.id, what: pad.type });
+      broadcast({ t:'state', state: serializeState() });
+      return;
+    }
+
+if (msg.t === 'input') {
       // Ignore gameplay until host starts.
       if (!GAME.started) return;
 
@@ -581,15 +741,19 @@ wss.on('connection', (ws) => {
       // shoot
       if (msg.shoot) {
         const t = nowMs();
-        const weapon = (msg.weapon === 'shotgun' || msg.weapon === 'sniper' || msg.weapon === 'fart' || msg.weapon === 'rocket') ? msg.weapon : 'rifle';
-        const fireCdMs = weapon === 'shotgun' ? 650 : (weapon === 'sniper' ? 1100 : (weapon === 'fart' ? 450 : (weapon === 'rocket' ? 1500 : 250))); 
+        let weapon = getWeapon((msg.weapon || 'rifle')).id;
+        // Pickup-only power weapon override
+        if (p.powerWeapon === 'minigun') weapon = 'minigun';
+
+        const wDef = getWeapon(weapon);
+        const fireCdMs = (wDef && wDef.fireCdMs) ? wDef.fireCdMs : 250;
 
         if (t - p.lastShotAt > fireCdMs) {
           // can't shoot while reloading
           if (t < p.reloadUntil) return;
 
           // Auto-reload (optional)
-          if (p.ammo <= 0) {
+          if ((wDef && typeof wDef.mag === 'number') && p.ammo <= 0) {
             if (p.autoReload) {
               p.reloadUntil = t + 900;
             }
@@ -597,12 +761,102 @@ wss.on('connection', (ws) => {
           }
 
           p.lastShotAt = t;
-          p.ammo -= 1;
+
+          // Ammo model: only apply mag ammo for classic guns; melee/grenades/power weapons use custom logic.
+          if (wDef && typeof wDef.mag === 'number') {
+            p.ammo -= 1;
+          }
 
           let hitId = null;
           let hitHp = null;
 
-          if (weapon === 'rifle') {
+          // Knife melee (server-authoritative)
+          if (weapon === 'knife') {
+            const kDef = getWeapon('knife');
+            const R = kDef.range || 2.2;
+            const coneDot = kDef.coneDot || 0.65;
+            const backstabDot = (kDef.backstabDot !== undefined) ? kDef.backstabDot : -0.35;
+            let best = null;
+            let bestDist = 1e9;
+            const fx = { x: p.x + Math.sin(p.yaw) * 1.0, y: p.y, z: p.z + Math.cos(p.yaw) * 1.0 };
+
+            for (const tP of players.values()) {
+              if (tP.id === p.id) continue;
+              if (tP.hp <= 0) continue;
+              const dx = tP.x - p.x;
+              const dz = tP.z - p.z;
+              const dist = Math.hypot(dx, dz);
+              if (dist > R) continue;
+              const fwdx = Math.sin(p.yaw);
+              const fwdz = Math.cos(p.yaw);
+              const dot = (dx / (dist||1)) * fwdx + (dz / (dist||1)) * fwdz;
+              if (dot < coneDot) continue;
+              if (dist < bestDist) { best = tP; bestDist = dist; }
+            }
+
+            if (best) {
+              // backstab if attacker is behind target
+              const tx = p.x - best.x;
+              const tz = p.z - best.z;
+              const tdist = Math.hypot(tx, tz) || 1;
+              const tFwdX = Math.sin(best.yaw||0);
+              const tFwdZ = Math.cos(best.yaw||0);
+              const behindDot = (tx/tdist)*tFwdX + (tz/tdist)*tFwdZ;
+              const isBackstab = behindDot < backstabDot;
+              const amt = isBackstab ? (kDef.dmgBackstab||999) : (kDef.dmgFront||35);
+              const dmg = doDamage({ shooter: p, target: best, amount: amt });
+              hitId = dmg.hitId;
+              hitHp = dmg.hitHp;
+              broadcast({ t:'slash', from:p.id, to: best.id, backstab: isBackstab });
+            }
+            broadcast({ t: 'shot', weapon, from: p.id, sx: p.x, sy: p.y, sz: p.z, yaw: p.yaw, pitch: p.pitch, ex: fx.x, ey: fx.y, ez: fx.z, hit: hitId, hitHp });
+
+          } else if (weapon === 'grenade_frag' || weapon === 'grenade_impact') {
+            // Spawn grenade projectile (server-simulated).
+            spawnGrenade({
+              kind: weapon,
+              ownerId: p.id,
+              x: p.x,
+              y: p.y + 0.2,
+              z: p.z,
+              yaw: p.yaw,
+              pitch: p.pitch,
+              now: nowMs(),
+            });
+            broadcast({ t:'shot', weapon, from:p.id, sx:p.x, sy:p.y, sz:p.z, yaw:p.yaw, pitch:p.pitch, ex:p.x, ey:p.y, ez:p.z, hit:null, hitHp:null });
+
+          } else if (weapon === 'minigun') {
+            // Minigun handled like rifle hitscan but uses power ammo + heat + spin-up.
+            const mDef = getWeapon('minigun');
+            if (!p.powerWeapon || p.powerWeapon !== 'minigun') return;
+
+            const dtSec = Math.max(0.001, Number(msg.dt || 0.066));
+            const want = !!msg.shoot;
+            p.mgSpin = clamp((p.mgSpin||0) + (want ? (mDef.spinUpPerSec||3.0) : -(mDef.spinDownPerSec||4.5)) * dtSec, 0, 1);
+            // Cool even while not firing
+            p.mgHeat = clamp((p.mgHeat||0) - (mDef.coolPerSec||0.55) * dtSec, 0, 1);
+
+            if (p.mgOverheat && (p.mgHeat||0) <= (mDef.recoverAt||0.35)) p.mgOverheat = 0;
+            if (p.mgOverheat) return;
+            if ((p.mgSpin||0) < 0.2) return;
+            if ((p.powerAmmo||0) <= 0) { p.powerWeapon = null; p.powerAmmo = 0; return; }
+
+            const rpm = (mDef.rpmMin||300) + ((mDef.rpmMax||1200) - (mDef.rpmMin||300)) * (p.mgSpin||0);
+            const cd = Math.max(25, Math.round(60000 / rpm));
+            if (t - p.lastShotAt <= cd) return;
+
+            p.lastShotAt = t;
+            p.powerAmmo = Math.max(0, (p.powerAmmo||0) - 1);
+            p.mgHeat = clamp((p.mgHeat||0) + (mDef.heatPerShot||0.012), 0, 1.2);
+            if ((p.mgHeat||0) >= (mDef.overheatAt||1.0)) { p.mgOverheat = 1; }
+
+            const hit = rayHit(p, mDef.range||32);
+            const dmgAmt = mDef.dmg||9;
+            const dmg = doDamage({ shooter: p, target: hit.target, amount: dmgAmt });
+            hitId = dmg.hitId; hitHp = dmg.hitHp;
+            broadcast({ t:'shot', weapon:'minigun', from:p.id, sx:p.x, sy:p.y, sz:p.z, yaw:p.yaw, pitch:p.pitch, ex: hit.endX, ey: p.y, ez: hit.endZ, hit: hitId, hitHp });
+
+          } else if (weapon === 'rifle') {
             const hit = rayHit(p, 30);
             let dmgAmt = 25;
             if (hit.target) {
@@ -793,6 +1047,67 @@ wss.on('connection', (ws) => {
 setInterval(() => {
   // Handle respawns + reload completion + fart debuff + cleanup disconnected players
   const t = nowMs();
+  // expire minigun drop
+  if (minigunDrop && t >= (minigunDrop.expiresAt||0)) {
+    minigunDrop = null;
+  }
+
+
+  // simulate grenades (simple physics + bounce)
+  {
+    const dt = 1 / TICK_HZ;
+    const grav = -18;
+    const groundY = 1.8;
+    const b = WORLD.bounds;
+
+    for (const gr of grenades) {
+      if (gr.exploded) continue;
+
+      // fuse detonation
+      if (t >= gr.fuseAt) {
+        gr.exploded = true;
+        explodeGrenade(gr, gr.x, gr.y, gr.z);
+        continue;
+      }
+
+      // integrate
+      gr.vy += grav * dt;
+      gr.x += gr.vx * dt;
+      gr.y += gr.vy * dt;
+      gr.z += gr.vz * dt;
+
+      const bounce = (getWeapon(gr.kind).bounce || 0.5);
+
+      // world bounds bounce
+      if (gr.x < b.minX) { gr.x = b.minX; gr.vx = Math.abs(gr.vx) * bounce; }
+      if (gr.x > b.maxX) { gr.x = b.maxX; gr.vx = -Math.abs(gr.vx) * bounce; }
+      if (gr.z < b.minZ) { gr.z = b.minZ; gr.vz = Math.abs(gr.vz) * bounce; }
+      if (gr.z > b.maxZ) { gr.z = b.maxZ; gr.vz = -Math.abs(gr.vz) * bounce; }
+
+      // ground collide
+      if (gr.y <= groundY) {
+        gr.y = groundY;
+        if (Math.abs(gr.vy) > 1.4) gr.vy = Math.abs(gr.vy) * bounce;
+        else gr.vy = 0;
+        gr.vx *= 0.94;
+        gr.vz *= 0.94;
+
+        // impact grenade detonates on first ground contact after arm
+        const gDef = getWeapon(gr.kind);
+        if (gDef.impact && t >= gr.armAt) {
+          gr.exploded = true;
+          explodeGrenade(gr, gr.x, gr.y, gr.z);
+          continue;
+        }
+      }
+    }
+
+    // prune
+    for (let i = grenades.length - 1; i >= 0; i--) {
+      if (grenades[i].exploded) grenades.splice(i, 1);
+    }
+  }
+
   for (const p of players.values()) {
     if (p.hp <= 0 && p.respawnAt && t >= p.respawnAt) respawn(p);
     if (p.hp > 0 && p.reloadUntil && t >= p.reloadUntil) { p.ammo = 12; p.reloadUntil = 0; }

@@ -203,6 +203,9 @@
             <option value="sniper">Sniper</option>
             <option value="fart">Fart gun</option>
             <option value="rocket">Rocket</option>
+            <option value="knife">Knife</option>
+            <option value="grenade_frag">Frag grenade</option>
+            <option value="grenade_impact">Impact grenade</option>
           </select>
         </div>
         <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
@@ -277,6 +280,19 @@
 
     <div id="btnWeaponPick"><div class="btnLabel"><div class="btnIcon">🔫</div></div></div>
 
+
+    <div id="btnPickup" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); left: calc(var(--pad) + var(--btn) + 10px); padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,0.18); background: rgba(255,220,120,0.16); color:#fff3c4; font-weight:900; letter-spacing:0.4px; pointer-events:auto; touch-action:none; display:none; z-index:30;">PICK UP</div>
+
+    <div id="mgHud" style="position:fixed; top:46px; left:50%; transform:translateX(-50%); z-index:110; display:none; gap:8px; align-items:center; pointer-events:none;">
+      <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.14); border-radius:999px; padding:6px 10px; font-weight:900; font-size:12px; color:#e6edf3;">MINIGUN</div>
+      <div style="width:140px; height:10px; background:rgba(255,255,255,0.10); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.12);">
+        <div id="mgAmmo" style="height:100%; width:100%; background:linear-gradient(90deg, rgba(120,255,160,0.85), rgba(80,220,120,0.85));"></div>
+      </div>
+      <div style="width:120px; height:10px; background:rgba(255,255,255,0.10); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.12);">
+        <div id="mgHeat" style="height:100%; width:0%; background:linear-gradient(90deg, rgba(255,200,80,0.85), rgba(255,80,80,0.85));"></div>
+      </div>
+    </div>
+
     <!-- Weapon picker modal -->
 
     <div id="scoreModal" style="position:fixed; inset:0; display:none; align-items:flex-end; justify-content:center; z-index:120; background: rgba(0,0,0,0.35);">
@@ -301,6 +317,9 @@
           <div class="wm-opt" data-weapon="sniper">🎯 Sniper</div>
           <div class="wm-opt" data-weapon="fart">💨 Fart Gun</div>
           <div class="wm-opt" data-weapon="rocket">🚀 Rocket</div>
+          <div class="wm-opt" data-weapon="knife">🔪 Knife</div>
+          <div class="wm-opt" data-weapon="grenade_frag">💣 Frag</div>
+          <div class="wm-opt" data-weapon="grenade_impact">💥 Impact</div>
         </div>
       </div>
     </div>
@@ -310,6 +329,7 @@
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
   <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+  <script src="weapons.js"></script>
   <script>
     const canvas = document.getElementById('renderCanvas');
     const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
@@ -438,6 +458,9 @@
           if (msg.t === 'fartPuff') spawnFartPuff(msg.to);
           if (msg.t === 'fartDot') spawnFartDot(msg.to, msg.dmg || 5);
           if (msg.t === 'explosion') spawnExplosion(msg);
+          if (msg.t === 'grenadeSpawn') onGrenadeSpawn(msg);
+          if (msg.t === 'slash') onSlashMsg(msg);
+          if (msg.t === 'pickup') showKill(`${msg.id} picked up ${msg.what}`);
           if (msg.t === 'dmg') onDamageMsg(msg);
           if (msg.t === 'snapSaved') {
             const url = `${location.origin}/snaps/${msg.file}`;
@@ -555,8 +578,56 @@
         const rel = (meP.reloadInMs || 0);
         document.getElementById('ammoText').textContent = rel > 0 ? `Reloading…` : `Ammo ${ammo}`;
 
+        // Minigun HUD
+        try {
+          const mgHud = document.getElementById('mgHud');
+          const mgAmmo = document.getElementById('mgAmmo');
+          const mgHeat = document.getElementById('mgHeat');
+          if (meP.powerWeapon === 'minigun') {
+            mgHud.style.display = 'flex';
+            const maxAmmo = (window.WEAPONS?.getWeapon('minigun')?.ammo) || 300;
+            const a = Math.max(0, Math.min(maxAmmo, meP.powerAmmo || 0));
+            mgAmmo.style.width = `${(a / maxAmmo) * 100}%`;
+            const h = Math.max(0, Math.min(1, meP.mgHeat || 0));
+            mgHeat.style.width = `${h * 100}%`;
+            if (meP.mgOverheat) mgHeat.style.filter = 'brightness(1.25) saturate(1.2)';
+            else mgHeat.style.filter = 'none';
+          } else {
+            mgHud.style.display = 'none';
+          }
+        } catch {}
+
+        // Pickup prompt
+        try {
+          const btnPickup = document.getElementById('btnPickup');
+          const pickups = (s.pickups || []);
+          let show = false;
+          let targetId = null;
+          if (btnPickup && meP && pickups.length) {
+            for (const it of pickups) {
+              if (it.type !== 'minigun') continue;
+              if (it.kind === 'pad' && (it.availInMs||0) > 0) continue;
+              if (it.kind === 'drop' && (it.expiresInMs||0) <= 0) continue;
+              const dx = (meP.x - it.x);
+              const dz = (meP.z - it.z);
+              const d = Math.hypot(dx, dz);
+              if (d <= 2.5) { show = true; targetId = it.id; break; }
+            }
+          }
+          if (btnPickup) {
+            btnPickup.style.display = show ? 'block' : 'none';
+            btnPickup.dataset.pickId = targetId || '';
+          }
+        } catch {}
+
         // Scope UI (sniper)
         updateScopeUI();
+
+        // Keep gun model in sync with current effective weapon (power weapon overrides selection).
+        try {
+          const eff = (meP.powerWeapon === 'minigun') ? 'minigun' : (document.getElementById('weapon')?.value || 'rifle');
+          if (fpRig?.setGun) fpRig.setGun(eff);
+        } catch {}
 
         // show spawn protection by tinting HP bar
         const inv = (meP.invulnInMs || 0);
@@ -1166,6 +1237,38 @@
           nozzle.position.set(0.02, 0.02, 0.62);
         }
 
+        // Minigun: barrel cluster + top box so it reads as a Gatling.
+        if (kind === 'minigun') {
+          const hub = BABYLON.MeshBuilder.CreateCylinder(`hub_${kind}`, { diameter: 0.10, height: 0.22, tessellation: 12 }, scene);
+          hub.material = metalM;
+          hub.parent = g;
+          hub.rotation.x = Math.PI / 2;
+          hub.position.set(0.02, 0.04, 0.52);
+
+          const barrels = [];
+          const n = 6;
+          for (let i = 0; i < n; i++) {
+            const a = (i / n) * Math.PI * 2;
+            const bx = Math.cos(a) * 0.05;
+            const by = Math.sin(a) * 0.05;
+            const b = BABYLON.MeshBuilder.CreateCylinder(`br_${kind}_${i}`, { diameter: 0.035, height: 0.38, tessellation: 10 }, scene);
+            b.material = metalM;
+            b.parent = g;
+            b.rotation.x = Math.PI / 2;
+            b.position.set(0.02 + bx, 0.04 + by, 0.62);
+            barrels.push(b);
+          }
+
+          const box = BABYLON.MeshBuilder.CreateBox(`bx_${kind}`, { width: 0.12, height: 0.10, depth: 0.18 }, scene);
+          box.material = accM;
+          box.parent = g;
+          box.position.set(-0.05, 0.12, 0.22);
+
+          // spin animation hook
+          g.metadata = g.metadata || {};
+          g.metadata._minigunBarrels = barrels;
+        }
+
         return g;
       }
 
@@ -1175,10 +1278,11 @@
         sniper: makeGunVariant('sniper'),
         rocket: makeGunVariant('rocket'),
         fart: makeGunVariant('fart'),
+        minigun: makeGunVariant('minigun'),
       };
 
       function setGun(kind) {
-        const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket') ? kind : 'rifle';
+        const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket' || kind === 'minigun') ? kind : 'rifle';
         for (const [name, node] of Object.entries(guns)) node.setEnabled(name === k);
       }
       // Default
@@ -1201,7 +1305,7 @@
       muzzleFlash.rotation.y = Math.PI; // face camera
       muzzleFlash.isVisible = false;
 
-      fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, muzzleFlash, setGun, _flashBaseSize: 0.18 };
+      fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, muzzleFlash, setGun, guns, _flashBaseSize: 0.18 };
       // Keep gun in sync with weapon selection.
       try { fpRig.setGun(document.getElementById('weapon')?.value); } catch {}
       return fpRig;
@@ -1957,6 +2061,29 @@ function showWinner(msg) {
       } catch {}
     }
 
+
+    // Grenade client-side sim (visual only)
+    const _grenades = new Map();
+    function onGrenadeSpawn(msg) {
+      try {
+        if (!scene) return;
+        const id = msg.id;
+        // simple sphere
+        const ball = BABYLON.MeshBuilder.CreateSphere('g_'+id, { diameter: 0.22, segments: 10 }, scene);
+        const mat = new BABYLON.StandardMaterial('gm_'+id, scene);
+        mat.diffuseColor = new BABYLON.Color3(0.18, 0.22, 0.26);
+        mat.emissiveColor = new BABYLON.Color3(0.03, 0.03, 0.03);
+        ball.material = mat;
+        ball.position.set(msg.x, msg.y, msg.z);
+        _grenades.set(id, { mesh: ball, vx: msg.vx, vy: msg.vy, vz: msg.vz, fuseAt: msg.fuseAt || (Date.now()+1200) });
+      } catch {}
+    }
+
+    function onSlashMsg(msg) {
+      // quick local feedback
+      try { flashReticle('hit'); } catch {}
+    }
+
 function spawnExplosion(msg) {
       try {
         const x = +msg.x, y = +msg.y, z = +msg.z;
@@ -2587,6 +2714,22 @@ function spawnDent(pos, normal, size, kind) {
         state.shoot = false;
       }
     });
+
+
+    // Pickup: tap to request pickup from nearest pad/drop
+    (() => {
+      const el = document.getElementById('btnPickup');
+      const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+      if (!el) return;
+      const act = (e) => {
+        prevent(e);
+        const pickId = el.dataset.pickId || '';
+        if (!pickId) return;
+        try { socket && socket.readyState === 1 && socket.send(JSON.stringify({ t:'pickup', id: pickId })); } catch {}
+      };
+      el.addEventListener('pointerdown', act, { passive:false });
+      el.addEventListener('touchstart', act, { passive:false });
+    })();
     holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
     // sprint removed
 
@@ -2913,7 +3056,45 @@ function spawnDent(pos, normal, size, kind) {
         if (gz < -0.001) fpRig.gunRoot.position.z += (-gz) * 0.18;
         else fpRig.gunRoot.position.z = 0;
       }
+      // Minigun barrel spin (cosmetic)
+      try {
+        const eff = (lastServerState && myId) ? (lastServerState.players.find(p=>p.id===myId)?.powerWeapon) : null;
+        if (eff === 'minigun' && fpRig?.guns?.minigun?.metadata?._minigunBarrels) {
+          const sp = (lastServerState.players.find(p=>p.id===myId)?.mgSpin || 0);
+          const rot = 0.35 + sp * 1.25;
+          for (const b of fpRig.guns.minigun.metadata._minigunBarrels) {
+            b.rotation.z += rot;
+          }
+        }
+      } catch {}
+
       // Screen shake disabled.
+
+      // Grenade visual sim (client-side only)
+      try {
+        if (!window.__lastGrenadeT) window.__lastGrenadeT = performance.now();
+        const now = performance.now();
+        const dt = Math.min(0.05, (now - window.__lastGrenadeT) / 1000);
+        window.__lastGrenadeT = now;
+        const grav = -18;
+        for (const [id, g] of _grenades.entries()) {
+          if (!g.mesh || g.mesh.isDisposed()) { _grenades.delete(id); continue; }
+          // fuse cleanup
+          if ((Date.now()) >= (g.fuseAt||0) + 200) { try{ g.mesh.dispose(); }catch{}; _grenades.delete(id); continue; }
+          g.vy += grav * dt;
+          g.mesh.position.x += g.vx * dt;
+          g.mesh.position.y += g.vy * dt;
+          g.mesh.position.z += g.vz * dt;
+          if (g.mesh.position.y <= 1.8) {
+            g.mesh.position.y = 1.8;
+            if (Math.abs(g.vy) > 1.4) g.vy = Math.abs(g.vy) * 0.55;
+            else g.vy = 0;
+            g.vx *= 0.94; g.vz *= 0.94;
+          }
+          g.mesh.rotation.y += 6 * dt;
+          g.mesh.rotation.x += 4 * dt;
+        }
+      } catch {}
 
       // Smooth remote players
       for (const [id, mesh] of players.entries()) {
