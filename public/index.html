@@ -1254,38 +1254,37 @@
         }
 
         if (kind === 'grenade_frag' || kind === 'grenade_impact') {
-          // Cartoon grenade: body + pin + lever / or canister for impact.
+          // Cartoon grenade: make it BIG + close so it never "disappears" on iPhone.
           const isImpact = (kind === 'grenade_impact');
+
           const bodyMesh = isImpact
-            ? BABYLON.MeshBuilder.CreateCylinder(`g_c_${kind}`, { diameter: 0.18, height: 0.26, tessellation: 12 }, scene)
-            : BABYLON.MeshBuilder.CreateSphere(`g_s_${kind}`, { diameter: 0.20, segments: 10 }, scene);
+            ? BABYLON.MeshBuilder.CreateCylinder(`g_c_${kind}`, { diameter: 0.24, height: 0.30, tessellation: 12 }, scene)
+            : BABYLON.MeshBuilder.CreateSphere(`g_s_${kind}`, { diameter: 0.26, segments: 12 }, scene);
           bodyMesh.material = isImpact ? toyOrangeMat : toyGreenMat;
           bodyMesh.parent = g;
           bodyMesh.rotation.x = Math.PI / 2;
-          bodyMesh.position.set(0.05, -0.03, 0.22);
+          bodyMesh.position.set(0.05, -0.07, 0.34);
 
-          const band = BABYLON.MeshBuilder.CreateBox(`g_band_${kind}`, { width:0.20, height:0.05, depth:0.06 }, scene);
+          const band = BABYLON.MeshBuilder.CreateBox(`g_band_${kind}`, { width:0.24, height:0.06, depth:0.08 }, scene);
           band.material = toyWhiteMat;
           band.parent = g;
-          band.position.set(0.05, 0.03, 0.22);
+          band.position.set(0.05, 0.01, 0.34);
 
-          const pin = BABYLON.MeshBuilder.CreateTorus(`g_pin_${kind}`, { diameter: 0.08, thickness: 0.012, tessellation: 12 }, scene);
+          const pin = BABYLON.MeshBuilder.CreateTorus(`g_pin_${kind}`, { diameter: 0.095, thickness: 0.014, tessellation: 14 }, scene);
           pin.material = toyYellowMat;
           pin.parent = g;
           pin.rotation.y = Math.PI / 2;
-          pin.position.set(0.12, 0.07, 0.18);
+          pin.position.set(0.14, 0.05, 0.28);
 
-          const lever = BABYLON.MeshBuilder.CreateBox(`g_lev_${kind}`, { width:0.02, height:0.08, depth:0.16 }, scene);
+          const lever = BABYLON.MeshBuilder.CreateBox(`g_lev_${kind}`, { width:0.022, height:0.10, depth:0.18 }, scene);
           lever.material = toyBlackMat;
           lever.parent = g;
-          lever.position.set(0.03, 0.06, 0.22);
-          lever.rotation.x = 0.25;
+          lever.position.set(0.03, 0.05, 0.34);
+          lever.rotation.x = 0.22;
 
-          // Held lower, closer to palm.
-          g.rotation.x = -0.10;
-          g.rotation.z = 0.15;
-          g.position.y -= 0.03;
-          g.position.z -= 0.10;
+          // Held low and short in hand.
+          g.rotation.x = -0.06;
+          g.rotation.z = 0.14;
 
           return g;
         }
@@ -2547,7 +2546,8 @@ function spawnDent(pos, normal, size, kind) {
       } else {
         segments.push([gunStart, new BABYLON.Vector3(s.ex, (s.sy || 1.8) - 0.2, s.ez)]);
       }
-      const weaponNoTracer = ((s.weapon || 'rifle') === 'rocket');
+      const wpn0 = (s.weapon || 'rifle');
+      const weaponNoTracer = (wpn0 === 'rocket' || wpn0.startsWith('grenade_'));
 
       // Use client-side picking so dents appear on ALL geometry (walls, blocks, floor, ceiling).
       function pickImpact(from, to) {
