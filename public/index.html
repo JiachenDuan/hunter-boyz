@@ -2595,6 +2595,9 @@ function spawnDent(pos, normal, size, kind) {
       const wpn0 = (s.weapon || 'rifle');
       const weaponNoTracer = (wpn0 === 'rocket' || wpn0.startsWith('grenade_') || wpn0 === 'knife');
 
+      // Knife shots: no tracers/lines/sparks. (Swing animation is handled elsewhere.)
+      const isKnife = (wpn0 === 'knife');
+
       // Use client-side picking so dents appear on ALL geometry (walls, blocks, floor, ceiling).
       function pickImpact(from, to) {
         try {
@@ -2668,12 +2671,12 @@ function spawnDent(pos, normal, size, kind) {
             for (const tr of s.traces) {
               const raw = new BABYLON.Vector3(tr.ex, (s.ey || (s.sy || 1.8) - 0.2), tr.ez);
               const hit = pickImpact(gunStart, raw);
-              if (wpn !== 'rocket' && !String(wpn).startsWith('grenade_')) spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
+              if (wpn !== 'rocket' && !String(wpn).startsWith('grenade_') && wpn !== 'knife') spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
             }
           } else {
             const raw = new BABYLON.Vector3(s.ex, (s.ey || (s.sy || 1.8) - 0.2), s.ez);
             const hit = pickImpact(gunStart, raw);
-            if (wpn !== 'rocket' && !String(wpn).startsWith('grenade_')) spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
+            if (wpn !== 'rocket' && !String(wpn).startsWith('grenade_') && wpn !== 'knife') spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
           }
         } catch {}
       }
@@ -2708,7 +2711,7 @@ function spawnDent(pos, normal, size, kind) {
           }, 55);
         }
         if (wpn === 'rocket') { try { SFX.whoosh(); } catch {} }
-        else if (wpn === 'knife') { try { SFX.shoot('rifle'); } catch {} }
+        else if (wpn === 'knife') { /* no gun sound */ }
         else SFX.shoot(wpn);
         if (s.hit) {
           showHitmarker();
