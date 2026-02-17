@@ -477,7 +477,24 @@
           if (msg.t === 'winner') showWinner(msg);
           if (msg.t === 'fartPuff') spawnFartPuff(msg.to);
           if (msg.t === 'fartDot') spawnFartDot(msg.to, msg.dmg || 5);
-          if (msg.t === 'explosion') spawnExplosion(msg);
+          if (msg.t === 'explosion') {
+            // If we have a matching grenade mesh nearby, delete it immediately so the timing feels right.
+            try {
+              if (msg.kind === 'grenade' && _grenades && _grenades.size) {
+                for (const [gid, g] of _grenades.entries()) {
+                  try {
+                    const m = g?.mesh;
+                    if (!m) continue;
+                    const dx = (m.position.x - msg.x);
+                    const dz = (m.position.z - msg.z);
+                    const d = Math.hypot(dx, dz);
+                    if (d < 1.2) { try { m.dispose(); } catch {} _grenades.delete(gid); }
+                  } catch {}
+                }
+              }
+            } catch {}
+            spawnExplosion(msg);
+          }
           if (msg.t === 'grenadeSpawn') onGrenadeSpawn(msg);
           if (msg.t === 'slash') onSlashMsg(msg);
           if (msg.t === 'pickup') showKill(`${msg.id} picked up ${msg.what}`);
@@ -2228,14 +2245,23 @@ function showWinner(msg) {
       try {
         if (!scene) return;
         const id = msg.id;
-        // simple sphere
-        const ball = BABYLON.MeshBuilder.CreateSphere('g_'+id, { diameter: 0.22, segments: 10 }, scene);
+        // bright sphere so it's obvious on iPhone
+        const ball = BABYLON.MeshBuilder.CreateSphere('g_'+id, { diameter: 0.28, segments: 12 }, scene);
         const mat = new BABYLON.StandardMaterial('gm_'+id, scene);
-        mat.diffuseColor = new BABYLON.Color3(0.18, 0.22, 0.26);
-        mat.emissiveColor = new BABYLON.Color3(0.03, 0.03, 0.03);
+        const isImpact = String(msg.kind||'').includes('impact');
+        mat.diffuseColor = isImpact ? new BABYLON.Color3(0.98, 0.55, 0.18) : new BABYLON.Color3(0.25, 0.92, 0.45);
+        mat.emissiveColor = isImpact ? new BABYLON.Color3(0.14, 0.06, 0.02) : new BABYLON.Color3(0.03, 0.10, 0.05);
+        mat.specularColor = new BABYLON.Color3(0.01,0.01,0.01);
         ball.material = mat;
         ball.position.set(msg.x, msg.y, msg.z);
-        _grenades.set(id, { mesh: ball, vx: msg.vx, vy: msg.vy, vz: msg.vz, fuseAt: msg.fuseAt || (Date.now()+1200) });
+
+        _grenades.set(id, {
+          mesh: ball,
+          vx: +msg.vx || 0,
+          vy: +msg.vy || 0,
+          vz: +msg.vz || 0,
+          fuseAt: (typeof msg.fuseAt === 'number') ? msg.fuseAt : (Date.now() + 1200),
+        });
       } catch {}
     }
 
@@ -2571,14 +2597,45 @@ function spawnDent(pos, normal, size, kind) {
         return { p: to, n: null };
       }
 
-      // Tracers (skip for rocket; rocket has a projectile)
+      // Tracers / projectiles
       if (!weaponNoTracer) {
+        // Hitscan tracer
         for (const pts of segments) {
           const lines = BABYLON.MeshBuilder.CreateLines('shot', { points: pts }, scene);
           lines.color = color;
           lines.alpha = 0.9;
           setTimeout(() => lines.dispose(), 260);
         }
+      } else if (wpn0.startsWith('grenade_')) {
+        // Grenade throw arc (visual only): curved line, not hitscan.
+        try {
+          const yaw = (typeof s.yaw === 'number') ? s.yaw : 0;
+          const pitch = (typeof s.pitch === 'number') ? s.pitch : 0;
+          const dirX = Math.sin(yaw) * Math.cos(pitch);
+          const dirY = Math.sin(pitch);
+          const dirZ = Math.cos(yaw) * Math.cos(pitch);
+          const speed = 16;
+          const vx = dirX * speed;
+          const vy0 = (dirY * speed) + 3.5;
+          const vz = dirZ * speed;
+          const grav = -18;
+
+          const pts = [];
+          const steps = 18;
+          const totalT = 0.85;
+          for (let i = 0; i <= steps; i++) {
+            const tt = (i / steps) * totalT;
+            const px = gunStart.x + vx * tt;
+            const py = gunStart.y + vy0 * tt + 0.5 * grav * tt * tt;
+            const pz = gunStart.z + vz * tt;
+            pts.push(new BABYLON.Vector3(px, Math.max(1.82, py), pz));
+          }
+
+          const arc = BABYLON.MeshBuilder.CreateLines('gArc', { points: pts }, scene);
+          arc.color = (wpn0 === 'grenade_impact') ? new BABYLON.Color3(1.0, 0.55, 0.18) : new BABYLON.Color3(0.25, 0.92, 0.45);
+          arc.alpha = 0.95;
+          setTimeout(() => { try { arc.dispose(); } catch {} }, 320);
+        } catch {}
       }
 
       // Bullet marks disabled (no dents). Keep sparks for feedback.
