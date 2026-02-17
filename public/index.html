@@ -1399,67 +1399,160 @@
         grip.position.set(0.05, -0.08, 0.02);
         grip.rotation.x = 0.25;
 
-        // Sniper: CS-ish "real gun" silhouette (big scope + bipod + bolt)
+        // Sniper: CS-style realistic rifle (large scope, long barrel, picatinny mount, bolt, bipod)
         if (kind === 'sniper') {
-          // Bigger scope
-          const scope = BABYLON.MeshBuilder.CreateCylinder(`sc_${kind}`, { diameter:0.085, height:0.36, tessellation: 14 }, scene);
-          scope.material = gunMat;
+          // Dark steel material for sniper-specific parts
+          const sniperDarkMat = new BABYLON.StandardMaterial(`sniperDark_${kind}`, scene);
+          sniperDarkMat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.07);
+          sniperDarkMat.emissiveColor = new BABYLON.Color3(0.005, 0.005, 0.006);
+          sniperDarkMat.specularColor = new BABYLON.Color3(0.15, 0.15, 0.18);
+          sniperDarkMat.specularPower = 80;
+
+          // Matte stock material (polymer look)
+          const sniperStockMat = new BABYLON.StandardMaterial(`sniperStock_${kind}`, scene);
+          sniperStockMat.diffuseColor = new BABYLON.Color3(0.04, 0.04, 0.045);
+          sniperStockMat.emissiveColor = new BABYLON.Color3(0.002, 0.002, 0.002);
+          sniperStockMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+          sniperStockMat.specularPower = 8;
+
+          // Scope body (large, realistic tube)
+          const scope = BABYLON.MeshBuilder.CreateCylinder(`sc_${kind}`, { diameter:0.10, height:0.42, tessellation: 16 }, scene);
+          scope.material = sniperDarkMat;
           scope.parent = g;
           scope.rotation.x = Math.PI / 2;
-          scope.position.set(0.02, 0.08, 0.40);
+          scope.position.set(0.02, 0.095, 0.38);
 
-          const scopeFront = BABYLON.MeshBuilder.CreateCylinder(`scf_${kind}`, { diameter:0.10, height:0.06, tessellation: 14 }, scene);
-          scopeFront.material = gunMat;
+          // Scope front bell (flared objective lens)
+          const scopeFront = BABYLON.MeshBuilder.CreateCylinder(`scf_${kind}`, {
+            diameterTop: 0.13, diameterBottom: 0.10, height: 0.07, tessellation: 16
+          }, scene);
+          scopeFront.material = sniperDarkMat;
           scopeFront.parent = g;
           scopeFront.rotation.x = Math.PI / 2;
-          scopeFront.position.set(0.02, 0.08, 0.58);
+          scopeFront.position.set(0.02, 0.095, 0.62);
 
-          const scopeRear = BABYLON.MeshBuilder.CreateCylinder(`scr_${kind}`, { diameter:0.095, height:0.06, tessellation: 14 }, scene);
-          scopeRear.material = gunMat;
+          // Scope front lens (blue tint)
+          const scopeLens = BABYLON.MeshBuilder.CreateCylinder(`scl_${kind}`, { diameter: 0.11, height: 0.008, tessellation: 16 }, scene);
+          const lensMat = new BABYLON.StandardMaterial(`scopeLensMat_${kind}`, scene);
+          lensMat.diffuseColor = new BABYLON.Color3(0.15, 0.20, 0.40);
+          lensMat.emissiveColor = new BABYLON.Color3(0.03, 0.04, 0.10);
+          lensMat.specularColor = new BABYLON.Color3(0.6, 0.6, 0.8);
+          lensMat.specularPower = 120;
+          lensMat.alpha = 0.7;
+          scopeLens.material = lensMat;
+          scopeLens.parent = g;
+          scopeLens.rotation.x = Math.PI / 2;
+          scopeLens.position.set(0.02, 0.095, 0.655);
+
+          // Scope rear eyepiece (smaller)
+          const scopeRear = BABYLON.MeshBuilder.CreateCylinder(`scr_${kind}`, { diameter:0.08, height:0.06, tessellation: 16 }, scene);
+          scopeRear.material = sniperDarkMat;
           scopeRear.parent = g;
           scopeRear.rotation.x = Math.PI / 2;
-          scopeRear.position.set(0.02, 0.08, 0.22);
+          scopeRear.position.set(0.02, 0.095, 0.14);
 
-          // Scope mount
-          const mount = BABYLON.MeshBuilder.CreateBox(`scm_${kind}`, { width:0.10, height:0.03, depth:0.20 }, scene);
-          mount.material = accentMat;
-          mount.parent = g;
-          mount.position.set(0.02, 0.05, 0.40);
+          // Scope adjustment turrets (elevation + windage knobs)
+          const turretTop = BABYLON.MeshBuilder.CreateCylinder(`sct_${kind}`, { diameter:0.035, height:0.04, tessellation: 10 }, scene);
+          turretTop.material = knifeBladeMat;
+          turretTop.parent = g;
+          turretTop.position.set(0.02, 0.15, 0.38);
 
-          // Bolt handle
-          const bolt = BABYLON.MeshBuilder.CreateCylinder(`bl_${kind}`, { diameter:0.018, height:0.10, tessellation: 10 }, scene);
-          bolt.material = knifeBladeMat; // shiny metal
+          const turretSide = BABYLON.MeshBuilder.CreateCylinder(`scs_${kind}`, { diameter:0.03, height:0.035, tessellation: 10 }, scene);
+          turretSide.material = knifeBladeMat;
+          turretSide.parent = g;
+          turretSide.rotation.z = Math.PI / 2;
+          turretSide.position.set(0.07, 0.095, 0.38);
+
+          // Picatinny rail / scope mount (two rings + rail)
+          const rail = BABYLON.MeshBuilder.CreateBox(`scr2_${kind}`, { width:0.06, height:0.02, depth:0.30 }, scene);
+          rail.material = sniperDarkMat;
+          rail.parent = g;
+          rail.position.set(0.02, 0.055, 0.38);
+
+          const ring1 = BABYLON.MeshBuilder.CreateTorus(`sr1_${kind}`, { diameter:0.11, thickness:0.015, tessellation: 16 }, scene);
+          ring1.material = sniperDarkMat;
+          ring1.parent = g;
+          ring1.rotation.x = Math.PI / 2;
+          ring1.position.set(0.02, 0.095, 0.26);
+
+          const ring2 = BABYLON.MeshBuilder.CreateTorus(`sr2_${kind}`, { diameter:0.11, thickness:0.015, tessellation: 16 }, scene);
+          ring2.material = sniperDarkMat;
+          ring2.parent = g;
+          ring2.rotation.x = Math.PI / 2;
+          ring2.position.set(0.02, 0.095, 0.50);
+
+          // Bolt handle (longer, angled)
+          const bolt = BABYLON.MeshBuilder.CreateCylinder(`bl_${kind}`, { diameter:0.016, height:0.12, tessellation: 10 }, scene);
+          bolt.material = knifeBladeMat;
           bolt.parent = g;
           bolt.rotation.z = Math.PI / 2;
-          bolt.position.set(0.09, 0.00, 0.10);
+          bolt.position.set(0.10, 0.005, 0.12);
 
-          const boltKnob = BABYLON.MeshBuilder.CreateSphere(`blk_${kind}`, { diameter:0.03, segments: 10 }, scene);
+          const boltKnob = BABYLON.MeshBuilder.CreateSphere(`blk_${kind}`, { diameter:0.032, segments: 10 }, scene);
           boltKnob.material = knifeBladeMat;
           boltKnob.parent = g;
-          boltKnob.position.set(0.14, 0.00, 0.10);
+          boltKnob.position.set(0.16, 0.005, 0.12);
 
-          // Bipod (simple V)
-          const leg1 = BABYLON.MeshBuilder.CreateCylinder(`bp1_${kind}`, { diameter:0.012, height:0.20, tessellation: 10 }, scene);
-          leg1.material = gunMat;
+          // Bolt root (where it meets receiver)
+          const boltRoot = BABYLON.MeshBuilder.CreateBox(`blr_${kind}`, { width:0.03, height:0.025, depth:0.06 }, scene);
+          boltRoot.material = sniperDarkMat;
+          boltRoot.parent = g;
+          boltRoot.position.set(0.06, 0.005, 0.12);
+
+          // Bipod (folding-style, two legs with feet)
+          const bipodMount = BABYLON.MeshBuilder.CreateBox(`bpm_${kind}`, { width:0.04, height:0.02, depth:0.04 }, scene);
+          bipodMount.material = sniperDarkMat;
+          bipodMount.parent = g;
+          bipodMount.position.set(0.02, -0.06, 0.68);
+
+          const leg1 = BABYLON.MeshBuilder.CreateCylinder(`bp1_${kind}`, { diameter:0.014, height:0.24, tessellation: 10 }, scene);
+          leg1.material = sniperDarkMat;
           leg1.parent = g;
-          leg1.rotation.z = 0.55;
-          leg1.position.set(-0.03, -0.09, 0.64);
+          leg1.rotation.z = 0.50;
+          leg1.position.set(-0.04, -0.14, 0.68);
 
-          const leg2 = BABYLON.MeshBuilder.CreateCylinder(`bp2_${kind}`, { diameter:0.012, height:0.20, tessellation: 10 }, scene);
-          leg2.material = gunMat;
+          const leg2 = BABYLON.MeshBuilder.CreateCylinder(`bp2_${kind}`, { diameter:0.014, height:0.24, tessellation: 10 }, scene);
+          leg2.material = sniperDarkMat;
           leg2.parent = g;
-          leg2.rotation.z = -0.55;
-          leg2.position.set(0.07, -0.09, 0.64);
+          leg2.rotation.z = -0.50;
+          leg2.position.set(0.08, -0.14, 0.68);
 
-          // Longer barrel + thinner look
+          // Bipod feet (rubber tips)
+          const foot1 = BABYLON.MeshBuilder.CreateSphere(`bpf1_${kind}`, { diameter:0.025, segments: 8 }, scene);
+          foot1.material = sniperStockMat;
+          foot1.parent = g;
+          foot1.position.set(-0.09, -0.24, 0.68);
+
+          const foot2 = BABYLON.MeshBuilder.CreateSphere(`bpf2_${kind}`, { diameter:0.025, segments: 8 }, scene);
+          foot2.material = sniperStockMat;
+          foot2.parent = g;
+          foot2.position.set(0.13, -0.24, 0.68);
+
+          // Longer barrel stretch + heavy barrel profile
           try {
-            barrel.scaling.z = 1.35;
+            barrel.scaling.z = 1.45;
+            barrel.scaling.x = 1.1;
+            barrel.scaling.y = 1.1;
           } catch {}
 
-          // Make sniper less toy-colored: darker overall.
-          receiver.material = gunMat;
-          stock.material = gunMat;
-          grip.material = gripMat;
+          // Muzzle brake (slotted tip)
+          const muzzleBrake = BABYLON.MeshBuilder.CreateCylinder(`mb_${kind}`, { diameter:0.055, height:0.08, tessellation: 12 }, scene);
+          muzzleBrake.material = sniperDarkMat;
+          muzzleBrake.parent = g;
+          muzzleBrake.rotation.x = Math.PI / 2;
+          muzzleBrake.position.set(0.02, 0.00, 0.24 + barrelLen * 1.45 / 2 + barrelLen * 1.45 / 2 + 0.04);
+
+          // Cheek riser on stock
+          const cheekRiser = BABYLON.MeshBuilder.CreateBox(`cr_${kind}`, { width:0.07, height:0.03, depth:0.10 }, scene);
+          cheekRiser.material = sniperStockMat;
+          cheekRiser.parent = g;
+          cheekRiser.position.set(0.02, 0.03, -0.14);
+
+          // Override all materials to dark tactical finish
+          receiver.material = sniperDarkMat;
+          barrel.material = sniperDarkMat;
+          stock.material = sniperStockMat;
+          grip.material = sniperStockMat;
         }
 
         // Shotgun pump
@@ -2685,8 +2778,16 @@ function spawnDent(pos, normal, size, kind) {
 
       const segments = [];
       if (Array.isArray(s.traces) && s.traces.length) {
-        for (const tr of s.traces) {
-          segments.push([gunStart, new BABYLON.Vector3(tr.ex, (s.sy || 1.8) - 0.2, tr.ez)]);
+        // Shotgun: draw only ONE tracer to the average endpoint (avoids visual clutter)
+        if ((s.weapon || 'rifle') === 'shotgun') {
+          let ax = 0, az = 0;
+          for (const tr of s.traces) { ax += tr.ex; az += tr.ez; }
+          ax /= s.traces.length; az /= s.traces.length;
+          segments.push([gunStart, new BABYLON.Vector3(ax, (s.sy || 1.8) - 0.2, az)]);
+        } else {
+          for (const tr of s.traces) {
+            segments.push([gunStart, new BABYLON.Vector3(tr.ex, (s.sy || 1.8) - 0.2, tr.ez)]);
+          }
         }
       } else {
         segments.push([gunStart, new BABYLON.Vector3(s.ex, (s.sy || 1.8) - 0.2, s.ez)]);
