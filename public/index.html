@@ -1262,56 +1262,75 @@
         const gripMatLocal = toy[kind]?.grip || gripM;
 
         if (kind === 'knife') {
-          // Cartoon dagger: shorter + chunkier so it reads well and doesn't look like a weird plank.
-          const handle = BABYLON.MeshBuilder.CreateBox(`k_h_${kind}`, { width:0.07, height:0.07, depth:0.16 }, scene);
+          // CS-ish knife: longer blade, clear guard, black handle, metallic shine.
+          // Built from simple primitives (no assets).
+
+          // Handle
+          const handle = BABYLON.MeshBuilder.CreateBox(`k_h_${kind}`, { width:0.06, height:0.06, depth:0.18 }, scene);
           handle.material = knifeHandleMat;
           handle.parent = g;
-          handle.position.set(0.04, -0.06, 0.08);
+          handle.position.set(0.05, -0.06, 0.04);
 
-          const pommel = BABYLON.MeshBuilder.CreateSphere(`k_p_${kind}`, { diameter: 0.06, segments: 10 }, scene);
+          // Grip ridges
+          for (let i = 0; i < 4; i++) {
+            const ridge = BABYLON.MeshBuilder.CreateBox(`k_r_${kind}_${i}`, { width:0.062, height:0.008, depth:0.02 }, scene);
+            ridge.material = knifeAccentMat;
+            ridge.parent = g;
+            ridge.position.set(0.05, -0.035, 0.01 + i * 0.04);
+          }
+
+          // Pommel
+          const pommel = BABYLON.MeshBuilder.CreateCylinder(`k_p_${kind}`, { diameter: 0.045, height: 0.018, tessellation: 12 }, scene);
           pommel.material = knifeAccentMat;
           pommel.parent = g;
-          pommel.position.set(0.04, -0.05, -0.02);
+          pommel.rotation.x = Math.PI / 2;
+          pommel.position.set(0.05, -0.06, -0.06);
 
-          const guard = BABYLON.MeshBuilder.CreateBox(`k_g_${kind}`, { width:0.12, height:0.025, depth:0.04 }, scene);
+          // Guard
+          const guard = BABYLON.MeshBuilder.CreateBox(`k_g_${kind}`, { width:0.12, height:0.02, depth:0.04 }, scene);
           guard.material = knifeAccentMat;
           guard.parent = g;
-          guard.position.set(0.04, -0.03, 0.16);
+          guard.position.set(0.05, -0.04, 0.14);
 
-          const blade = BABYLON.MeshBuilder.CreateBox(`k_b_${kind}`, { width:0.022, height:0.085, depth:0.34 }, scene);
-          blade.material = knifeBladeMat;
-          blade.parent = g;
-          blade.position.set(0.04, 0.01, 0.36);
+          // Blade: slight taper using 3 segments
+          const b1 = BABYLON.MeshBuilder.CreateBox(`k_b1_${kind}`, { width:0.020, height:0.055, depth:0.18 }, scene);
+          b1.material = knifeBladeMat;
+          b1.parent = g;
+          b1.position.set(0.05, -0.01, 0.28);
 
-          const spine = BABYLON.MeshBuilder.CreateBox(`k_sp_${kind}`, { width:0.010, height:0.030, depth:0.32 }, scene);
+          const b2 = BABYLON.MeshBuilder.CreateBox(`k_b2_${kind}`, { width:0.018, height:0.050, depth:0.18 }, scene);
+          b2.material = knifeBladeMat;
+          b2.parent = g;
+          b2.position.set(0.05, 0.00, 0.44);
+
+          const b3 = BABYLON.MeshBuilder.CreateBox(`k_b3_${kind}`, { width:0.014, height:0.040, depth:0.16 }, scene);
+          b3.material = knifeBladeMat;
+          b3.parent = g;
+          b3.position.set(0.05, 0.01, 0.59);
+
+          // Spine ridge
+          const spine = BABYLON.MeshBuilder.CreateBox(`k_sp_${kind}`, { width:0.010, height:0.018, depth:0.50 }, scene);
           spine.material = knifeAccentMat;
           spine.parent = g;
-          spine.position.set(0.04, 0.05, 0.34);
+          spine.position.set(0.05, 0.03, 0.42);
 
-
-          // Tip (taper)
-          const tip = BABYLON.MeshBuilder.CreateCylinder(`k_t_${kind}`, { height:0.09, diameterTop:0.001, diameterBottom:0.045, tessellation: 10 }, scene);
+          // Tip
+          const tip = BABYLON.MeshBuilder.CreateCylinder(`k_t_${kind}`, { height:0.10, diameterTop:0.001, diameterBottom:0.030, tessellation: 12 }, scene);
           tip.material = knifeBladeMat;
           tip.parent = g;
           tip.rotation.x = Math.PI / 2;
-          tip.position.set(0.04, 0.01, 0.52);
+          tip.position.set(0.05, 0.01, 0.72);
 
-          // Accent stripe
-          const stripe = BABYLON.MeshBuilder.CreateBox(`k_s_${kind}`, { width:0.032, height:0.01, depth:0.14 }, scene);
-          stripe.material = knifeAccentMat;
-          stripe.parent = g;
-          stripe.position.set(0.04, 0.05, 0.32);
+          // Base pose: right-side CS feel
+          g.rotation.x = -0.10;
+          g.rotation.z = -0.22;
+          g.position.x += 0.08;
+          g.position.y -= 0.04;
+          g.position.z -= 0.03;
 
-          // Position/tilt in hand
-          g.rotation.x = -0.18;
-          g.rotation.z = 0.15;
-          g.position.y -= 0.03;
-          g.position.z -= 0.04;
-
-          // swing animation hook
+          // stab animation hook
           g.metadata = g.metadata || {};
-          g.metadata._swing = 0;
-          g.metadata._swingVel = 0;
+          g.metadata._stab = 0;
 
           return g;
         }
@@ -3357,11 +3376,11 @@ function spawnDent(pos, normal, size, kind) {
           const baseY = -0.03;
           const baseZ = -0.04;
 
-          // thrust forward like a hand holding a knife
-          k.rotation.x = baseRotX - a * 0.10;
-          k.rotation.z = baseRotZ + a * 0.06;
-          k.position.y = baseY - a * 0.01;
-          k.position.z = baseZ + a * 0.22;
+          // CS-ish thrust forward
+          k.rotation.x = baseRotX - a * 0.18;
+          k.rotation.z = baseRotZ + a * 0.12;
+          k.position.y = baseY + a * 0.02;
+          k.position.z = baseZ + a * 0.30;
         }
       } catch {}
 
