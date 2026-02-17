@@ -2581,7 +2581,7 @@ function spawnDent(pos, normal, size, kind) {
         segments.push([gunStart, new BABYLON.Vector3(s.ex, (s.sy || 1.8) - 0.2, s.ez)]);
       }
       const wpn0 = (s.weapon || 'rifle');
-      const weaponNoTracer = (wpn0 === 'rocket' || wpn0.startsWith('grenade_'));
+      const weaponNoTracer = (wpn0 === 'rocket' || wpn0.startsWith('grenade_') || wpn0 === 'knife');
 
       // Use client-side picking so dents appear on ALL geometry (walls, blocks, floor, ceiling).
       function pickImpact(from, to) {
@@ -2643,6 +2643,16 @@ function spawnDent(pos, normal, size, kind) {
           arc.color = (wpn0 === 'grenade_impact') ? new BABYLON.Color3(1.0, 0.55, 0.18) : new BABYLON.Color3(0.25, 0.92, 0.45);
           arc.alpha = 0.95;
           setTimeout(() => { try { arc.dispose(); } catch {} }, 320);
+        } catch {}
+      } else if (wpn0 === 'knife') {
+        // Knife: no tracer lines; just a quick slash hint near center.
+        try {
+          const p1 = new BABYLON.Vector3(gunStart.x - 0.08, gunStart.y + 0.02, gunStart.z + 0.20);
+          const p2 = new BABYLON.Vector3(gunStart.x + 0.08, gunStart.y + 0.06, gunStart.z + 0.55);
+          const slash = BABYLON.MeshBuilder.CreateLines('kSlash', { points: [p1, p2] }, scene);
+          slash.color = new BABYLON.Color3(0.92, 0.92, 0.95);
+          slash.alpha = 0.9;
+          setTimeout(() => { try { slash.dispose(); } catch {} }, 140);
         } catch {}
       }
 
