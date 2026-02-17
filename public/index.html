@@ -1240,7 +1240,7 @@
         // Minigun: barrel cluster + top box so it reads as a Gatling.
         if (kind === 'minigun') {
           const hub = BABYLON.MeshBuilder.CreateCylinder(`hub_${kind}`, { diameter: 0.10, height: 0.22, tessellation: 12 }, scene);
-          hub.material = metalM;
+          hub.material = bodyM;
           hub.parent = g;
           hub.rotation.x = Math.PI / 2;
           hub.position.set(0.02, 0.04, 0.52);
@@ -1252,7 +1252,7 @@
             const bx = Math.cos(a) * 0.05;
             const by = Math.sin(a) * 0.05;
             const b = BABYLON.MeshBuilder.CreateCylinder(`br_${kind}_${i}`, { diameter: 0.035, height: 0.38, tessellation: 10 }, scene);
-            b.material = metalM;
+            b.material = bodyM;
             b.parent = g;
             b.rotation.x = Math.PI / 2;
             b.position.set(0.02 + bx, 0.04 + by, 0.62);
@@ -2420,22 +2420,19 @@ function spawnDent(pos, normal, size, kind) {
         }
       }
 
-      // Dents: only on world impacts (not when you hit a player)
+      // Bullet marks disabled (no dents). Keep sparks for feedback.
       if (!s.hit) {
         try {
           const wpn = (s.weapon || 'rifle');
-          const dentSize = (wpn === 'rocket') ? 1.95 : (wpn === 'shotgun' ? 0.26 : 0.22);
           if (Array.isArray(s.traces) && s.traces.length) {
             for (const tr of s.traces) {
               const raw = new BABYLON.Vector3(tr.ex, (s.ey || (s.sy || 1.8) - 0.2), tr.ez);
               const hit = pickImpact(gunStart, raw);
-              spawnDent(hit.p, hit.n, dentSize, wpn);
               if (wpn !== 'rocket') spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
             }
           } else {
             const raw = new BABYLON.Vector3(s.ex, (s.ey || (s.sy || 1.8) - 0.2), s.ez);
             const hit = pickImpact(gunStart, raw);
-            spawnDent(hit.p, hit.n, dentSize, wpn);
             if (wpn !== 'rocket') spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
           }
         } catch {}
