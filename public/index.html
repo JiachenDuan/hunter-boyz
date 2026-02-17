@@ -3376,7 +3376,16 @@ function spawnDent(pos, normal, size, kind) {
           }
 
           const wSel = document.getElementById('weapon')?.value;
-          const weapon = (wSel === 'shotgun' || wSel === 'sniper' || wSel === 'fart' || wSel === 'rocket') ? wSel : 'rifle';
+          const weapon = (
+            wSel === 'shotgun' ||
+            wSel === 'sniper' ||
+            wSel === 'fart' ||
+            wSel === 'rocket' ||
+            wSel === 'knife' ||
+            wSel === 'grenade_frag' ||
+            wSel === 'grenade_impact' ||
+            wSel === 'minigun'
+          ) ? wSel : 'rifle';
 
           const autoReload = !!document.getElementById('autoReload')?.checked;
 
