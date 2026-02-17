@@ -1197,6 +1197,26 @@
       toyBlackMat.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.012);
       toyBlackMat.specularColor = new BABYLON.Color3(0.01, 0.01, 0.01);
 
+
+      // Knife materials (more realistic)
+      const knifeBladeMat = new BABYLON.StandardMaterial('knifeBladeMat', scene);
+      knifeBladeMat.diffuseColor = new BABYLON.Color3(0.80, 0.82, 0.86);
+      knifeBladeMat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.025);
+      knifeBladeMat.specularColor = new BABYLON.Color3(0.85, 0.85, 0.90);
+      knifeBladeMat.specularPower = 96;
+
+      const knifeHandleMat = new BABYLON.StandardMaterial('knifeHandleMat', scene);
+      knifeHandleMat.diffuseColor = new BABYLON.Color3(0.10, 0.10, 0.11);
+      knifeHandleMat.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.012);
+      knifeHandleMat.specularColor = new BABYLON.Color3(0.08, 0.08, 0.09);
+      knifeHandleMat.specularPower = 24;
+
+      const knifeAccentMat = new BABYLON.StandardMaterial('knifeAccentMat', scene);
+      knifeAccentMat.diffuseColor = new BABYLON.Color3(0.22, 0.22, 0.24);
+      knifeAccentMat.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.012);
+      knifeAccentMat.specularColor = new BABYLON.Color3(0.25, 0.25, 0.28);
+      knifeAccentMat.specularPower = 48;
+
       // Fart gun skin ("minion" vibe): bright yellow + green accents
       const fartBodyMat = new BABYLON.StandardMaterial('fartBodyMat', scene);
       fartBodyMat.diffuseColor = new BABYLON.Color3(1.00, 0.85, 0.18);
@@ -1244,35 +1264,41 @@
         if (kind === 'knife') {
           // Cartoon dagger: shorter + chunkier so it reads well and doesn't look like a weird plank.
           const handle = BABYLON.MeshBuilder.CreateBox(`k_h_${kind}`, { width:0.07, height:0.07, depth:0.16 }, scene);
-          handle.material = toyBlackMat;
+          handle.material = knifeHandleMat;
           handle.parent = g;
           handle.position.set(0.04, -0.06, 0.08);
 
           const pommel = BABYLON.MeshBuilder.CreateSphere(`k_p_${kind}`, { diameter: 0.06, segments: 10 }, scene);
-          pommel.material = toyBlueMat;
+          pommel.material = knifeAccentMat;
           pommel.parent = g;
           pommel.position.set(0.04, -0.05, -0.02);
 
           const guard = BABYLON.MeshBuilder.CreateBox(`k_g_${kind}`, { width:0.12, height:0.025, depth:0.04 }, scene);
-          guard.material = toyWhiteMat;
+          guard.material = knifeAccentMat;
           guard.parent = g;
           guard.position.set(0.04, -0.03, 0.16);
 
-          const blade = BABYLON.MeshBuilder.CreateBox(`k_b_${kind}`, { width:0.028, height:0.095, depth:0.30 }, scene);
-          blade.material = toyWhiteMat;
+          const blade = BABYLON.MeshBuilder.CreateBox(`k_b_${kind}`, { width:0.022, height:0.085, depth:0.34 }, scene);
+          blade.material = knifeBladeMat;
           blade.parent = g;
           blade.position.set(0.04, 0.01, 0.36);
 
+          const spine = BABYLON.MeshBuilder.CreateBox(`k_sp_${kind}`, { width:0.010, height:0.030, depth:0.32 }, scene);
+          spine.material = knifeAccentMat;
+          spine.parent = g;
+          spine.position.set(0.04, 0.05, 0.34);
+
+
           // Tip (taper)
           const tip = BABYLON.MeshBuilder.CreateCylinder(`k_t_${kind}`, { height:0.09, diameterTop:0.001, diameterBottom:0.045, tessellation: 10 }, scene);
-          tip.material = toyWhiteMat;
+          tip.material = knifeBladeMat;
           tip.parent = g;
           tip.rotation.x = Math.PI / 2;
           tip.position.set(0.04, 0.01, 0.52);
 
           // Accent stripe
           const stripe = BABYLON.MeshBuilder.CreateBox(`k_s_${kind}`, { width:0.032, height:0.01, depth:0.14 }, scene);
-          stripe.material = toyRedMat;
+          stripe.material = knifeAccentMat;
           stripe.parent = g;
           stripe.position.set(0.04, 0.05, 0.32);
 
