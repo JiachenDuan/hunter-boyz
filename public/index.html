@@ -2699,7 +2699,7 @@ function spawnDent(pos, normal, size, kind) {
             const k = fpRig?.guns?.knife;
             if (k) {
               k.metadata = k.metadata || {};
-              k.metadata._swing = 1.0;
+              k.metadata._stab = 1.0;
             }
           } catch {}
         } else if (fpRig?.muzzleFlash && fpRig._flashBaseSize) {
@@ -3317,19 +3317,25 @@ function spawnDent(pos, normal, size, kind) {
             b.rotation.z += rot;
           }
         }
-      } catch {}
-
-      // Knife swing (cosmetic)
+      } catch {}      // Knife stab (cosmetic)
       try {
         const k = fpRig?.guns?.knife;
         if (k && k.isEnabled && k.metadata) {
-          k.metadata._swing = (k.metadata._swing || 0) * 0.82;
-          const amt = k.metadata._swing || 0;
-          // quick forward/down slash
-          k.rotation.x = -0.18 + amt * 0.85;
-          k.rotation.z = 0.15 + amt * 0.35;
-          k.position.y = (-0.03) - amt * 0.06;
-          k.position.z = (-0.04) + amt * 0.06;
+          // decay
+          k.metadata._stab = (k.metadata._stab || 0) * 0.78;
+          const a = k.metadata._stab || 0;
+
+          // base pose (matches makeGunVariant knife)
+          const baseRotX = -0.18;
+          const baseRotZ = 0.15;
+          const baseY = -0.03;
+          const baseZ = -0.04;
+
+          // thrust forward like a hand holding a knife
+          k.rotation.x = baseRotX - a * 0.10;
+          k.rotation.z = baseRotZ + a * 0.06;
+          k.position.y = baseY - a * 0.01;
+          k.position.z = baseZ + a * 0.22;
         }
       } catch {}
 
