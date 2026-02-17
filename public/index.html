@@ -1130,6 +1130,48 @@
       gripMat.specularColor = new BABYLON.Color3(0.04, 0.04, 0.04);
       gripMat.specularPower = 12;
 
+
+      // Cartoon / toy palette (bright colors + low specular)
+      const toyBlueMat = new BABYLON.StandardMaterial('toyBlueMat', scene);
+      toyBlueMat.diffuseColor = new BABYLON.Color3(0.15, 0.55, 0.95);
+      toyBlueMat.emissiveColor = new BABYLON.Color3(0.02, 0.04, 0.06);
+      toyBlueMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+
+      const toyRedMat = new BABYLON.StandardMaterial('toyRedMat', scene);
+      toyRedMat.diffuseColor = new BABYLON.Color3(0.95, 0.20, 0.25);
+      toyRedMat.emissiveColor = new BABYLON.Color3(0.06, 0.02, 0.02);
+      toyRedMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+
+      const toyPurpleMat = new BABYLON.StandardMaterial('toyPurpleMat', scene);
+      toyPurpleMat.diffuseColor = new BABYLON.Color3(0.62, 0.28, 0.95);
+      toyPurpleMat.emissiveColor = new BABYLON.Color3(0.04, 0.02, 0.06);
+      toyPurpleMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+
+      const toyGreenMat = new BABYLON.StandardMaterial('toyGreenMat', scene);
+      toyGreenMat.diffuseColor = new BABYLON.Color3(0.25, 0.92, 0.45);
+      toyGreenMat.emissiveColor = new BABYLON.Color3(0.02, 0.06, 0.03);
+      toyGreenMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+
+      const toyOrangeMat = new BABYLON.StandardMaterial('toyOrangeMat', scene);
+      toyOrangeMat.diffuseColor = new BABYLON.Color3(0.98, 0.55, 0.18);
+      toyOrangeMat.emissiveColor = new BABYLON.Color3(0.06, 0.03, 0.01);
+      toyOrangeMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+
+      const toyYellowMat = new BABYLON.StandardMaterial('toyYellowMat', scene);
+      toyYellowMat.diffuseColor = new BABYLON.Color3(0.98, 0.92, 0.20);
+      toyYellowMat.emissiveColor = new BABYLON.Color3(0.06, 0.05, 0.01);
+      toyYellowMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+
+      const toyWhiteMat = new BABYLON.StandardMaterial('toyWhiteMat', scene);
+      toyWhiteMat.diffuseColor = new BABYLON.Color3(0.92, 0.92, 0.95);
+      toyWhiteMat.emissiveColor = new BABYLON.Color3(0.03, 0.03, 0.035);
+      toyWhiteMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+
+      const toyBlackMat = new BABYLON.StandardMaterial('toyBlackMat', scene);
+      toyBlackMat.diffuseColor = new BABYLON.Color3(0.10, 0.10, 0.12);
+      toyBlackMat.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.012);
+      toyBlackMat.specularColor = new BABYLON.Color3(0.01, 0.01, 0.01);
+
       // Fart gun skin ("minion" vibe): bright yellow + green accents
       const fartBodyMat = new BABYLON.StandardMaterial('fartBodyMat', scene);
       fartBodyMat.diffuseColor = new BABYLON.Color3(1.00, 0.85, 0.18);
@@ -1152,9 +1194,105 @@
         const accM = isFart ? fartAccentMat : accentMat;
         const gripM = isFart ? fartAccentMat : gripMat;
 
+
+        // SPECIAL: knife/grenades replace the gun entirely in-hand.
+        // Also swap to cartoon colors so each weapon reads differently.
+        const toy = {
+          rifle: { body: toyBlueMat, acc: toyWhiteMat, grip: toyBlackMat },
+          shotgun: { body: toyRedMat, acc: toyWhiteMat, grip: toyBlackMat },
+          sniper: { body: toyPurpleMat, acc: toyWhiteMat, grip: toyBlackMat },
+          rocket: { body: toyGreenMat, acc: toyWhiteMat, grip: toyBlackMat },
+          minigun: { body: toyBlueMat, acc: toyOrangeMat, grip: toyBlackMat },
+        };
+
+        // If this is a toy-gun weapon, override base mats.
+        if (toy[kind]) {
+          // eslint-disable-next-line no-unused-vars
+          const _t = toy[kind];
+        }
+
+        // NOTE: bodyM/accM/gripM are const above; so we compute local overrides.
+        const body = toy[kind]?.body || bodyM;
+        const acc = toy[kind]?.acc || accM;
+        const gripMatLocal = toy[kind]?.grip || gripM;
+
+        if (kind === 'knife') {
+          // Big cartoon knife: blade + guard + handle
+          const handle = BABYLON.MeshBuilder.CreateBox(`k_h_${kind}`, { width:0.06, height:0.07, depth:0.18 }, scene);
+          handle.material = toyBlackMat;
+          handle.parent = g;
+          handle.position.set(0.04, -0.05, 0.10);
+
+          const guard = BABYLON.MeshBuilder.CreateBox(`k_g_${kind}`, { width:0.10, height:0.02, depth:0.04 }, scene);
+          guard.material = toyWhiteMat;
+          guard.parent = g;
+          guard.position.set(0.04, -0.02, 0.20);
+
+          const blade = BABYLON.MeshBuilder.CreateBox(`k_b_${kind}`, { width:0.03, height:0.10, depth:0.44 }, scene);
+          blade.material = toyWhiteMat;
+          blade.parent = g;
+          blade.position.set(0.04, 0.02, 0.46);
+
+          // tip
+          const tip = BABYLON.MeshBuilder.CreateCylinder(`k_t_${kind}`, { height:0.10, diameterTop:0.001, diameterBottom:0.05, tessellation: 10 }, scene);
+          tip.material = toyWhiteMat;
+          tip.parent = g;
+          tip.rotation.x = Math.PI / 2;
+          tip.position.set(0.04, 0.02, 0.72);
+
+          // Small accent stripe
+          const stripe = BABYLON.MeshBuilder.CreateBox(`k_s_${kind}`, { width:0.034, height:0.01, depth:0.20 }, scene);
+          stripe.material = toyBlueMat;
+          stripe.parent = g;
+          stripe.position.set(0.04, 0.06, 0.44);
+
+          // Position/tilt in hand
+          g.rotation.x = -0.25;
+          g.rotation.z = 0.22;
+
+          return g;
+        }
+
+        if (kind === 'grenade_frag' || kind === 'grenade_impact') {
+          // Cartoon grenade: body + pin + lever / or canister for impact.
+          const isImpact = (kind === 'grenade_impact');
+          const bodyMesh = isImpact
+            ? BABYLON.MeshBuilder.CreateCylinder(`g_c_${kind}`, { diameter: 0.18, height: 0.26, tessellation: 12 }, scene)
+            : BABYLON.MeshBuilder.CreateSphere(`g_s_${kind}`, { diameter: 0.20, segments: 10 }, scene);
+          bodyMesh.material = isImpact ? toyOrangeMat : toyGreenMat;
+          bodyMesh.parent = g;
+          bodyMesh.rotation.x = Math.PI / 2;
+          bodyMesh.position.set(0.05, -0.03, 0.22);
+
+          const band = BABYLON.MeshBuilder.CreateBox(`g_band_${kind}`, { width:0.20, height:0.05, depth:0.06 }, scene);
+          band.material = toyWhiteMat;
+          band.parent = g;
+          band.position.set(0.05, 0.03, 0.22);
+
+          const pin = BABYLON.MeshBuilder.CreateTorus(`g_pin_${kind}`, { diameter: 0.08, thickness: 0.012, tessellation: 12 }, scene);
+          pin.material = toyYellowMat;
+          pin.parent = g;
+          pin.rotation.y = Math.PI / 2;
+          pin.position.set(0.12, 0.07, 0.18);
+
+          const lever = BABYLON.MeshBuilder.CreateBox(`g_lev_${kind}`, { width:0.02, height:0.08, depth:0.16 }, scene);
+          lever.material = toyBlackMat;
+          lever.parent = g;
+          lever.position.set(0.03, 0.06, 0.22);
+          lever.rotation.x = 0.25;
+
+          // Held lower, closer to palm.
+          g.rotation.x = -0.10;
+          g.rotation.z = 0.15;
+          g.position.y -= 0.03;
+          g.position.z -= 0.10;
+
+          return g;
+        }
+
         // Receiver
         const receiver = BABYLON.MeshBuilder.CreateBox(`recv_${kind}`, { width:0.10, height:0.09, depth:0.22 }, scene);
-        receiver.material = accM;
+        receiver.material = acc;
         receiver.parent = g;
         receiver.position.set(0.02, 0.00, 0.02);
 
@@ -1162,20 +1300,20 @@
         const barrelLen = (kind === 'sniper') ? 0.78 : (kind === 'shotgun' ? 0.50 : 0.56);
         const barrelDia = (kind === 'shotgun') ? 0.065 : (kind === 'sniper' ? 0.04 : 0.045);
         const barrel = BABYLON.MeshBuilder.CreateCylinder(`bar_${kind}`, { diameter:barrelDia, height:barrelLen, tessellation: 10 }, scene);
-        barrel.material = bodyM;
+        barrel.material = body;
         barrel.parent = g;
         barrel.rotation.x = Math.PI / 2;
         barrel.position.set(0.02, 0.00, 0.24 + barrelLen / 2);
 
         // Stock
         const stock = BABYLON.MeshBuilder.CreateBox(`stk_${kind}`, { width:0.09, height:0.08, depth:0.16 }, scene);
-        stock.material = accM;
+        stock.material = acc;
         stock.parent = g;
         stock.position.set(0.02, -0.01, -0.16);
 
         // Grip
         const grip = BABYLON.MeshBuilder.CreateBox(`gr_${kind}`, { width:0.05, height:0.10, depth:0.06 }, scene);
-        grip.material = gripM;
+        grip.material = gripMatLocal;
         grip.parent = g;
         grip.position.set(0.05, -0.08, 0.02);
         grip.rotation.x = 0.25;
@@ -1183,7 +1321,7 @@
         // Sniper scope tube
         if (kind === 'sniper') {
           const scope = BABYLON.MeshBuilder.CreateCylinder(`sc_${kind}`, { diameter:0.06, height:0.22, tessellation: 12 }, scene);
-          scope.material = accM;
+          scope.material = acc;
           scope.parent = g;
           scope.rotation.x = Math.PI / 2;
           scope.position.set(0.02, 0.05, 0.34);
@@ -1192,7 +1330,7 @@
         // Shotgun pump
         if (kind === 'shotgun') {
           const pump = BABYLON.MeshBuilder.CreateBox(`pm_${kind}`, { width:0.10, height:0.06, depth:0.12 }, scene);
-          pump.material = accM;
+          pump.material = acc;
           pump.parent = g;
           pump.position.set(0.02, -0.02, 0.34);
         }
@@ -1201,7 +1339,7 @@
         if (kind === 'rocket') {
           // Main tube
           const tube = BABYLON.MeshBuilder.CreateCylinder(`rk_tube_${kind}`, { diameter: 0.18, height: 0.82, tessellation: 14 }, scene);
-          tube.material = accM;
+          tube.material = acc;
           tube.parent = g;
           tube.rotation.x = Math.PI / 2;
           tube.position.set(0.02, 0.06, 0.40);
@@ -1212,14 +1350,14 @@
             { height: 0.18, diameterTop: 0.001, diameterBottom: 0.16, tessellation: 14 },
             scene
           );
-          tip.material = bodyM;
+          tip.material = body;
           tip.parent = g;
           tip.rotation.x = Math.PI / 2;
           tip.position.set(0.02, 0.06, 0.86);
 
           // Rear cap
           const cap = BABYLON.MeshBuilder.CreateCylinder(`rk_cap_${kind}`, { diameter: 0.19, height: 0.06, tessellation: 14 }, scene);
-          cap.material = bodyM;
+          cap.material = body;
           cap.parent = g;
           cap.rotation.x = Math.PI / 2;
           cap.position.set(0.02, 0.06, -0.02);
@@ -1227,7 +1365,7 @@
           // Fins (4)
           for (let i = 0; i < 4; i++) {
             const fin = BABYLON.MeshBuilder.CreateBox(`rk_fin_${kind}_${i}`, { width: 0.03, height: 0.09, depth: 0.14 }, scene);
-            fin.material = accM;
+            fin.material = acc;
             fin.parent = g;
             fin.position.set(0.02, 0.06, 0.70);
             fin.rotation.z = (Math.PI / 2) * i;
@@ -1237,7 +1375,7 @@
 
           // Simple sight block on top
           const sight = BABYLON.MeshBuilder.CreateBox(`rk_sight_${kind}`, { width: 0.08, height: 0.05, depth: 0.10 }, scene);
-          sight.material = bodyM;
+          sight.material = body;
           sight.parent = g;
           sight.position.set(0.02, 0.14, 0.28);
         }
@@ -1245,13 +1383,13 @@
         // Fart gun extras: a "tank" + nozzle so it's obvious.
         if (kind === 'fart') {
           const tank = BABYLON.MeshBuilder.CreateCylinder(`tk_${kind}`, { diameter: 0.14, height: 0.20, tessellation: 12 }, scene);
-          tank.material = accM;
+          tank.material = acc;
           tank.parent = g;
           tank.rotation.x = Math.PI / 2;
           tank.position.set(-0.06, 0.02, -0.02);
 
           const nozzle = BABYLON.MeshBuilder.CreateCylinder(`nz_${kind}`, { diameter: 0.09, height: 0.16, tessellation: 12 }, scene);
-          nozzle.material = accM;
+          nozzle.material = acc;
           nozzle.parent = g;
           nozzle.rotation.x = Math.PI / 2;
           nozzle.position.set(0.02, 0.02, 0.62);
@@ -1260,7 +1398,7 @@
         // Minigun: barrel cluster + top box so it reads as a Gatling.
         if (kind === 'minigun') {
           const hub = BABYLON.MeshBuilder.CreateCylinder(`hub_${kind}`, { diameter: 0.10, height: 0.22, tessellation: 12 }, scene);
-          hub.material = bodyM;
+          hub.material = body;
           hub.parent = g;
           hub.rotation.x = Math.PI / 2;
           hub.position.set(0.02, 0.04, 0.52);
@@ -1272,7 +1410,7 @@
             const bx = Math.cos(a) * 0.05;
             const by = Math.sin(a) * 0.05;
             const b = BABYLON.MeshBuilder.CreateCylinder(`br_${kind}_${i}`, { diameter: 0.035, height: 0.38, tessellation: 10 }, scene);
-            b.material = bodyM;
+            b.material = body;
             b.parent = g;
             b.rotation.x = Math.PI / 2;
             b.position.set(0.02 + bx, 0.04 + by, 0.62);
@@ -1280,7 +1418,7 @@
           }
 
           const box = BABYLON.MeshBuilder.CreateBox(`bx_${kind}`, { width: 0.12, height: 0.10, depth: 0.18 }, scene);
-          box.material = accM;
+          box.material = acc;
           box.parent = g;
           box.position.set(-0.05, 0.12, 0.22);
 
@@ -1299,10 +1437,13 @@
         rocket: makeGunVariant('rocket'),
         fart: makeGunVariant('fart'),
         minigun: makeGunVariant('minigun'),
+        knife: makeGunVariant('knife'),
+        grenade_frag: makeGunVariant('grenade_frag'),
+        grenade_impact: makeGunVariant('grenade_impact'),
       };
 
       function setGun(kind) {
-        const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket' || kind === 'minigun') ? kind : 'rifle';
+        const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket' || kind === 'minigun' || kind === 'knife' || kind === 'grenade_frag' || kind === 'grenade_impact') ? kind : 'rifle';
         for (const [name, node] of Object.entries(guns)) node.setEnabled(name === k);
       }
       // Default
