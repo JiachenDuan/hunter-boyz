@@ -2873,18 +2873,23 @@ function spawnDent(pos, normal, size, kind) {
 
       const segments = [];
       if (Array.isArray(s.traces) && s.traces.length) {
+        const w = (s.weapon || 'rifle');
         // Shotgun: draw only ONE tracer to the average endpoint (avoids visual clutter)
-        if ((s.weapon || 'rifle') === 'shotgun') {
+        if (w === 'shotgun') {
           let ax = 0, az = 0;
           for (const tr of s.traces) { ax += tr.ex; az += tr.ez; }
           ax /= s.traces.length; az /= s.traces.length;
           segments.push([gunStart, new BABYLON.Vector3(ax, (s.sy || 1.8) - 0.2, az)]);
+        } else if (w === 'rifle') {
+          // Rifle: some servers send traces[]; keep visuals clean like CS (single tracer).
+          const tr0 = s.traces[0];
+          segments.push([gunStart, new BABYLON.Vector3(tr0.ex, (s.sy || 1.8) - 0.2, tr0.ez)]);
         } else {
           for (const tr of s.traces) {
             segments.push([gunStart, new BABYLON.Vector3(tr.ex, (s.sy || 1.8) - 0.2, tr.ez)]);
           }
         }
-      } else {
+      } else { 
         segments.push([gunStart, new BABYLON.Vector3(s.ex, (s.sy || 1.8) - 0.2, s.ez)]);
       }
       const wpn0 = (s.weapon || 'rifle');
