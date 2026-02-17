@@ -1378,7 +1378,7 @@
         receiver.position.set(0.02, 0.00, 0.02);
 
         // Barrel (varies)
-        const barrelLen = (kind === 'sniper') ? 0.78 : (kind === 'shotgun' ? 0.50 : 0.56);
+        const barrelLen = (kind === 'sniper') ? 0.98 : (kind === 'shotgun' ? 0.50 : 0.56);
         const barrelDia = (kind === 'shotgun') ? 0.065 : (kind === 'sniper' ? 0.04 : 0.045);
         const barrel = BABYLON.MeshBuilder.CreateCylinder(`bar_${kind}`, { diameter:barrelDia, height:barrelLen, tessellation: 10 }, scene);
         barrel.material = body;
@@ -1399,13 +1399,67 @@
         grip.position.set(0.05, -0.08, 0.02);
         grip.rotation.x = 0.25;
 
-        // Sniper scope tube
+        // Sniper: CS-ish "real gun" silhouette (big scope + bipod + bolt)
         if (kind === 'sniper') {
-          const scope = BABYLON.MeshBuilder.CreateCylinder(`sc_${kind}`, { diameter:0.06, height:0.22, tessellation: 12 }, scene);
-          scope.material = acc;
+          // Bigger scope
+          const scope = BABYLON.MeshBuilder.CreateCylinder(`sc_${kind}`, { diameter:0.085, height:0.36, tessellation: 14 }, scene);
+          scope.material = gunMat;
           scope.parent = g;
           scope.rotation.x = Math.PI / 2;
-          scope.position.set(0.02, 0.05, 0.34);
+          scope.position.set(0.02, 0.08, 0.40);
+
+          const scopeFront = BABYLON.MeshBuilder.CreateCylinder(`scf_${kind}`, { diameter:0.10, height:0.06, tessellation: 14 }, scene);
+          scopeFront.material = gunMat;
+          scopeFront.parent = g;
+          scopeFront.rotation.x = Math.PI / 2;
+          scopeFront.position.set(0.02, 0.08, 0.58);
+
+          const scopeRear = BABYLON.MeshBuilder.CreateCylinder(`scr_${kind}`, { diameter:0.095, height:0.06, tessellation: 14 }, scene);
+          scopeRear.material = gunMat;
+          scopeRear.parent = g;
+          scopeRear.rotation.x = Math.PI / 2;
+          scopeRear.position.set(0.02, 0.08, 0.22);
+
+          // Scope mount
+          const mount = BABYLON.MeshBuilder.CreateBox(`scm_${kind}`, { width:0.10, height:0.03, depth:0.20 }, scene);
+          mount.material = accentMat;
+          mount.parent = g;
+          mount.position.set(0.02, 0.05, 0.40);
+
+          // Bolt handle
+          const bolt = BABYLON.MeshBuilder.CreateCylinder(`bl_${kind}`, { diameter:0.018, height:0.10, tessellation: 10 }, scene);
+          bolt.material = knifeBladeMat; // shiny metal
+          bolt.parent = g;
+          bolt.rotation.z = Math.PI / 2;
+          bolt.position.set(0.09, 0.00, 0.10);
+
+          const boltKnob = BABYLON.MeshBuilder.CreateSphere(`blk_${kind}`, { diameter:0.03, segments: 10 }, scene);
+          boltKnob.material = knifeBladeMat;
+          boltKnob.parent = g;
+          boltKnob.position.set(0.14, 0.00, 0.10);
+
+          // Bipod (simple V)
+          const leg1 = BABYLON.MeshBuilder.CreateCylinder(`bp1_${kind}`, { diameter:0.012, height:0.20, tessellation: 10 }, scene);
+          leg1.material = gunMat;
+          leg1.parent = g;
+          leg1.rotation.z = 0.55;
+          leg1.position.set(-0.03, -0.09, 0.64);
+
+          const leg2 = BABYLON.MeshBuilder.CreateCylinder(`bp2_${kind}`, { diameter:0.012, height:0.20, tessellation: 10 }, scene);
+          leg2.material = gunMat;
+          leg2.parent = g;
+          leg2.rotation.z = -0.55;
+          leg2.position.set(0.07, -0.09, 0.64);
+
+          // Longer barrel + thinner look
+          try {
+            barrel.scaling.z = 1.35;
+          } catch {}
+
+          // Make sniper less toy-colored: darker overall.
+          receiver.material = gunMat;
+          stock.material = gunMat;
+          grip.material = gripMat;
         }
 
         // Shotgun pump
