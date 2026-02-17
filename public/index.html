@@ -1247,7 +1247,7 @@
           // Rifle + shotgun are now CS-ish realistic, so they are NOT in this list.
           sniper: { body: toyPurpleMat, acc: toyWhiteMat, grip: toyBlackMat },
           rocket: { body: toyGreenMat, acc: toyWhiteMat, grip: toyBlackMat },
-          minigun: { body: toyBlueMat, acc: toyOrangeMat, grip: toyBlackMat },
+          // minigun uses realistic mats (not toy colors)
         };
 
         // If this is a toy-gun weapon, override base mats.
@@ -1718,32 +1718,101 @@
           nozzle.position.set(0.02, 0.02, 0.62);
         }
 
-        // Minigun: barrel cluster + top box so it reads as a Gatling.
+        // Minigun: CS-style “加特林” vibe (barrel shroud, carry handle, ammo box + belt) + spinning barrel cluster.
         if (kind === 'minigun') {
-          const hub = BABYLON.MeshBuilder.CreateCylinder(`hub_${kind}`, { diameter: 0.10, height: 0.22, tessellation: 12 }, scene);
-          hub.material = body;
+          const mgDarkMat = new BABYLON.StandardMaterial(`mgDark_${kind}`, scene);
+          mgDarkMat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.07);
+          mgDarkMat.emissiveColor = new BABYLON.Color3(0.004, 0.004, 0.005);
+          mgDarkMat.specularColor = new BABYLON.Color3(0.14, 0.14, 0.16);
+          mgDarkMat.specularPower = 72;
+
+          const mgPolyMat = new BABYLON.StandardMaterial(`mgPoly_${kind}`, scene);
+          mgPolyMat.diffuseColor = new BABYLON.Color3(0.035, 0.035, 0.04);
+          mgPolyMat.emissiveColor = new BABYLON.Color3(0.002, 0.002, 0.002);
+          mgPolyMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+          mgPolyMat.specularPower = 10;
+
+          // Main receiver block (chunkier)
+          const recv2 = BABYLON.MeshBuilder.CreateBox(`mg_recv_${kind}`, { width: 0.13, height: 0.11, depth: 0.26 }, scene);
+          recv2.material = mgDarkMat;
+          recv2.parent = g;
+          recv2.position.set(0.02, 0.02, 0.02);
+
+          // Carry handle
+          const handleBar = BABYLON.MeshBuilder.CreateBox(`mg_hb_${kind}`, { width: 0.10, height: 0.02, depth: 0.14 }, scene);
+          handleBar.material = mgPolyMat;
+          handleBar.parent = g;
+          handleBar.position.set(0.02, 0.12, 0.05);
+          const handleLeg1 = BABYLON.MeshBuilder.CreateBox(`mg_hl1_${kind}`, { width: 0.018, height: 0.06, depth: 0.02 }, scene);
+          handleLeg1.material = mgPolyMat;
+          handleLeg1.parent = g;
+          handleLeg1.position.set(-0.02, 0.09, 0.02);
+          const handleLeg2 = BABYLON.MeshBuilder.CreateBox(`mg_hl2_${kind}`, { width: 0.018, height: 0.06, depth: 0.02 }, scene);
+          handleLeg2.material = mgPolyMat;
+          handleLeg2.parent = g;
+          handleLeg2.position.set(0.06, 0.09, 0.02);
+
+          // Barrel shroud
+          const shroud = BABYLON.MeshBuilder.CreateCylinder(`mg_sh_${kind}`, { diameter: 0.16, height: 0.48, tessellation: 14 }, scene);
+          shroud.material = mgDarkMat;
+          shroud.parent = g;
+          shroud.rotation.x = Math.PI / 2;
+          shroud.position.set(0.02, 0.02, 0.52);
+
+          // Front cap / muzzle ring
+          const cap = BABYLON.MeshBuilder.CreateTorus(`mg_cap_${kind}`, { diameter: 0.16, thickness: 0.015, tessellation: 18 }, scene);
+          cap.material = mgDarkMat;
+          cap.parent = g;
+          cap.rotation.x = Math.PI / 2;
+          cap.position.set(0.02, 0.02, 0.74);
+
+          // Spinning barrel cluster inside
+          const hub = BABYLON.MeshBuilder.CreateCylinder(`hub_${kind}`, { diameter: 0.07, height: 0.18, tessellation: 12 }, scene);
+          hub.material = knifeBladeMat;
           hub.parent = g;
           hub.rotation.x = Math.PI / 2;
-          hub.position.set(0.02, 0.04, 0.52);
+          hub.position.set(0.02, 0.02, 0.60);
 
           const barrels = [];
           const n = 6;
           for (let i = 0; i < n; i++) {
             const a = (i / n) * Math.PI * 2;
-            const bx = Math.cos(a) * 0.05;
-            const by = Math.sin(a) * 0.05;
-            const b = BABYLON.MeshBuilder.CreateCylinder(`br_${kind}_${i}`, { diameter: 0.035, height: 0.38, tessellation: 10 }, scene);
-            b.material = body;
+            const bx = Math.cos(a) * 0.045;
+            const by = Math.sin(a) * 0.045;
+            const b = BABYLON.MeshBuilder.CreateCylinder(`br_${kind}_${i}`, { diameter: 0.022, height: 0.46, tessellation: 10 }, scene);
+            b.material = knifeBladeMat;
             b.parent = g;
             b.rotation.x = Math.PI / 2;
-            b.position.set(0.02 + bx, 0.04 + by, 0.62);
+            b.position.set(0.02 + bx, 0.02 + by, 0.58);
             barrels.push(b);
           }
 
-          const box = BABYLON.MeshBuilder.CreateBox(`bx_${kind}`, { width: 0.12, height: 0.10, depth: 0.18 }, scene);
-          box.material = acc;
-          box.parent = g;
-          box.position.set(-0.05, 0.12, 0.22);
+          // Ammo box on left side
+          const ammo = BABYLON.MeshBuilder.CreateBox(`mg_ammo_${kind}`, { width: 0.14, height: 0.12, depth: 0.18 }, scene);
+          ammo.material = mgPolyMat;
+          ammo.parent = g;
+          ammo.position.set(-0.10, 0.02, -0.02);
+
+          // Ammo belt (simple linked strip)
+          for (let i = 0; i < 7; i++) {
+            const link = BABYLON.MeshBuilder.CreateBox(`mg_link_${kind}_${i}`, { width: 0.02, height: 0.015, depth: 0.03 }, scene);
+            link.material = knifeBladeMat;
+            link.parent = g;
+            link.position.set(-0.02 + i * 0.015, -0.02 + (i * 0.002), 0.10 + i * 0.02);
+            link.rotation.y = 0.12;
+          }
+
+          // Front grip (vertical-ish)
+          const fg = BABYLON.MeshBuilder.CreateBox(`mg_fg_${kind}`, { width: 0.03, height: 0.10, depth: 0.04 }, scene);
+          fg.material = mgPolyMat;
+          fg.parent = g;
+          fg.position.set(0.07, -0.09, 0.34);
+
+          // Override base parts to match minigun realism
+          receiver.material = mgDarkMat;
+          barrel.material = mgDarkMat;
+          stock.material = mgPolyMat;
+          grip.material = mgPolyMat;
 
           // spin animation hook
           g.metadata = g.metadata || {};
@@ -1922,6 +1991,7 @@
       shotgun: { gunKick: 0.08, pitchKick: 0.035, shakeAmt: 0.008, flashScale: 1.6 },
       sniper:  { gunKick: 0.10, pitchKick: 0.045, shakeAmt: 0.005, flashScale: 1.3 },
       fart:    { gunKick: 0.02, pitchKick: 0.005, shakeAmt: 0.001, flashScale: 0.6 },
+      minigun: { gunKick: 0.03, pitchKick: 0.012, shakeAmt: 0.003, flashScale: 1.25 },
     };
 
     let _shakePitch = 0;
@@ -2064,6 +2134,23 @@
                 thumpEnd: 55,
                 thumpPeak: 0.10,
                 thumpEndAt: 0.20,
+              }
+            : (w === 'minigun')
+            ? {
+                // minigun: tighter, punchier “brrrt” (less thump, more mid)
+                noise: 0.09,
+                bpFreq: 1500,
+                bpQ: 1.0,
+                lpFreq: 4600,
+                gainPeak: 0.18,
+                gainMid: 0.03,
+                gainMidAt: 0.05,
+                gainEndAt: 0.11,
+                thumpType: 'triangle',
+                thumpStart: 140,
+                thumpEnd: 95,
+                thumpPeak: 0.06,
+                thumpEndAt: 0.10,
               }
             : {
                 // rifle default
