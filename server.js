@@ -666,6 +666,9 @@ if (msg.t === 'input') {
       // Ignore gameplay until host starts.
       if (!GAME.started) return;
 
+      // Prevent AFK cleanup from kicking active players.
+      p.lastInputAt = nowMs();
+
       // Per-player settings
       if (typeof msg.autoReload === 'boolean') p.autoReload = msg.autoReload;
 
