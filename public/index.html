@@ -1282,7 +1282,7 @@
       const skinRifleMat = gunSkinMat('rifle', { seed: 4101, base: '#11151b', accent: '#2f7cff', accent2: '#e6e6e6', pattern: 'digital', decal: 'HB-RIFLE', uScale: 2.4, vScale: 2.4, metallic: 0.60, roughness: 0.40 });
       const skinShotgunMat = gunSkinMat('shotgun', { seed: 8822, base: '#141416', accent: '#ff8c1a', accent2: '#b000ff', pattern: 'diagonal', decal: 'HB-SG', uScale: 2.2, vScale: 2.2, metallic: 0.55, roughness: 0.45 });
       const skinMinigunMat = gunSkinMat('minigun', { seed: 12007, base: '#0f1216', accent: '#ff2d55', accent2: '#ffd60a', pattern: 'camo', decal: 'HB-MG', uScale: 2.0, vScale: 2.0, metallic: 0.70, roughness: 0.30 });
-      const skinSniperMat = gunSkinMat('sniper', { seed: 7711, base: '#0c0f13', accent: '#00bcd4', accent2: '#b8ff5a', pattern: 'fade', decal: 'HB-AWP', uScale: 2.0, vScale: 2.0, metallic: 0.65, roughness: 0.33 });
+      const skinSniperMat = gunSkinMat('sniper', { seed: 7711, base: '#0e100f', accent: '#1a1e1c', accent2: '#2a2f2b', pattern: 'fade', decal: 'HB-AWP', uScale: 2.0, vScale: 2.0, metallic: 0.50, roughness: 0.55 });
       const skinRocketMat = gunSkinMat('rocket', { seed: 9090, base: '#0f1216', accent: '#ff3b30', accent2: '#ffd60a', pattern: 'diagonal', decal: 'HB-RPG', uScale: 1.8, vScale: 1.8, metallic: 0.45, roughness: 0.55 });
       const skinFartMat = gunSkinMat('fart', { seed: 2501, base: '#13161b', accent: '#27e18c', accent2: '#ffd60a', pattern: 'digital', decal: 'FART', uScale: 2.6, vScale: 2.6, metallic: 0.25, roughness: 0.65 });
 
@@ -1565,11 +1565,11 @@
           // Scope front lens (blue tint)
           const scopeLens = BABYLON.MeshBuilder.CreateCylinder(`scl_${kind}`, { diameter: 0.11, height: 0.008, tessellation: 16 }, scene);
           const lensMat = new BABYLON.StandardMaterial(`scopeLensMat_${kind}`, scene);
-          lensMat.diffuseColor = new BABYLON.Color3(0.15, 0.20, 0.40);
-          lensMat.emissiveColor = new BABYLON.Color3(0.03, 0.04, 0.10);
-          lensMat.specularColor = new BABYLON.Color3(0.6, 0.6, 0.8);
-          lensMat.specularPower = 120;
-          lensMat.alpha = 0.7;
+          lensMat.diffuseColor = new BABYLON.Color3(0.04, 0.05, 0.08);
+          lensMat.emissiveColor = new BABYLON.Color3(0.01, 0.012, 0.025);
+          lensMat.specularColor = new BABYLON.Color3(0.25, 0.28, 0.35);
+          lensMat.specularPower = 100;
+          lensMat.alpha = 0.55;
           scopeLens.material = lensMat;
           scopeLens.parent = g;
           scopeLens.rotation.x = Math.PI / 2;
@@ -2964,46 +2964,49 @@ function showKill(text) {
     const MAX_DENTS = 300;
 
 
+    // Impact flash: single billboard plane (no line-based spark rays).
+    // At most ONE visible at a time to keep visuals clean during rapid fire.
     function spawnSparks(pos, intensity=1) {
       try {
         if (!scene || !pos) return;
-        // Dispose previous spark set to prevent fan-of-lines accumulation
-        if (window.__lastSparkLines) {
-          for (const l of window.__lastSparkLines) { try { l.dispose(); } catch {} }
+        // Dispose previous flash to prevent accumulation
+        if (window.__lastImpactFlash) {
+          try { window.__lastImpactFlash.dispose(); } catch {}
+          window.__lastImpactFlash = null;
         }
-        const origin = pos.clone();
-        origin.y += 0.05;
-        const lines = [];
-        const n = Math.round(4 * intensity);
-        for (let i = 0; i < n; i++) {
-          const ang = Math.random() * Math.PI * 2;
-          const up = 0.10 + Math.random() * 0.12;
-          const len = 0.08 + Math.random() * 0.10;
-          const p1 = origin;
-          const p2 = new BABYLON.Vector3(
-            origin.x + Math.cos(ang) * len,
-            origin.y + up,
-            origin.z + Math.sin(ang) * len
-          );
-          const l = BABYLON.MeshBuilder.CreateLines(`sp_${Date.now()}_${i}`, { points: [p1, p2] }, scene);
-          l.color = new BABYLON.Color3(1.0, 0.85, 0.35);
-          l.alpha = 0.90;
-          l.isPickable = false;
-          lines.push(l);
-        }
-        window.__lastSparkLines = lines;
+
+        const sz = 0.18 + 0.10 * intensity;
+        const flash = BABYLON.MeshBuilder.CreatePlane('impFlash', { size: sz }, scene);
+        flash.position = pos.clone();
+        flash.position.y += 0.06;
+        flash.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+        flash.isPickable = false;
+
+        const mat = new BABYLON.StandardMaterial('impFlashMat', scene);
+        mat.diffuseColor  = new BABYLON.Color3(1.0, 0.88, 0.55);
+        mat.emissiveColor = new BABYLON.Color3(1.0, 0.78, 0.35);
+        mat.specularColor = new BABYLON.Color3(0, 0, 0);
+        mat.alpha = 0.85;
+        mat.disableLighting = true;
+        mat.backFaceCulling = false;
+        flash.material = mat;
+
+        window.__lastImpactFlash = flash;
+
         const start = performance.now();
-        const dur = 80;
+        const dur = 90;
         const tick = () => {
           const t = performance.now() - start;
           const k = Math.min(1, t / dur);
-          for (const l of lines) {
-            try { l.alpha = 0.90 * (1 - k); } catch {}
-          }
+          try {
+            mat.alpha = 0.85 * (1 - k);
+            flash.scaling.setAll(1.0 + k * 0.4);
+          } catch {}
           if (k < 1) requestAnimationFrame(tick);
           else {
-            for (const l of lines) { try { l.dispose(); } catch {} }
-            if (window.__lastSparkLines === lines) window.__lastSparkLines = null;
+            try { flash.dispose(); } catch {}
+            try { mat.dispose(); } catch {}
+            if (window.__lastImpactFlash === flash) window.__lastImpactFlash = null;
           }
         };
         requestAnimationFrame(tick);
@@ -3167,14 +3170,17 @@ function spawnDent(pos, normal, size, kind) {
 
       // Tracers / projectiles
       if (!weaponNoTracer) {
-        // Hitscan tracer
-        // Keep it CS-clean on mobile: at most one visible tracer per weapon at a time,
-        // and shorter lifetime for rapid-fire guns.
+        // Hitscan tracer – strict single-line policy:
+        // At most ONE visible tracer globally (not just per-weapon) so rapid fire
+        // or fast weapon-switching never accumulates multiple lines.
         try {
-          const w = String(wpn0 || 'rifle');
           if (!window.__lastTracerByWeapon) window.__lastTracerByWeapon = {};
-          const prev = window.__lastTracerByWeapon[w];
-          if (prev && !prev.isDisposed?.()) { try { prev.dispose(); } catch {} }
+          // Dispose ALL active tracers (any weapon) before drawing new one
+          for (const k of Object.keys(window.__lastTracerByWeapon)) {
+            const prev = window.__lastTracerByWeapon[k];
+            if (prev && !prev.isDisposed?.()) { try { prev.dispose(); } catch {} }
+            delete window.__lastTracerByWeapon[k];
+          }
         } catch {}
 
         const pts = segments[0];
@@ -3183,9 +3189,8 @@ function spawnDent(pos, normal, size, kind) {
           lines.color = color;
           lines.alpha = 0.9;
           try {
-            const w = String(wpn0 || 'rifle');
             if (!window.__lastTracerByWeapon) window.__lastTracerByWeapon = {};
-            window.__lastTracerByWeapon[w] = lines;
+            window.__lastTracerByWeapon[wpn0] = lines;
           } catch {}
 
           const ttl = (wpn0 === 'rifle') ? 70 : (wpn0 === 'minigun') ? 55 : (wpn0 === 'shotgun') ? 140 : (wpn0 === 'sniper') ? 180 : 120;
