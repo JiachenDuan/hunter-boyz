@@ -3182,7 +3182,11 @@ function spawnDent(pos, normal, size, kind) {
         try {
           const wpn = (s.weapon || 'rifle');
           if (Array.isArray(s.traces) && s.traces.length) {
-            for (const tr of s.traces) {
+            // Some weapons (rifle/shotgun) can arrive with multiple traces (pellets / server detail).
+            // For cleaner CS-style visuals, only spawn ONE impact spark burst.
+            const oneSpark = (wpn === 'rifle' || wpn === 'shotgun');
+            const list = oneSpark ? [s.traces[0]] : s.traces;
+            for (const tr of list) {
               const raw = new BABYLON.Vector3(tr.ex, (s.ey || (s.sy || 1.8) - 0.2), tr.ez);
               const hit = pickImpact(gunStart, raw);
               if (wpn !== 'rocket' && !String(wpn).startsWith('grenade_') && wpn !== 'knife') spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
