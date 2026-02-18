@@ -3160,11 +3160,28 @@ function spawnDent(pos, normal, size, kind) {
       // Tracers / projectiles
       if (!weaponNoTracer) {
         // Hitscan tracer
-        for (const pts of segments) {
+        // Keep it CS-clean on mobile: at most one visible tracer per weapon at a time,
+        // and shorter lifetime for rapid-fire guns.
+        try {
+          const w = String(wpn0 || 'rifle');
+          if (!window.__lastTracerByWeapon) window.__lastTracerByWeapon = {};
+          const prev = window.__lastTracerByWeapon[w];
+          if (prev && !prev.isDisposed?.()) { try { prev.dispose(); } catch {} }
+        } catch {}
+
+        const pts = segments[0];
+        if (pts) {
           const lines = BABYLON.MeshBuilder.CreateLines('shot', { points: pts }, scene);
           lines.color = color;
           lines.alpha = 0.9;
-          setTimeout(() => lines.dispose(), 260);
+          try {
+            const w = String(wpn0 || 'rifle');
+            if (!window.__lastTracerByWeapon) window.__lastTracerByWeapon = {};
+            window.__lastTracerByWeapon[w] = lines;
+          } catch {}
+
+          const ttl = (wpn0 === 'rifle') ? 70 : (wpn0 === 'minigun') ? 55 : (wpn0 === 'shotgun') ? 140 : (wpn0 === 'sniper') ? 180 : 120;
+          setTimeout(() => { try { lines.dispose(); } catch {} }, ttl);
         }
       } else if (wpn0.startsWith('grenade_')) {
         // Grenade throw arc (visual only): curved line, not hitscan.
