@@ -1155,6 +1155,101 @@
       gripMat.specularColor = new BABYLON.Color3(0.04, 0.04, 0.04);
       gripMat.specularPower = 12;
 
+      // ── Fancy gun skins (procedural; no external assets) ──
+      // Uses a low-res DynamicTexture so it looks like a “skin” but stays iPhone-friendly.
+      function gunSkinMat(name, opts = {}) {
+        const size = opts.size || 256;
+        const base = opts.base || '#1b1e23';
+        const accent = opts.accent || '#7c5cff';
+        const accent2 = opts.accent2 || '#f1c40f';
+        const pattern = opts.pattern || 'splatter'; // splatter|diagonal|digital|fade
+
+        const tex = new BABYLON.DynamicTexture(`skinTex_${name}`, { width: size, height: size }, scene, false);
+        const ctx = tex.getContext();
+
+        // base fill
+        ctx.fillStyle = base;
+        ctx.fillRect(0, 0, size, size);
+
+        // subtle gradient
+        const g = ctx.createLinearGradient(0, 0, size, size);
+        g.addColorStop(0, 'rgba(255,255,255,0.06)');
+        g.addColorStop(1, 'rgba(0,0,0,0.10)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, size, size);
+
+        function rand(seed) {
+          // deterministic-ish PRNG
+          seed = (seed * 1664525 + 1013904223) >>> 0;
+          return [seed, (seed & 0xfffffff) / 0xfffffff];
+        }
+        let seed = (opts.seed || 123456789) >>> 0;
+
+        // pattern layer
+        if (pattern === 'diagonal') {
+          ctx.globalAlpha = 0.35;
+          ctx.fillStyle = accent;
+          for (let i = -size; i < size * 2; i += 22) {
+            ctx.save();
+            ctx.translate(i, 0);
+            ctx.rotate(-Math.PI / 4);
+            ctx.fillRect(0, 0, 10, size * 3);
+            ctx.restore();
+          }
+          ctx.globalAlpha = 1;
+        } else if (pattern === 'digital') {
+          ctx.globalAlpha = 0.32;
+          for (let i = 0; i < 220; i++) {
+            [seed, r] = rand(seed); const x = Math.floor(r * size);
+            [seed, r] = rand(seed); const y = Math.floor(r * size);
+            [seed, r] = rand(seed); const w = 6 + Math.floor(r * 22);
+            [seed, r] = rand(seed); const h = 4 + Math.floor(r * 16);
+            [seed, r] = rand(seed);
+            ctx.fillStyle = (r < 0.65) ? accent : accent2;
+            ctx.fillRect(x, y, w, h);
+          }
+          ctx.globalAlpha = 1;
+        } else if (pattern === 'fade') {
+          const g2 = ctx.createLinearGradient(0, size, size, 0);
+          g2.addColorStop(0, base);
+          g2.addColorStop(0.55, accent);
+          g2.addColorStop(1, accent2);
+          ctx.globalAlpha = 0.55;
+          ctx.fillStyle = g2;
+          ctx.fillRect(0, 0, size, size);
+          ctx.globalAlpha = 1;
+        } else {
+          // splatter
+          ctx.globalAlpha = 0.35;
+          for (let i = 0; i < 180; i++) {
+            [seed, r] = rand(seed); const x = r * size;
+            [seed, r] = rand(seed); const y = r * size;
+            [seed, r] = rand(seed); const rad = 2 + r * 10;
+            [seed, r] = rand(seed);
+            ctx.fillStyle = (r < 0.7) ? accent : accent2;
+            ctx.beginPath();
+            ctx.arc(x, y, rad, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
+
+        tex.update(false);
+        try { tex.wrapU = BABYLON.Texture.WRAP_ADDRESSMODE; tex.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE; } catch {}
+
+        const m = new BABYLON.StandardMaterial(`skinMat_${name}`, scene);
+        m.diffuseTexture = tex;
+        m.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.012);
+        m.specularColor = new BABYLON.Color3(0.30, 0.30, 0.34);
+        m.specularPower = 72;
+        return m;
+      }
+
+      // Default fancy skins (CS-ish, but slightly stylized)
+      const skinRifleMat = gunSkinMat('rifle', { seed: 4101, base: '#14181e', accent: '#2d7dff', accent2: '#ffffff', pattern: 'digital' });
+      const skinShotgunMat = gunSkinMat('shotgun', { seed: 8822, base: '#171717', accent: '#ff9f1a', accent2: '#b000ff', pattern: 'diagonal' });
+      const skinMinigunMat = gunSkinMat('minigun', { seed: 12007, base: '#111318', accent: '#ff2d55', accent2: '#ffd60a', pattern: 'splatter' });
+
 
       // Cartoon / toy palette (bright colors + low specular)
       const toyBlueMat = new BABYLON.StandardMaterial('toyBlueMat', scene);
@@ -1607,7 +1702,8 @@
           md.rotation.x = Math.PI / 2;
           md.position.set(0.02, 0.00, 0.24 + barrelLen / 2 + 0.04);
 
-          receiver.material = rifleDarkMat;
+          // Fancy “skin” pass: put a patterned skin on main body parts.
+          receiver.material = skinRifleMat;
           barrel.material = rifleDarkMat;
           stock.material = riflePolyMat;
           grip.material = riflePolyMat;
@@ -1652,7 +1748,8 @@
             stock.scaling.y = 1.10;
           } catch {}
 
-          receiver.material = sgDarkMat;
+          // Fancy “skin” pass
+          receiver.material = skinShotgunMat;
           barrel.material = sgDarkMat;
           stock.material = sgPolyMat;
           grip.material = sgPolyMat;
@@ -1809,7 +1906,8 @@
           fg.position.set(0.07, -0.09, 0.34);
 
           // Override base parts to match minigun realism
-          receiver.material = mgDarkMat;
+          // Fancy “skin” pass
+          receiver.material = skinMinigunMat;
           barrel.material = mgDarkMat;
           stock.material = mgPolyMat;
           grip.material = mgPolyMat;
