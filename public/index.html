@@ -498,7 +498,13 @@
           }
           if (msg.t === 'grenadeSpawn') onGrenadeSpawn(msg);
           if (msg.t === 'slash') onSlashMsg(msg);
-          if (msg.t === 'pickup') showKill(`${msg.id} picked up ${msg.what}`);
+          if (msg.t === 'pickup') {
+            showKill(`${msg.id} picked up ${msg.what}`);
+            // If it's us, immediately force weapon switch so minigun shows without waiting for next state tick
+            if (msg.id === myId && msg.what === 'minigun' && fpRig?.setGun) {
+              try { fpRig.setGun('minigun'); } catch {}
+            }
+          }
           if (msg.t === 'dmg') onDamageMsg(msg);
           if (msg.t === 'snapSaved') {
             const url = `${location.origin}/snaps/${msg.file}`;
@@ -648,7 +654,7 @@
           const pickups = (s.pickups || []);
           let show = false;
           let targetId = null;
-          if (btnPickup && meP && pickups.length) {
+          if (btnPickup && meP && pickups.length && state.started) {
             for (const it of pickups) {
               if (it.type !== 'minigun') continue;
               if (it.kind === 'pad' && (it.availInMs||0) > 0) continue;
@@ -3547,7 +3553,14 @@ function spawnDent(pos, normal, size, kind) {
         prevent(e);
         const pickId = el.dataset.pickId || '';
         if (!pickId) return;
-        try { socket && socket.readyState === 1 && socket.send(JSON.stringify({ t:'pickup', id: pickId })); } catch {}
+        // Visual tap feedback
+        el.style.background = 'rgba(255,220,120,0.5)';
+        setTimeout(() => { el.style.background = 'rgba(255,220,120,0.16)'; }, 120);
+        if (!socket || socket.readyState !== 1) {
+          showKill('Server disconnected!');
+          return;
+        }
+        try { socket.send(JSON.stringify({ t:'pickup', id: pickId })); } catch {}
       };
       el.addEventListener('pointerdown', act, { passive:false });
       el.addEventListener('touchstart', act, { passive:false });
