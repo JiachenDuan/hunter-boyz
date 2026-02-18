@@ -1155,6 +1155,13 @@
       gripMat.specularColor = new BABYLON.Color3(0.04, 0.04, 0.04);
       gripMat.specularPower = 12;
 
+      // Wood material (AK-style furniture)
+      const woodMat = new BABYLON.StandardMaterial('woodMat', scene);
+      woodMat.diffuseColor = new BABYLON.Color3(0.28, 0.16, 0.08);
+      woodMat.emissiveColor = new BABYLON.Color3(0.02, 0.01, 0.005);
+      woodMat.specularColor = new BABYLON.Color3(0.10, 0.08, 0.06);
+      woodMat.specularPower = 24;
+
       // ── Fancy gun skins (procedural; no external assets) ──
       // Uses a low-res DynamicTexture so it looks like a “skin” but stays iPhone-friendly.
       function gunSkinMat(name, opts = {}) {
@@ -1679,63 +1686,82 @@
           grip.material = sniperStockMat;
         }
 
-        // Rifle: CS-ish carbine silhouette (magazine, handguard, rail, irons) + darker tactical materials
+        // Rifle: AK-style silhouette (wood furniture + curved mag)
         if (kind === 'rifle') {
-          const rifleDarkMat = new BABYLON.StandardMaterial(`rifleDark_${kind}`, scene);
-          rifleDarkMat.diffuseColor = new BABYLON.Color3(0.07, 0.075, 0.085);
-          rifleDarkMat.emissiveColor = new BABYLON.Color3(0.004, 0.004, 0.005);
-          rifleDarkMat.specularColor = new BABYLON.Color3(0.12, 0.12, 0.14);
-          rifleDarkMat.specularPower = 72;
+          const akMetalMat = new BABYLON.StandardMaterial(`akMetal_${kind}`, scene);
+          akMetalMat.diffuseColor = new BABYLON.Color3(0.10, 0.11, 0.13);
+          akMetalMat.emissiveColor = new BABYLON.Color3(0.006, 0.006, 0.007);
+          akMetalMat.specularColor = new BABYLON.Color3(0.20, 0.20, 0.22);
+          akMetalMat.specularPower = 84;
 
-          const riflePolyMat = new BABYLON.StandardMaterial(`riflePoly_${kind}`, scene);
-          riflePolyMat.diffuseColor = new BABYLON.Color3(0.04, 0.04, 0.045);
-          riflePolyMat.emissiveColor = new BABYLON.Color3(0.002, 0.002, 0.002);
-          riflePolyMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
-          riflePolyMat.specularPower = 10;
+          // Curved magazine (3-step curve)
+          const mag1 = BABYLON.MeshBuilder.CreateBox(`mag1_${kind}`, { width:0.060, height:0.10, depth:0.060 }, scene);
+          mag1.material = akMetalMat;
+          mag1.parent = g;
+          mag1.position.set(0.03, -0.10, 0.06);
+          mag1.rotation.x = 0.15;
 
-          // Magazine
-          const mag = BABYLON.MeshBuilder.CreateBox(`mag_${kind}`, { width:0.055, height:0.12, depth:0.09 }, scene);
-          mag.material = riflePolyMat;
-          mag.parent = g;
-          mag.position.set(0.02, -0.10, 0.06);
-          mag.rotation.x = 0.10;
+          const mag2 = BABYLON.MeshBuilder.CreateBox(`mag2_${kind}`, { width:0.060, height:0.10, depth:0.060 }, scene);
+          mag2.material = akMetalMat;
+          mag2.parent = g;
+          mag2.position.set(0.03, -0.16, 0.11);
+          mag2.rotation.x = 0.32;
 
-          // Handguard
-          const handguard = BABYLON.MeshBuilder.CreateBox(`hg_${kind}`, { width:0.09, height:0.07, depth:0.20 }, scene);
-          handguard.material = riflePolyMat;
+          const mag3 = BABYLON.MeshBuilder.CreateBox(`mag3_${kind}`, { width:0.060, height:0.10, depth:0.060 }, scene);
+          mag3.material = akMetalMat;
+          mag3.parent = g;
+          mag3.position.set(0.03, -0.22, 0.18);
+          mag3.rotation.x = 0.52;
+
+          // Wooden handguard
+          const handguard = BABYLON.MeshBuilder.CreateBox(`ak_hg_${kind}`, { width:0.10, height:0.07, depth:0.22 }, scene);
+          handguard.material = woodMat;
           handguard.parent = g;
           handguard.position.set(0.02, -0.02, 0.36);
 
-          // Top rail
-          const rail = BABYLON.MeshBuilder.CreateBox(`rail_${kind}`, { width:0.05, height:0.015, depth:0.24 }, scene);
-          rail.material = rifleDarkMat;
-          rail.parent = g;
-          rail.position.set(0.02, 0.055, 0.10);
+          // Gas tube above barrel
+          const gas = BABYLON.MeshBuilder.CreateCylinder(`ak_gas_${kind}`, { diameter:0.028, height:0.30, tessellation: 10 }, scene);
+          gas.material = akMetalMat;
+          gas.parent = g;
+          gas.rotation.x = Math.PI / 2;
+          gas.position.set(0.02, 0.045, 0.40);
 
-          // Front sight post
-          const fs = BABYLON.MeshBuilder.CreateBox(`fs_${kind}`, { width:0.03, height:0.05, depth:0.03 }, scene);
-          fs.material = rifleDarkMat;
-          fs.parent = g;
-          fs.position.set(0.02, 0.04, 0.52);
+          // Front sight block
+          const fsb = BABYLON.MeshBuilder.CreateBox(`ak_fsb_${kind}`, { width:0.05, height:0.06, depth:0.05 }, scene);
+          fsb.material = akMetalMat;
+          fsb.parent = g;
+          fsb.position.set(0.02, 0.02, 0.55);
+
+          const post = BABYLON.MeshBuilder.CreateBox(`ak_post_${kind}`, { width:0.01, height:0.04, depth:0.01 }, scene);
+          post.material = knifeBladeMat;
+          post.parent = g;
+          post.position.set(0.02, 0.05, 0.56);
 
           // Rear sight block
-          const rs = BABYLON.MeshBuilder.CreateBox(`rs_${kind}`, { width:0.04, height:0.04, depth:0.04 }, scene);
-          rs.material = rifleDarkMat;
+          const rs = BABYLON.MeshBuilder.CreateBox(`ak_rs_${kind}`, { width:0.05, height:0.03, depth:0.05 }, scene);
+          rs.material = akMetalMat;
           rs.parent = g;
-          rs.position.set(0.02, 0.04, 0.00);
+          rs.position.set(0.02, 0.03, 0.02);
 
           // Muzzle device
-          const md = BABYLON.MeshBuilder.CreateCylinder(`md_${kind}`, { diameter:0.055, height:0.06, tessellation: 12 }, scene);
-          md.material = rifleDarkMat;
+          const md = BABYLON.MeshBuilder.CreateCylinder(`ak_md_${kind}`, { diameter:0.050, height:0.06, tessellation: 12 }, scene);
+          md.material = akMetalMat;
           md.parent = g;
           md.rotation.x = Math.PI / 2;
           md.position.set(0.02, 0.00, 0.24 + barrelLen / 2 + 0.04);
 
-          // Fancy “skin” pass: put a patterned skin on main body parts.
-          receiver.material = skinRifleMat;
-          barrel.material = rifleDarkMat;
-          stock.material = riflePolyMat;
-          grip.material = riflePolyMat;
+          // Wooden stock (chunkier, AK-ish)
+          stock.scaling.x = 1.25;
+          stock.scaling.y = 1.10;
+          stock.scaling.z = 1.15;
+          stock.position.z = -0.18;
+          stock.position.y = -0.01;
+          stock.material = woodMat;
+
+          // Apply materials
+          receiver.material = akMetalMat;
+          barrel.material = akMetalMat;
+          grip.material = akMetalMat;
         }
 
         // Shotgun: more realistic pump shotgun (tube mag, bead sight, darker mats)
