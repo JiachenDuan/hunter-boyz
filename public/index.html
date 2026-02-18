@@ -1249,6 +1249,9 @@
       const skinRifleMat = gunSkinMat('rifle', { seed: 4101, base: '#14181e', accent: '#2d7dff', accent2: '#ffffff', pattern: 'digital' });
       const skinShotgunMat = gunSkinMat('shotgun', { seed: 8822, base: '#171717', accent: '#ff9f1a', accent2: '#b000ff', pattern: 'diagonal' });
       const skinMinigunMat = gunSkinMat('minigun', { seed: 12007, base: '#111318', accent: '#ff2d55', accent2: '#ffd60a', pattern: 'splatter' });
+      const skinSniperMat = gunSkinMat('sniper', { seed: 7711, base: '#0f1216', accent: '#00d1ff', accent2: '#b8ff5a', pattern: 'fade' });
+      const skinRocketMat = gunSkinMat('rocket', { seed: 9090, base: '#121417', accent: '#ff3b30', accent2: '#ffd60a', pattern: 'diagonal' });
+      const skinFartMat = gunSkinMat('fart', { seed: 2501, base: '#1b1e23', accent: '#27e18c', accent2: '#ffd60a', pattern: 'digital' });
 
 
       // Cartoon / toy palette (bright colors + low specular)
@@ -1643,8 +1646,8 @@
           cheekRiser.parent = g;
           cheekRiser.position.set(0.02, 0.03, -0.14);
 
-          // Override all materials to dark tactical finish
-          receiver.material = sniperDarkMat;
+          // Fancy “skin” pass (keep realistic tactical parts but add a premium skin on receiver)
+          receiver.material = skinSniperMat;
           barrel.material = sniperDarkMat;
           stock.material = sniperStockMat;
           grip.material = sniperStockMat;
