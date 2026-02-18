@@ -1159,54 +1159,41 @@
       // Uses a low-res DynamicTexture so it looks like a “skin” but stays iPhone-friendly.
       function gunSkinMat(name, opts = {}) {
         const size = opts.size || 256;
-        const base = opts.base || '#1b1e23';
-        const accent = opts.accent || '#7c5cff';
-        const accent2 = opts.accent2 || '#f1c40f';
-        const pattern = opts.pattern || 'splatter'; // splatter|diagonal|digital|fade
+        const base = opts.base || '#12151a';
+        const accent = opts.accent || '#4aa3ff';
+        const accent2 = opts.accent2 || '#d7ff4f';
+        const pattern = opts.pattern || 'digital'; // digital|diagonal|fade|camo
 
         const tex = new BABYLON.DynamicTexture(`skinTex_${name}`, { width: size, height: size }, scene, false);
         const ctx = tex.getContext();
 
-        // base fill
-        ctx.fillStyle = base;
-        ctx.fillRect(0, 0, size, size);
-
-        // subtle gradient
-        const g = ctx.createLinearGradient(0, 0, size, size);
-        g.addColorStop(0, 'rgba(255,255,255,0.06)');
-        g.addColorStop(1, 'rgba(0,0,0,0.10)');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, size, size);
-
         function rand(seed) {
-          // deterministic-ish PRNG
           seed = (seed * 1664525 + 1013904223) >>> 0;
           return [seed, (seed & 0xfffffff) / 0xfffffff];
         }
         let seed = (opts.seed || 123456789) >>> 0;
 
-        // pattern layer
+        // base fill
+        ctx.fillStyle = base;
+        ctx.fillRect(0, 0, size, size);
+
+        // subtle vignette / depth
+        const vg = ctx.createRadialGradient(size * 0.4, size * 0.35, size * 0.1, size * 0.5, size * 0.5, size * 0.75);
+        vg.addColorStop(0, 'rgba(255,255,255,0.05)');
+        vg.addColorStop(1, 'rgba(0,0,0,0.18)');
+        ctx.fillStyle = vg;
+        ctx.fillRect(0, 0, size, size);
+
+        // pattern layer (kept more “CS skin” than neon toy)
         if (pattern === 'diagonal') {
-          ctx.globalAlpha = 0.35;
+          ctx.globalAlpha = 0.22;
           ctx.fillStyle = accent;
-          for (let i = -size; i < size * 2; i += 22) {
+          for (let i = -size; i < size * 2; i += 26) {
             ctx.save();
             ctx.translate(i, 0);
             ctx.rotate(-Math.PI / 4);
-            ctx.fillRect(0, 0, 10, size * 3);
+            ctx.fillRect(0, 0, 8, size * 3);
             ctx.restore();
-          }
-          ctx.globalAlpha = 1;
-        } else if (pattern === 'digital') {
-          ctx.globalAlpha = 0.32;
-          for (let i = 0; i < 220; i++) {
-            [seed, r] = rand(seed); const x = Math.floor(r * size);
-            [seed, r] = rand(seed); const y = Math.floor(r * size);
-            [seed, r] = rand(seed); const w = 6 + Math.floor(r * 22);
-            [seed, r] = rand(seed); const h = 4 + Math.floor(r * 16);
-            [seed, r] = rand(seed);
-            ctx.fillStyle = (r < 0.65) ? accent : accent2;
-            ctx.fillRect(x, y, w, h);
           }
           ctx.globalAlpha = 1;
         } else if (pattern === 'fade') {
@@ -1214,44 +1201,83 @@
           g2.addColorStop(0, base);
           g2.addColorStop(0.55, accent);
           g2.addColorStop(1, accent2);
-          ctx.globalAlpha = 0.55;
+          ctx.globalAlpha = 0.35;
           ctx.fillStyle = g2;
           ctx.fillRect(0, 0, size, size);
           ctx.globalAlpha = 1;
-        } else {
-          // splatter
-          ctx.globalAlpha = 0.35;
-          for (let i = 0; i < 180; i++) {
-            [seed, r] = rand(seed); const x = r * size;
-            [seed, r] = rand(seed); const y = r * size;
-            [seed, r] = rand(seed); const rad = 2 + r * 10;
+        } else if (pattern === 'camo') {
+          ctx.globalAlpha = 0.28;
+          for (let i = 0; i < 120; i++) {
+            let r;
+            [seed, r] = rand(seed); const x = Math.floor(r * size);
+            [seed, r] = rand(seed); const y = Math.floor(r * size);
+            [seed, r] = rand(seed); const w = 14 + Math.floor(r * 60);
+            [seed, r] = rand(seed); const h = 10 + Math.floor(r * 46);
             [seed, r] = rand(seed);
-            ctx.fillStyle = (r < 0.7) ? accent : accent2;
+            ctx.fillStyle = (r < 0.6) ? accent : accent2;
             ctx.beginPath();
-            ctx.arc(x, y, rad, 0, Math.PI * 2);
+            ctx.roundRect(x, y, w, h, 6);
             ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        } else {
+          // digital (default)
+          ctx.globalAlpha = 0.26;
+          for (let i = 0; i < 180; i++) {
+            let r;
+            [seed, r] = rand(seed); const x = Math.floor(r * size);
+            [seed, r] = rand(seed); const y = Math.floor(r * size);
+            [seed, r] = rand(seed); const w = 8 + Math.floor(r * 22);
+            [seed, r] = rand(seed); const h = 6 + Math.floor(r * 18);
+            [seed, r] = rand(seed);
+            ctx.fillStyle = (r < 0.72) ? accent : accent2;
+            ctx.fillRect(x, y, w, h);
           }
           ctx.globalAlpha = 1;
         }
 
-        tex.update(false);
-        try { tex.wrapU = BABYLON.Texture.WRAP_ADDRESSMODE; tex.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE; } catch {}
+        // “brushed metal” micro lines (helps read as real material)
+        ctx.globalAlpha = 0.10;
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        for (let y = 0; y < size; y += 4) {
+          ctx.beginPath();
+          ctx.moveTo(0, y + ((y % 8) ? 0.5 : 0));
+          ctx.lineTo(size, y);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
 
-        const m = new BABYLON.StandardMaterial(`skinMat_${name}`, scene);
-        m.diffuseTexture = tex;
-        m.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.012);
-        m.specularColor = new BABYLON.Color3(0.30, 0.30, 0.34);
-        m.specularPower = 72;
+        // tiny decals (serial-ish)
+        ctx.globalAlpha = 0.28;
+        ctx.fillStyle = 'rgba(255,255,255,0.65)';
+        ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillText(String(opts.decal || name).toUpperCase().slice(0, 10), 14, size - 18);
+        ctx.globalAlpha = 1;
+
+        tex.update(false);
+        try {
+          tex.wrapU = BABYLON.Texture.WRAP_ADDRESSMODE;
+          tex.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
+          tex.uScale = opts.uScale || 2.0;
+          tex.vScale = opts.vScale || 2.0;
+        } catch {}
+
+        // PBR for more “real” look
+        const m = new BABYLON.PBRMetallicRoughnessMaterial(`skinMat_${name}`, scene);
+        m.baseTexture = tex;
+        m.metallic = (typeof opts.metallic === 'number') ? opts.metallic : 0.65;
+        m.roughness = (typeof opts.roughness === 'number') ? opts.roughness : 0.35;
+        m.baseColor = new BABYLON.Color3(1, 1, 1);
         return m;
       }
 
       // Default fancy skins (CS-ish, but slightly stylized)
-      const skinRifleMat = gunSkinMat('rifle', { seed: 4101, base: '#14181e', accent: '#2d7dff', accent2: '#ffffff', pattern: 'digital' });
-      const skinShotgunMat = gunSkinMat('shotgun', { seed: 8822, base: '#171717', accent: '#ff9f1a', accent2: '#b000ff', pattern: 'diagonal' });
-      const skinMinigunMat = gunSkinMat('minigun', { seed: 12007, base: '#111318', accent: '#ff2d55', accent2: '#ffd60a', pattern: 'splatter' });
-      const skinSniperMat = gunSkinMat('sniper', { seed: 7711, base: '#0f1216', accent: '#00d1ff', accent2: '#b8ff5a', pattern: 'fade' });
-      const skinRocketMat = gunSkinMat('rocket', { seed: 9090, base: '#121417', accent: '#ff3b30', accent2: '#ffd60a', pattern: 'diagonal' });
-      const skinFartMat = gunSkinMat('fart', { seed: 2501, base: '#1b1e23', accent: '#27e18c', accent2: '#ffd60a', pattern: 'digital' });
+      const skinRifleMat = gunSkinMat('rifle', { seed: 4101, base: '#11151b', accent: '#2f7cff', accent2: '#e6e6e6', pattern: 'digital', decal: 'HB-RIFLE', uScale: 2.4, vScale: 2.4, metallic: 0.60, roughness: 0.40 });
+      const skinShotgunMat = gunSkinMat('shotgun', { seed: 8822, base: '#141416', accent: '#ff8c1a', accent2: '#b000ff', pattern: 'diagonal', decal: 'HB-SG', uScale: 2.2, vScale: 2.2, metallic: 0.55, roughness: 0.45 });
+      const skinMinigunMat = gunSkinMat('minigun', { seed: 12007, base: '#0f1216', accent: '#ff2d55', accent2: '#ffd60a', pattern: 'camo', decal: 'HB-MG', uScale: 2.0, vScale: 2.0, metallic: 0.70, roughness: 0.30 });
+      const skinSniperMat = gunSkinMat('sniper', { seed: 7711, base: '#0c0f13', accent: '#00bcd4', accent2: '#b8ff5a', pattern: 'fade', decal: 'HB-AWP', uScale: 2.0, vScale: 2.0, metallic: 0.65, roughness: 0.33 });
+      const skinRocketMat = gunSkinMat('rocket', { seed: 9090, base: '#0f1216', accent: '#ff3b30', accent2: '#ffd60a', pattern: 'diagonal', decal: 'HB-RPG', uScale: 1.8, vScale: 1.8, metallic: 0.45, roughness: 0.55 });
+      const skinFartMat = gunSkinMat('fart', { seed: 2501, base: '#13161b', accent: '#27e18c', accent2: '#ffd60a', pattern: 'digital', decal: 'FART', uScale: 2.6, vScale: 2.6, metallic: 0.25, roughness: 0.65 });
 
 
       // Cartoon / toy palette (bright colors + low specular)
