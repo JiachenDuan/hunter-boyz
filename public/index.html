@@ -286,6 +286,9 @@
 
     <div id="mgHud" style="position:fixed; top:46px; left:50%; transform:translateX(-50%); z-index:110; display:none; gap:8px; align-items:center; pointer-events:none;">
       <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.14); border-radius:999px; padding:6px 10px; font-weight:900; font-size:12px; color:#e6edf3;">MINIGUN</div>
+      <div style="width:80px; height:10px; background:rgba(255,255,255,0.10); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.12);" title="Spin">
+        <div id="mgSpin" style="height:100%; width:0%; background:linear-gradient(90deg, rgba(100,180,255,0.85), rgba(60,140,255,0.85));"></div>
+      </div>
       <div style="width:140px; height:10px; background:rgba(255,255,255,0.10); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.12);">
         <div id="mgAmmo" style="height:100%; width:100%; background:linear-gradient(90deg, rgba(120,255,160,0.85), rgba(80,220,120,0.85));"></div>
       </div>
@@ -634,6 +637,7 @@
           const mgHud = document.getElementById('mgHud');
           const mgAmmo = document.getElementById('mgAmmo');
           const mgHeat = document.getElementById('mgHeat');
+          const mgSpinEl = document.getElementById('mgSpin');
           if (meP.powerWeapon === 'minigun') {
             mgHud.style.display = 'flex';
             const maxAmmo = (window.WEAPONS?.getWeapon('minigun')?.ammo) || 300;
@@ -643,6 +647,14 @@
             mgHeat.style.width = `${h * 100}%`;
             if (meP.mgOverheat) mgHeat.style.filter = 'brightness(1.25) saturate(1.2)';
             else mgHeat.style.filter = 'none';
+            // Spin indicator (needs >= 20% to fire)
+            const spin = Math.max(0, Math.min(1, meP.mgSpin || 0));
+            if (mgSpinEl) {
+              mgSpinEl.style.width = `${spin * 100}%`;
+              mgSpinEl.style.background = spin >= 0.2
+                ? 'linear-gradient(90deg, rgba(60,220,120,0.85), rgba(60,255,160,0.85))'
+                : 'linear-gradient(90deg, rgba(100,180,255,0.85), rgba(60,140,255,0.85))';
+            }
           } else {
             mgHud.style.display = 'none';
           }
@@ -677,7 +689,73 @@
         // Keep gun model in sync with current effective weapon (power weapon overrides selection).
         try {
           const eff = (meP.powerWeapon === 'minigun') ? 'minigun' : (document.getElementById('weapon')?.value || 'rifle');
-          if (fpRig?.setGun) fpRig.setGun(eff);
+          if (fpRig?.setGun) {
+            fpRig.setGun(eff);
+            // Also recursively enable all children when switching to minigun
+            if (eff === 'minigun' && fpRig.guns.minigun) {
+              fpRig.guns.minigun.getChildMeshes().forEach(m => m.setEnabled(true));
+            }
+          }
+        } catch {}
+
+        // Render 3D pickup pad indicators on the map
+        try {
+          if (!window.__pickupPadMeshes) window.__pickupPadMeshes = {};
+          const pads = window.__pickupPadMeshes;
+          const pickupsNow = (s.pickups || []);
+          // Mark all existing as stale
+          for (const k of Object.keys(pads)) pads[k]._stale = true;
+          for (const pk of pickupsNow) {
+            const avail = (pk.kind === 'pad') ? ((pk.availInMs||0) <= 0) : ((pk.expiresInMs||0) > 0);
+            if (!pads[pk.id]) {
+              // Create a glowing crate mesh
+              const crate = BABYLON.MeshBuilder.CreateBox('pickup_' + pk.id, { width: 0.8, height: 0.5, depth: 0.8 }, scene);
+              const mat = new BABYLON.StandardMaterial('pickMat_' + pk.id, scene);
+              mat.diffuseColor = new BABYLON.Color3(1.0, 0.85, 0.2);
+              mat.emissiveColor = new BABYLON.Color3(0.6, 0.45, 0.05);
+              mat.alpha = 0.85;
+              crate.material = mat;
+              crate.position.set(pk.x, (pk.y || 0.5) - 0.5, pk.z);
+              // Label
+              const label = BABYLON.MeshBuilder.CreatePlane('pickLabel_' + pk.id, { width: 1.2, height: 0.4 }, scene);
+              const labelTex = new BABYLON.DynamicTexture('pickTex_' + pk.id, { width: 256, height: 64 }, scene, false);
+              labelTex.hasAlpha = true;
+              const ctx2 = labelTex.getContext();
+              ctx2.clearRect(0, 0, 256, 64);
+              ctx2.font = 'bold 28px sans-serif';
+              ctx2.fillStyle = '#ffd700';
+              ctx2.textAlign = 'center';
+              ctx2.fillText('⚡ MINIGUN', 128, 42);
+              labelTex.update();
+              const labelMat = new BABYLON.StandardMaterial('pickLblMat_' + pk.id, scene);
+              labelMat.diffuseTexture = labelTex;
+              labelMat.emissiveColor = new BABYLON.Color3(1, 0.9, 0.3);
+              labelMat.disableLighting = true;
+              labelMat.backFaceCulling = false;
+              labelMat.useAlphaFromDiffuseTexture = true;
+              label.material = labelMat;
+              label.position.set(pk.x, (pk.y || 0.5) + 0.6, pk.z);
+              label.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+              pads[pk.id] = { crate, label, mat };
+            }
+            pads[pk.id]._stale = false;
+            // Show/hide based on availability
+            pads[pk.id].crate.setEnabled(avail);
+            pads[pk.id].label.setEnabled(avail);
+            // Gentle bob animation
+            if (avail) {
+              pads[pk.id].crate.position.y = ((pk.y || 0.5) - 0.5) + Math.sin(performance.now() * 0.003) * 0.08;
+              pads[pk.id].crate.rotation.y += 0.015;
+            }
+          }
+          // Remove stale
+          for (const k of Object.keys(pads)) {
+            if (pads[k]._stale) {
+              pads[k].crate.dispose();
+              pads[k].label.dispose();
+              delete pads[k];
+            }
+          }
         } catch {}
 
         // show spawn protection by tinting HP bar
