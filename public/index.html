@@ -250,13 +250,13 @@
         <div id="weaponText" style="font-weight:900; font-size:12px; opacity:.75;">Weapon rifle</div>
       </div>
       <div id="hitToast" style="margin-top:10px; text-align:center; font-weight:900; font-size:18px; opacity:0; transition: opacity 120ms ease; color: rgba(255,240,120,0.95); text-shadow: 0 2px 10px rgba(0,0,0,0.6);">HIT!</div>
-      <div id="hitDetail" style="margin-top:6px; text-align:center; font-weight:800; font-size:13px; opacity:0; transition: opacity 120ms ease; color: rgba(230,237,243,0.9);">—</div>
+      <div id="hitDetail" style="margin-top:6px; text-align:center; font-weight:800; font-size:13px; opacity:0; transition: opacity 120ms ease; color: rgba(230,237,243,0.9);">-</div>
     </div>
 
         <div id="dmgVignette" style="position:fixed; inset:0; pointer-events:none; z-index:94; opacity:0; transition: opacity 120ms ease; background: radial-gradient(circle at center, rgba(0,0,0,0) 55%, rgba(255,0,0,0.22) 100%);"></div>
 
 <!-- Winner banner -->
-    <div id="winnerBanner" style="position:fixed; top:18%; left:50%; transform:translateX(-50%); padding:12px 14px; border-radius:14px; background: rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18); color:#e6edf3; font-weight:900; font-size:18px; letter-spacing:0.4px; opacity:0; transition: opacity 120ms ease; pointer-events:none; z-index:95;">WINNER: —    <!-- Round countdown timer (top center) -->
+    <div id="winnerBanner" style="position:fixed; top:18%; left:50%; transform:translateX(-50%); padding:12px 14px; border-radius:14px; background: rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18); color:#e6edf3; font-weight:900; font-size:18px; letter-spacing:0.4px; opacity:0; transition: opacity 120ms ease; pointer-events:none; z-index:95;">WINNER: -    <!-- Round countdown timer (top center) -->
     <div id="roundTimer" style="position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:96; pointer-events:none; font-weight:900; font-size:14px; letter-spacing:0.6px; color: rgba(230,237,243,0.95); background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:999px; padding:8px 12px; min-width: 86px; text-align:center;">02:00</div>
 
 </div>
@@ -376,7 +376,7 @@
       if (t - _fatalAt < 1500) return;
       _fatalAt = t;
       try { console.error('[FATAL]', msg); } catch {}
-      try { log(`⚠️ ${String(msg).slice(0, 120)} — reconnecting…`); } catch {}
+      try { log(`⚠️ ${String(msg).slice(0, 120)} - reconnecting…`); } catch {}
       try { intentionalClose = false; socket?.close(); } catch {}
       try { setTimeout(() => { try { openSocket(); } catch {} }, 250); } catch {}
     }
@@ -1163,7 +1163,7 @@
       woodMat.specularPower = 24;
 
       // ── Fancy gun skins (procedural; no external assets) ──
-      // Uses a low-res DynamicTexture so it looks like a “skin” but stays iPhone-friendly.
+      // Uses a low-res DynamicTexture so it looks like a "skin" but stays iPhone-friendly.
       function gunSkinMat(name, opts = {}) {
         const size = opts.size || 256;
         const base = opts.base || '#12151a';
@@ -1191,7 +1191,7 @@
         ctx.fillStyle = vg;
         ctx.fillRect(0, 0, size, size);
 
-        // pattern layer (kept more “CS skin” than neon toy)
+        // pattern layer (kept more "CS skin" than neon toy)
         if (pattern === 'diagonal') {
           ctx.globalAlpha = 0.22;
           ctx.fillStyle = accent;
@@ -1243,7 +1243,7 @@
           ctx.globalAlpha = 1;
         }
 
-        // “brushed metal” micro lines (helps read as real material)
+        // "brushed metal" micro lines (helps read as real material)
         ctx.globalAlpha = 0.10;
         ctx.strokeStyle = 'rgba(255,255,255,0.35)';
         for (let y = 0; y < size; y += 4) {
@@ -1269,7 +1269,7 @@
           tex.vScale = opts.vScale || 2.0;
         } catch {}
 
-        // PBR for more “real” look
+        // PBR for more "real" look
         const m = new BABYLON.PBRMetallicRoughnessMaterial(`skinMat_${name}`, scene);
         m.baseTexture = tex;
         m.metallic = (typeof opts.metallic === 'number') ? opts.metallic : 0.65;
@@ -1374,7 +1374,7 @@
         // SPECIAL: knife/grenades replace the gun entirely in-hand.
         // Also swap to cartoon colors so each weapon reads differently.
         const toy = {
-          // Keep the “toy” look for the more arcade-y weapons.
+          // Keep the "toy" look for the more arcade-y weapons.
           // Rifle + shotgun are now CS-ish realistic, so they are NOT in this list.
           sniper: { body: toyPurpleMat, acc: toyWhiteMat, grip: toyBlackMat },
           rocket: { body: toyGreenMat, acc: toyWhiteMat, grip: toyBlackMat },
@@ -1679,7 +1679,7 @@
           cheekRiser.parent = g;
           cheekRiser.position.set(0.02, 0.03, -0.14);
 
-          // Fancy “skin” pass (keep realistic tactical parts but add a premium skin on receiver)
+          // Fancy "skin" pass (keep realistic tactical parts but add a premium skin on receiver)
           receiver.material = skinSniperMat;
           barrel.material = sniperDarkMat;
           stock.material = sniperStockMat;
@@ -1803,7 +1803,7 @@
             stock.scaling.y = 1.10;
           } catch {}
 
-          // Fancy “skin” pass
+          // Fancy "skin" pass
           receiver.material = skinShotgunMat;
           barrel.material = sgDarkMat;
           stock.material = sgPolyMat;
@@ -1870,7 +1870,7 @@
           nozzle.position.set(0.02, 0.02, 0.62);
         }
 
-        // Minigun: CS-style “加特林” vibe (barrel shroud, carry handle, ammo box + belt) + spinning barrel cluster.
+        // Minigun: CS-style "加特林" vibe (barrel shroud, carry handle, ammo box + belt) + spinning barrel cluster.
         if (kind === 'minigun') {
           const mgDarkMat = new BABYLON.StandardMaterial(`mgDark_${kind}`, scene);
           mgDarkMat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.07);
@@ -1961,7 +1961,7 @@
           fg.position.set(0.07, -0.09, 0.34);
 
           // Override base parts to match minigun realism
-          // Fancy “skin” pass
+          // Fancy "skin" pass
           receiver.material = skinMinigunMat;
           barrel.material = mgDarkMat;
           stock.material = mgPolyMat;
@@ -2290,7 +2290,7 @@
               }
             : (w === 'minigun')
             ? {
-                // minigun: tighter, punchier “brrrt” (less thump, more mid)
+                // minigun: tighter, punchier "brrrt" (less thump, more mid)
                 noise: 0.09,
                 bpFreq: 1500,
                 bpQ: 1.0,
@@ -2548,8 +2548,8 @@
 
 
 
-    
-    
+
+
     function onDamageMsg(msg) {
       try {
         if (String(msg.to) !== String(state.me)) return;
@@ -2685,7 +2685,7 @@ function showWinner(msg) {
       } catch {}
     }
 
-    
+
     function renderRocketProjectile(from, to) {
       try {
         const dir = to.subtract(from);
@@ -2963,7 +2963,7 @@ function showKill(text) {
     const _dents = [];
     const MAX_DENTS = 300;
 
-    
+
     function spawnSparks(pos, intensity=1) {
       try {
         if (!scene || !pos) return;
@@ -3114,22 +3114,19 @@ function spawnDent(pos, normal, size, kind) {
       const segments = [];
       if (Array.isArray(s.traces) && s.traces.length) {
         const w = (s.weapon || 'rifle');
-        // Shotgun: draw only ONE tracer to the average endpoint (avoids visual clutter)
+        // Visual policy: keep tracers clean/CS-style → 1 line per shot.
+        // - shotgun: average pellets into one line
+        // - everything else: first trace only
         if (w === 'shotgun') {
           let ax = 0, az = 0;
           for (const tr of s.traces) { ax += tr.ex; az += tr.ez; }
           ax /= s.traces.length; az /= s.traces.length;
           segments.push([gunStart, new BABYLON.Vector3(ax, (s.sy || 1.8) - 0.2, az)]);
-        } else if (w === 'rifle') {
-          // Rifle: some servers send traces[]; keep visuals clean like CS (single tracer).
+        } else {
           const tr0 = s.traces[0];
           segments.push([gunStart, new BABYLON.Vector3(tr0.ex, (s.sy || 1.8) - 0.2, tr0.ez)]);
-        } else {
-          for (const tr of s.traces) {
-            segments.push([gunStart, new BABYLON.Vector3(tr.ex, (s.sy || 1.8) - 0.2, tr.ez)]);
-          }
         }
-      } else { 
+      } else {
         segments.push([gunStart, new BABYLON.Vector3(s.ex, (s.sy || 1.8) - 0.2, s.ez)]);
       }
       const wpn0 = (s.weapon || 'rifle');
