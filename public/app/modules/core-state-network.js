@@ -166,42 +166,14 @@
           if (msg.t === 'slash') onSlashMsg(msg);
           if (msg.t === 'pickup') {
             showKill(`${msg.id} picked up ${msg.what}`);
-            // Third-person: switch weapon only for the pickup owner.
-            try {
-              if (msg.what === 'minigun') {
-                for (const [pid, root] of players.entries()) {
-                  const w = root?.metadata?.weapons;
-                  if (!w) continue;
-                  const isOwner = String(pid) === String(msg.id);
-                  if (w.gun) w.gun.setEnabled(!isOwner);
-                  if (w.minigun) w.minigun.setEnabled(isOwner);
-                }
-              }
-            } catch {}
             // Immediately switch to minigun in-hand without waiting for next state tick
             if (msg.id === myId && msg.what === 'minigun' && fpRig) {
               try {
                 fpRig.setGun('minigun');
-                // Belt-and-suspenders: directly show every minigun mesh, hide others
-                Object.entries(fpRig.guns).forEach(([n, node]) => {
-                  node.getDescendants(false).forEach(d => {
-                    if (typeof d.isVisible === 'undefined') return;
-                    if (n === 'minigun' && d.metadata && d.metadata._intentionallyHidden) return;
-                    try { d.isVisible = (n === 'minigun'); } catch {}
-                  });
-                  try { node.setEnabled(n === 'minigun'); } catch {}
-                });
               } catch {}
             }
           }
           if (msg.t === 'minigunEmpty') {
-            // Third-person: revert this player back to default gun.
-            try {
-              const root = players.get(String(msg.id));
-              const w = root?.metadata?.weapons;
-              if (w?.gun) w.gun.setEnabled(true);
-              if (w?.minigun) w.minigun.setEnabled(false);
-            } catch {}
             if (msg.id === myId) {
               showKill('⚠️ Minigun out of ammo!');
               // Immediately switch back to selected weapon
@@ -669,6 +641,7 @@
             targetYaw: p.yaw,
             namePlate,
             fartFx,
+            tppWeaponVisible: 'gun',
             weapons: { gun, minigun: tppMinigun },
           };
           players.set(p.id, root);
@@ -713,8 +686,12 @@
           try {
             const w = mesh.metadata.weapons;
             const hasMinigun = (p.powerWeapon === 'minigun');
-            if (w?.gun) w.gun.setEnabled(!hasMinigun);
-            if (w?.minigun) w.minigun.setEnabled(hasMinigun);
+            const nextVisible = hasMinigun ? 'minigun' : 'gun';
+            if (mesh.metadata.tppWeaponVisible !== nextVisible) {
+              if (w?.gun) w.gun.setEnabled(!hasMinigun);
+              if (w?.minigun) w.minigun.setEnabled(hasMinigun);
+              mesh.metadata.tppWeaponVisible = nextVisible;
+            }
           } catch {}
         }
 
