@@ -253,6 +253,14 @@ function respawn(p) {
   p.fartUntil = 0;
   p.fartTickAt = 0;
   p.disconnectedAt = 0;
+  // Release any pickup pad this player was holding so pad becomes available again
+  const t = nowMs();
+  for (const pad of pickupPads) {
+    if (pad.heldBy === p.id) {
+      pad.heldBy = null;
+      pad.respawnAt = t + 15_000;
+    }
+  }
 }
 
 function rayHit(shooter, maxDist = 30, yawOverride = null) {
@@ -1055,6 +1063,16 @@ setInterval(() => {
     minigunDrop = null;
   }
 
+  // Sanity-check pickup pads: release hold if player no longer exists or lost the weapon
+  for (const pad of pickupPads) {
+    if (!pad.heldBy) continue;
+    const holder = players.get(pad.heldBy);
+    if (!holder || holder.powerWeapon !== 'minigun') {
+      pad.heldBy = null;
+      pad.respawnAt = t + 15_000; // 15s before pad respawns
+    }
+  }
+
 
   // simulate grenades (simple physics + bounce)
   {
@@ -1148,6 +1166,13 @@ setInterval(() => {
         if (pid === id) clientToPlayer.delete(cid);
       }
       if (GAME.hostId === id) GAME.hostId = players.keys().next().value || null;
+      // Release any pickup pad this player was holding so it can be picked up again
+      for (const pad of pickupPads) {
+        if (pad.heldBy === id) {
+          pad.heldBy = null;
+          pad.respawnAt = t + 15_000; // 15s cooldown before pad is available again
+        }
+      }
     }
   }
 
