@@ -163,21 +163,17 @@ const MAPS = {
       { x: 7, y: 2.2, z: -6, w: 2, h: 4.4, d: 6 },
       { x: 7, y: 2.2, z: 2, w: 2, h: 4.4, d: 6 },
 
-      // Interior shaping for room/hallway duels.
+      // Interior shaping (light): keep only one central divider so it doesn’t feel like a maze.
       { x: 0, y: 2.2, z: -2, w: 2, h: 4.4, d: 8 },
-      { x: -3, y: 1.2, z: 0, w: 2, h: 2.4, d: 3 },
-      { x: 3, y: 1.2, z: 0, w: 2, h: 2.4, d: 3 },
 
-      // Side structures to emulate garage / side route pressure.
-      { x: -13, y: 2.2, z: -2, w: 6, h: 4.4, d: 8 },
-      { x: 13, y: 2.2, z: -1, w: 5, h: 4.4, d: 7 },
+      // Side structures (reduced): shrink these so side lanes are playable.
+      { x: -13, y: 2.2, z: -2, w: 4, h: 4.4, d: 6 },
+      { x: 13, y: 2.2, z: -1, w: 4, h: 4.4, d: 6 },
 
-      // Front courtyard cover.
+      // Front courtyard cover (reduced): keep just 3 pieces.
       { x: 0, y: 1.1, z: 13, w: 4, h: 2.2, d: 4 },
-      { x: -8, y: 1.1, z: 12, w: 5, h: 2.2, d: 3 },
-      { x: 8, y: 1.1, z: 12, w: 5, h: 2.2, d: 3 },
-      { x: -15, y: 1.2, z: 9, w: 4, h: 2.4, d: 6 },
-      { x: 15, y: 1.2, z: 9, w: 4, h: 2.4, d: 6 },
+      { x: -10, y: 1.2, z: 10, w: 4, h: 2.4, d: 6 },
+      { x: 10, y: 1.2, z: 10, w: 4, h: 2.4, d: 6 },
     ],
     pickupPads: [
       { id: 'pad_mg_1', type: 'minigun', x: -9, y: 1.8, z: 12 },
