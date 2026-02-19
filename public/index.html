@@ -505,8 +505,19 @@
           if (msg.t === 'pickup') {
             showKill(`${msg.id} picked up ${msg.what}`);
             // Immediately switch to minigun in-hand without waiting for next state tick
-            if (msg.id === myId && msg.what === 'minigun' && fpRig?.setGun) {
-              try { fpRig.setGun('minigun'); } catch {}
+            if (msg.id === myId && msg.what === 'minigun' && fpRig) {
+              try {
+                fpRig.setGun('minigun');
+                // Belt-and-suspenders: directly show every minigun mesh, hide others
+                Object.entries(fpRig.guns).forEach(([n, node]) => {
+                  node.getDescendants(false).forEach(d => {
+                    if (typeof d.isVisible === 'undefined') return;
+                    if (n === 'minigun' && d.metadata && d.metadata._intentionallyHidden) return;
+                    try { d.isVisible = (n === 'minigun'); } catch {}
+                  });
+                  try { node.setEnabled(n === 'minigun'); } catch {}
+                });
+              } catch {}
             }
           }
           if (msg.t === 'minigunEmpty') {
@@ -2118,18 +2129,15 @@
         const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket' || kind === 'minigun' || kind === 'knife' || kind === 'grenade_frag' || kind === 'grenade_impact') ? kind : 'rifle';
         for (const [name, node] of Object.entries(guns)) {
           const enable = (name === k);
-          node.setEnabled(enable);
-          // CRITICAL: Babylon.js setEnabled(true) does NOT cascade to children.
-          // setEnabled(false) DOES cascade. So after disabling+re-enabling a node,
-          // all children are still disabled. We must manually re-enable all descendants.
-          // EXCEPT nodes tagged _intentionallyHidden — those must stay hidden (e.g. base
-          // rifle parts that are replaced by minigun-specific geometry).
-          if (enable) {
-            node.getDescendants(false).forEach(d => {
-              if (d.metadata && d.metadata._intentionallyHidden) return;
-              try { d.setEnabled(true); } catch {}
-            });
-          }
+          // Use isVisible on every descendant mesh directly — most reliable across browsers.
+          // setEnabled cascade is unreliable (setEnabled(true) doesn't re-enable children).
+          node.getDescendants(false).forEach(d => {
+            if (!d.isEnabled || typeof d.isVisible === 'undefined') return;
+            if (enable && d.metadata && d.metadata._intentionallyHidden) return; // keep hidden
+            try { d.isVisible = enable; } catch {}
+          });
+          // Also toggle the root node itself
+          try { node.setEnabled(enable); } catch {}
         }
       }
       // Default
