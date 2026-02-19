@@ -1,0 +1,74 @@
+<div id="hud">
+  <div class="hudTopRow">
+    <div class="hudTitle">Hunter Boyz</div>
+    <div id="connDot"></div>
+    <button id="settingsBtn">Settings</button>
+  </div>
+
+  <div id="settingsPanel">
+    <div class="settingsRow settingsRowTight">
+      <input id="name" placeholder="Name" maxlength="16" />
+      <button id="joinBtn">Join</button>
+    </div>
+
+    <div class="settingsRow">
+      <label class="controlLabel" for="sensTurn">Look</label>
+      <input id="sensTurn" type="range" min="0.6" max="3.0" step="0.1" value="2.2" />
+    </div>
+
+    <div class="settingsBlock">
+      <label class="controlLabelStrong" for="sensAim">Aim (vertical) sensitivity</label>
+      <input id="sensAim" type="range" min="0.8" max="4.0" step="0.1" value="2.2" />
+    </div>
+
+    <div class="settingsBlock">
+      <label class="controlLabelStrong" for="deadzone">Move stick deadzone</label>
+      <input id="deadzone" type="range" min="0.05" max="0.30" step="0.01" value="0.14" />
+    </div>
+
+    <div class="settingsRow settingsRowCheckStrong">
+      <input id="autoRun" type="checkbox" />
+      <label class="controlLabelHeavy" for="autoRun">Auto-run</label>
+    </div>
+
+    <div class="settingsRow">
+      <label class="controlLabel" for="autofire">Auto-fire</label>
+      <input id="autofire" type="checkbox" />
+    </div>
+
+    <div class="settingsRow">
+      <label class="controlLabel" for="autoReload">Auto-reload</label>
+      <input id="autoReload" type="checkbox" checked />
+      <span class="controlNote">(hide Reload button)</span>
+    </div>
+
+    <div class="settingsRow">
+      <label class="controlLabel" for="weapon">Weapon</label>
+      <select id="weapon" class="pill">
+        <option value="rifle">Rifle</option>
+        <option value="shotgun">Shotgun</option>
+        <option value="sniper">Sniper</option>
+        <option value="fart">Fart gun</option>
+        <option value="rocket">Rocket</option>
+        <option value="knife">Knife</option>
+        <option value="grenade_frag">Frag grenade</option>
+        <option value="grenade_impact">Impact grenade</option>
+      </select>
+    </div>
+
+    <div class="settingsRow">
+      <label class="controlLabel" for="aimAssist">Aim assist</label>
+      <input id="aimAssist" type="checkbox" checked />
+    </div>
+
+    <div class="hudActions">
+      <button id="snapBtn" class="btnGhost">Send snapshot</button>
+      <button id="copyLinkBtn" class="btnGhost">Copy link</button>
+      <button id="soundBtn">Enable sound</button>
+      <button id="resetLobbyBtn">Reset lobby</button>
+      <div class="hudHint">(snapshot saves on server)</div>
+    </div>
+  </div>
+
+  <div id="log">Tip: tap Settings to hide this panel while playing.</div>
+</div>
