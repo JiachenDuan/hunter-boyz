@@ -887,10 +887,8 @@ if (msg.t === 'input') {
               return;
             }
 
-            const rpm = (mDef.rpmMin||300) + ((mDef.rpmMax||1200) - (mDef.rpmMin||300)) * (p.mgSpin||0);
-            const cd = Math.max(25, Math.round(60000 / rpm));
-            if (t - p.lastShotAt <= cd) return;
-
+            // Fire rate is controlled by the outer fireCdMs gate (20ms = 50 shots/sec).
+            // Spin scales damage slightly: full spin = full dmg, partial spin = reduced.
             p.lastShotAt = t;
             p.powerAmmo = Math.max(0, (p.powerAmmo||0) - 1);
             p.mgHeat = clamp((p.mgHeat||0) + (mDef.heatPerShot||0.012), 0, 1.2);

@@ -69,18 +69,19 @@
 
     minigun: {
       id:'minigun', label:'Minigun', type:'minigun',
-      rpmMin: 300,
-      rpmMax: 1200,
-      dmg: 9,
-      headMult: 1.6,
-      range: 32,
-      heatPerShot: 0.012,
-      coolPerSec: 0.55,
+      fireCdMs: 20,        // 50 rounds/sec at full spin (3000 RPM equiv)
+      rpmMin: 600,         // already spinning fast at spin-up threshold
+      rpmMax: 3000,        // full-speed: 50 rounds/sec
+      dmg: 7,              // lower per-shot, devastating in volume
+      headMult: 1.4,
+      range: 38,
+      heatPerShot: 0.004,  // heats slower so you can sustain longer bursts
+      coolPerSec: 0.40,
       overheatAt: 1.0,
-      recoverAt: 0.35,
-      spinUpPerSec: 3.0,
-      spinDownPerSec: 4.5,
-      ammo: 300,
+      recoverAt: 0.25,
+      spinUpPerSec: 6.0,   // spins up in ~0.2s (fast enough to feel responsive)
+      spinDownPerSec: 5.0,
+      ammo: 450,           // more ammo for sustained suppression
     },
   };
 
