@@ -660,7 +660,7 @@
           }
         } catch {}
 
-        // Pickup prompt
+        // Pickup prompt (with sticky holdover so pickId doesn't flicker between ticks)
         try {
           const btnPickup = document.getElementById('btnPickup');
           const pickups = (s.pickups || []);
@@ -674,12 +674,24 @@
               const dx = (meP.x - it.x);
               const dz = (meP.z - it.z);
               const d = Math.hypot(dx, dz);
-              if (d <= 2.5) { show = true; targetId = it.id; break; }
+              if (d <= 3.5) { show = true; targetId = it.id; break; } // wider radius for reliability
             }
           }
           if (btnPickup) {
-            btnPickup.style.display = show ? 'block' : 'none';
-            btnPickup.dataset.pickId = targetId || '';
+            if (show) {
+              btnPickup.style.display = 'block';
+              btnPickup.dataset.pickId = targetId;
+              btnPickup.dataset.pickIdTs = String(Date.now());
+            } else {
+              // Sticky: keep showing for 400ms after player walks slightly out of range
+              const lastTs = Number(btnPickup.dataset.pickIdTs || 0);
+              if (btnPickup.dataset.pickId && (Date.now() - lastTs) < 400) {
+                btnPickup.style.display = 'block'; // hold it visible
+              } else {
+                btnPickup.style.display = 'none';
+                btnPickup.dataset.pickId = '';
+              }
+            }
           }
         } catch {}
 
@@ -3627,21 +3639,42 @@ function spawnDent(pos, normal, size, kind) {
       const el = document.getElementById('btnPickup');
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
       if (!el) return;
+      let lastPickupSend = 0;
       const act = (e) => {
         prevent(e);
-        const pickId = el.dataset.pickId || '';
-        if (!pickId) return;
+        // Debounce: ignore duplicate events within 350ms
+        const now = Date.now();
+        if (now - lastPickupSend < 350) return;
+
+        // Get pickId from element, or fallback: scan lastServerState for nearest available pickup
+        let pickId = el.dataset.pickId || '';
+        if (!pickId && lastServerState && myId) {
+          const me = lastServerState.players.find(p => p.id === myId);
+          if (me) {
+            for (const it of (lastServerState.pickups || [])) {
+              if (it.type !== 'minigun') continue;
+              if (it.kind === 'pad' && (it.availInMs||0) > 0) continue;
+              if (it.kind === 'drop' && (it.expiresInMs||0) <= 0) continue;
+              const d = Math.hypot(me.x - it.x, me.z - it.z);
+              if (d <= 4.0) { pickId = it.id; break; }
+            }
+          }
+        }
+        if (!pickId) { showKill('Move closer to pick up!'); return; }
+
         // Visual tap feedback
         el.style.background = 'rgba(255,220,120,0.5)';
-        setTimeout(() => { el.style.background = 'rgba(255,220,120,0.16)'; }, 120);
+        setTimeout(() => { el.style.background = 'rgba(255,220,120,0.16)'; }, 150);
+
         if (!socket || socket.readyState !== 1) {
           showKill('Server disconnected!');
           return;
         }
+        lastPickupSend = now;
         try { socket.send(JSON.stringify({ t:'pickup', id: pickId })); } catch {}
       };
+      // Use only pointerdown (covers both mouse and touch on iOS Safari; avoid double-firing with touchstart)
       el.addEventListener('pointerdown', act, { passive:false });
-      el.addEventListener('touchstart', act, { passive:false });
     })();
     holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
     // sprint removed
