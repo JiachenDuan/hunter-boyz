@@ -655,6 +655,12 @@
                 ? 'linear-gradient(90deg, rgba(60,220,120,0.85), rgba(60,255,160,0.85))'
                 : 'linear-gradient(90deg, rgba(100,180,255,0.85), rgba(60,140,255,0.85))';
             }
+            // Toast: remind player to hold fire during spin-up
+            if (state.shoot && spin < 0.2 && !window.__mgSpinToastShown) {
+              window.__mgSpinToastShown = true;
+              showKill('⟳ Minigun spinning up — hold fire!');
+              setTimeout(() => { window.__mgSpinToastShown = false; }, 3000);
+            }
           } else {
             mgHud.style.display = 'none';
           }
@@ -1966,102 +1972,133 @@
           nozzle.position.set(0.02, 0.02, 0.62);
         }
 
-        // Minigun: CS-style "加特林" vibe (barrel shroud, carry handle, ammo box + belt) + spinning barrel cluster.
+        // Minigun: big Gatling gun — unmistakable silhouette, orange+black, wide barrel cluster.
         if (kind === 'minigun') {
-          const mgDarkMat = new BABYLON.StandardMaterial(`mgDark_${kind}`, scene);
-          mgDarkMat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.07);
-          mgDarkMat.emissiveColor = new BABYLON.Color3(0.004, 0.004, 0.005);
-          mgDarkMat.specularColor = new BABYLON.Color3(0.14, 0.14, 0.16);
-          mgDarkMat.specularPower = 72;
+          // Hide base parts (minigun replaces them entirely)
+          receiver.setEnabled(false);
+          barrel.setEnabled(false);
+          stock.setEnabled(false);
+          grip.setEnabled(false);
 
-          const mgPolyMat = new BABYLON.StandardMaterial(`mgPoly_${kind}`, scene);
-          mgPolyMat.diffuseColor = new BABYLON.Color3(0.035, 0.035, 0.04);
-          mgPolyMat.emissiveColor = new BABYLON.Color3(0.002, 0.002, 0.002);
-          mgPolyMat.specularColor = new BABYLON.Color3(0.02, 0.02, 0.02);
-          mgPolyMat.specularPower = 10;
+          // Materials
+          const mgBodyMat = new BABYLON.StandardMaterial(`mgBody_${kind}`, scene);
+          mgBodyMat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.09);
+          mgBodyMat.emissiveColor = new BABYLON.Color3(0.01, 0.01, 0.01);
+          mgBodyMat.specularColor = new BABYLON.Color3(0.3, 0.3, 0.35);
+          mgBodyMat.specularPower = 60;
 
-          // Main receiver block (chunkier)
-          const recv2 = BABYLON.MeshBuilder.CreateBox(`mg_recv_${kind}`, { width: 0.13, height: 0.11, depth: 0.26 }, scene);
-          recv2.material = mgDarkMat;
-          recv2.parent = g;
-          recv2.position.set(0.02, 0.02, 0.02);
+          const mgOrangeMat = new BABYLON.StandardMaterial(`mgOrange_${kind}`, scene);
+          mgOrangeMat.diffuseColor = new BABYLON.Color3(0.9, 0.45, 0.05);
+          mgOrangeMat.emissiveColor = new BABYLON.Color3(0.18, 0.07, 0.0);
+          mgOrangeMat.specularColor = new BABYLON.Color3(0.4, 0.2, 0.05);
+          mgOrangeMat.specularPower = 40;
 
-          // Carry handle
-          const handleBar = BABYLON.MeshBuilder.CreateBox(`mg_hb_${kind}`, { width: 0.10, height: 0.02, depth: 0.14 }, scene);
-          handleBar.material = mgPolyMat;
-          handleBar.parent = g;
-          handleBar.position.set(0.02, 0.12, 0.05);
-          const handleLeg1 = BABYLON.MeshBuilder.CreateBox(`mg_hl1_${kind}`, { width: 0.018, height: 0.06, depth: 0.02 }, scene);
-          handleLeg1.material = mgPolyMat;
-          handleLeg1.parent = g;
-          handleLeg1.position.set(-0.02, 0.09, 0.02);
-          const handleLeg2 = BABYLON.MeshBuilder.CreateBox(`mg_hl2_${kind}`, { width: 0.018, height: 0.06, depth: 0.02 }, scene);
-          handleLeg2.material = mgPolyMat;
-          handleLeg2.parent = g;
-          handleLeg2.position.set(0.06, 0.09, 0.02);
+          const mgSilverMat = new BABYLON.StandardMaterial(`mgSilver_${kind}`, scene);
+          mgSilverMat.diffuseColor = new BABYLON.Color3(0.55, 0.58, 0.62);
+          mgSilverMat.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+          mgSilverMat.specularPower = 80;
 
-          // Barrel shroud
-          const shroud = BABYLON.MeshBuilder.CreateCylinder(`mg_sh_${kind}`, { diameter: 0.16, height: 0.48, tessellation: 14 }, scene);
-          shroud.material = mgDarkMat;
+          const mgYellowMat = new BABYLON.StandardMaterial(`mgYellow_${kind}`, scene);
+          mgYellowMat.diffuseColor = new BABYLON.Color3(0.9, 0.78, 0.1);
+          mgYellowMat.emissiveColor = new BABYLON.Color3(0.12, 0.10, 0.0);
+
+          // === BODY: thick main receiver (wide + tall — unmistakably NOT a rifle) ===
+          const body = BABYLON.MeshBuilder.CreateBox(`mg_body_${kind}`, { width: 0.22, height: 0.18, depth: 0.30 }, scene);
+          body.material = mgBodyMat;
+          body.parent = g;
+          body.position.set(0.0, 0.0, -0.05);
+
+          // Orange accent stripe along top of body
+          const stripe = BABYLON.MeshBuilder.CreateBox(`mg_stripe_${kind}`, { width: 0.22, height: 0.025, depth: 0.28 }, scene);
+          stripe.material = mgOrangeMat;
+          stripe.parent = g;
+          stripe.position.set(0.0, 0.105, -0.05);
+
+          // === HANDLE on top ===
+          const handleBase = BABYLON.MeshBuilder.CreateBox(`mg_hbase_${kind}`, { width: 0.16, height: 0.018, depth: 0.18 }, scene);
+          handleBase.material = mgOrangeMat;
+          handleBase.parent = g;
+          handleBase.position.set(0.0, 0.135, -0.04);
+          const handleArch = BABYLON.MeshBuilder.CreateBox(`mg_harch_${kind}`, { width: 0.028, height: 0.07, depth: 0.06 }, scene);
+          handleArch.material = mgBodyMat;
+          handleArch.parent = g;
+          handleArch.position.set(0.0, 0.175, -0.04);
+          const handleGrip = BABYLON.MeshBuilder.CreateBox(`mg_hgrip_${kind}`, { width: 0.12, height: 0.018, depth: 0.06 }, scene);
+          handleGrip.material = mgBodyMat;
+          handleGrip.parent = g;
+          handleGrip.position.set(0.0, 0.212, -0.04);
+
+          // === LARGE BARREL SHROUD (defining silhouette) ===
+          const shroud = BABYLON.MeshBuilder.CreateCylinder(`mg_sh_${kind}`, { diameter: 0.28, height: 0.52, tessellation: 16 }, scene);
+          shroud.material = mgBodyMat;
           shroud.parent = g;
           shroud.rotation.x = Math.PI / 2;
-          shroud.position.set(0.02, 0.02, 0.52);
+          shroud.position.set(0.0, 0.0, 0.36);
 
-          // Front cap / muzzle ring
-          const cap = BABYLON.MeshBuilder.CreateTorus(`mg_cap_${kind}`, { diameter: 0.16, thickness: 0.015, tessellation: 18 }, scene);
-          cap.material = mgDarkMat;
-          cap.parent = g;
-          cap.rotation.x = Math.PI / 2;
-          cap.position.set(0.02, 0.02, 0.74);
+          // Shroud ribs (orange rings — very visible)
+          for (let r = 0; r < 4; r++) {
+            const rib = BABYLON.MeshBuilder.CreateTorus(`mg_rib_${kind}_${r}`, { diameter: 0.28, thickness: 0.018, tessellation: 16 }, scene);
+            rib.material = mgOrangeMat;
+            rib.parent = g;
+            rib.rotation.x = Math.PI / 2;
+            rib.position.set(0.0, 0.0, 0.16 + r * 0.13);
+          }
 
-          // Spinning barrel cluster inside
-          const hub = BABYLON.MeshBuilder.CreateCylinder(`hub_${kind}`, { diameter: 0.07, height: 0.18, tessellation: 12 }, scene);
-          hub.material = knifeBladeMat;
+          // Muzzle cap (large, orange) — makes front unmistakable
+          const muzzleCap = BABYLON.MeshBuilder.CreateCylinder(`mg_muzzle_${kind}`, { diameter: 0.30, height: 0.04, tessellation: 16 }, scene);
+          muzzleCap.material = mgOrangeMat;
+          muzzleCap.parent = g;
+          muzzleCap.rotation.x = Math.PI / 2;
+          muzzleCap.position.set(0.0, 0.0, 0.64);
+
+          // === SPINNING BARREL CLUSTER (6 silver barrels, very visible) ===
+          const hub = BABYLON.MeshBuilder.CreateCylinder(`hub_${kind}`, { diameter: 0.10, height: 0.50, tessellation: 12 }, scene);
+          hub.material = mgSilverMat;
           hub.parent = g;
           hub.rotation.x = Math.PI / 2;
-          hub.position.set(0.02, 0.02, 0.60);
+          hub.position.set(0.0, 0.0, 0.37);
 
           const barrels = [];
-          const n = 6;
-          for (let i = 0; i < n; i++) {
-            const a = (i / n) * Math.PI * 2;
-            const bx = Math.cos(a) * 0.045;
-            const by = Math.sin(a) * 0.045;
-            const b = BABYLON.MeshBuilder.CreateCylinder(`br_${kind}_${i}`, { diameter: 0.022, height: 0.46, tessellation: 10 }, scene);
-            b.material = knifeBladeMat;
+          const nB = 6;
+          for (let i = 0; i < nB; i++) {
+            const a = (i / nB) * Math.PI * 2;
+            const bx = Math.cos(a) * 0.095;
+            const by = Math.sin(a) * 0.095;
+            const b = BABYLON.MeshBuilder.CreateCylinder(`br_${kind}_${i}`, { diameter: 0.038, height: 0.58, tessellation: 8 }, scene);
+            b.material = (i % 2 === 0) ? mgSilverMat : mgBodyMat;
             b.parent = g;
             b.rotation.x = Math.PI / 2;
-            b.position.set(0.02 + bx, 0.02 + by, 0.58);
+            b.position.set(bx, by, 0.37);
             barrels.push(b);
           }
 
-          // Ammo box on left side
-          const ammo = BABYLON.MeshBuilder.CreateBox(`mg_ammo_${kind}`, { width: 0.14, height: 0.12, depth: 0.18 }, scene);
-          ammo.material = mgPolyMat;
-          ammo.parent = g;
-          ammo.position.set(-0.10, 0.02, -0.02);
+          // === PISTOL GRIP (bottom) ===
+          const pGrip = BABYLON.MeshBuilder.CreateBox(`mg_pgrip_${kind}`, { width: 0.07, height: 0.16, depth: 0.08 }, scene);
+          pGrip.material = mgBodyMat;
+          pGrip.parent = g;
+          pGrip.rotation.x = 0.22;
+          pGrip.position.set(0.0, -0.17, 0.04);
 
-          // Ammo belt (simple linked strip)
-          for (let i = 0; i < 7; i++) {
-            const link = BABYLON.MeshBuilder.CreateBox(`mg_link_${kind}_${i}`, { width: 0.02, height: 0.015, depth: 0.03 }, scene);
-            link.material = knifeBladeMat;
+          // === AMMO BOX (big, bright yellow — like a real M134) ===
+          const ammoBox = BABYLON.MeshBuilder.CreateBox(`mg_ammo_${kind}`, { width: 0.18, height: 0.18, depth: 0.24 }, scene);
+          ammoBox.material = mgYellowMat;
+          ammoBox.parent = g;
+          ammoBox.position.set(-0.22, 0.0, -0.04);
+
+          // Ammo box label stripe
+          const ammoStripe = BABYLON.MeshBuilder.CreateBox(`mg_ammostripe_${kind}`, { width: 0.182, height: 0.025, depth: 0.24 }, scene);
+          ammoStripe.material = mgBodyMat;
+          ammoStripe.parent = g;
+          ammoStripe.position.set(-0.22, 0.05, -0.04);
+
+          // Belt feed (visible link from box to gun)
+          for (let i = 0; i < 6; i++) {
+            const link = BABYLON.MeshBuilder.CreateBox(`mg_link_${kind}_${i}`, { width: 0.025, height: 0.018, depth: 0.035 }, scene);
+            link.material = mgYellowMat;
             link.parent = g;
-            link.position.set(-0.02 + i * 0.015, -0.02 + (i * 0.002), 0.10 + i * 0.02);
-            link.rotation.y = 0.12;
+            link.position.set(-0.13 + i * 0.022, 0.02, -0.04 + i * 0.018);
+            link.rotation.y = 0.15;
           }
-
-          // Front grip (vertical-ish)
-          const fg = BABYLON.MeshBuilder.CreateBox(`mg_fg_${kind}`, { width: 0.03, height: 0.10, depth: 0.04 }, scene);
-          fg.material = mgPolyMat;
-          fg.parent = g;
-          fg.position.set(0.07, -0.09, 0.34);
-
-          // Override base parts to match minigun realism
-          // Fancy "skin" pass
-          receiver.material = skinMinigunMat;
-          barrel.material = mgDarkMat;
-          stock.material = mgPolyMat;
-          grip.material = mgPolyMat;
 
           // spin animation hook
           g.metadata = g.metadata || {};
@@ -2085,7 +2122,16 @@
 
       function setGun(kind) {
         const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket' || kind === 'minigun' || kind === 'knife' || kind === 'grenade_frag' || kind === 'grenade_impact') ? kind : 'rifle';
-        for (const [name, node] of Object.entries(guns)) node.setEnabled(name === k);
+        for (const [name, node] of Object.entries(guns)) {
+          const enable = (name === k);
+          node.setEnabled(enable);
+          // CRITICAL: Babylon.js setEnabled(true) does NOT cascade to children.
+          // setEnabled(false) DOES cascade. So after disabling+re-enabling a node,
+          // all children are still disabled. We must manually re-enable all descendants.
+          if (enable) {
+            node.getDescendants(false).forEach(d => { try { d.setEnabled(true); } catch {} });
+          }
+        }
       }
       // Default
       setGun('rifle');
