@@ -3630,14 +3630,18 @@ function spawnDent(pos, normal, size, kind) {
       const mapId = getSelectedMapId();
       syncMapSelects(mapId);
       try { localStorage.setItem(MAP_KEY, mapId); } catch {}
-      if (!socket || socket.readyState !== 1) return;
-      if (!state.joined) return;
-      if (state.started) return;
+      if (!socket || socket.readyState !== 1) { try { log('Map not sent: offline'); } catch {} return; }
+      if (!state.joined) { try { log('Map not sent: join first'); } catch {} return; }
+      if (state.started) { try { log('Map locked after round start'); } catch {} return; }
       try { socket.send(JSON.stringify({ t:'setMap', mapId })); } catch {}
     }
     mapEls.forEach((el) => el.addEventListener('change', () => {
       const mapId = (el.value || 'arena');
       syncMapSelects(mapId);
+      // Instant local feedback; server state remains source of truth.
+      try { state.mapId = mapId; } catch {}
+      try { window.__hbApplyMapVisual?.(mapId); } catch {}
+      try { clearDents(); } catch {}
       sendMapSelection();
       try { log(`Map selected: ${mapId}`); } catch {}
     }));
