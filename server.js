@@ -626,6 +626,28 @@ wss.on('connection', (ws) => {
     }
 
     
+    if (msg.t === 'dropMinigun') {
+      if (p.powerWeapon !== 'minigun') return;
+      const t = nowMs();
+      // Clear player's minigun
+      p.powerWeapon = null;
+      p.powerAmmo = 0;
+      p.mgSpin = 0;
+      p.mgHeat = 0;
+      p.mgOverheat = 0;
+      // Release any pad they were holding
+      for (const pad of pickupPads) {
+        if (pad.heldBy === p.id) {
+          pad.heldBy = null;
+          pad.respawnAt = t + 30_000; // pad respawns in 30s
+        }
+      }
+      // Spawn a drop pickup at player's location so others can grab it
+      minigunDrop = { x: p.x, y: p.y, z: p.z, expiresAt: t + 15_000 };
+      broadcast({ t: 'state', state: serializeState() });
+      return;
+    }
+
     if (msg.t === 'pickup') {
       if (!GAME.started) return;
       if (p.hp <= 0) return;

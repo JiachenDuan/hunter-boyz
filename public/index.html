@@ -283,6 +283,7 @@
 
 
     <div id="btnPickup" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); left: calc(var(--pad) + var(--btn) + 10px); padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,0.18); background: rgba(255,220,120,0.16); color:#fff3c4; font-weight:900; letter-spacing:0.4px; pointer-events:auto; touch-action:none; display:none; z-index:30;">PICK UP</div>
+    <div id="btnDropMinigun" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); left: calc(var(--pad) + var(--btn) + 10px); padding:10px 12px; border-radius:14px; border:1px solid rgba(255,80,80,0.4); background: rgba(255,60,60,0.18); color:#ffb3b3; font-weight:900; letter-spacing:0.4px; pointer-events:auto; touch-action:none; display:none; z-index:30;">DROP GUN</div>
 
     <div id="mgHud" style="position:fixed; top:46px; left:50%; transform:translateX(-50%); z-index:110; display:none; gap:8px; align-items:center; pointer-events:none;">
       <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.14); border-radius:999px; padding:6px 10px; font-weight:900; font-size:12px; color:#e6edf3;">MINIGUN</div>
@@ -664,6 +665,11 @@
           } else {
             mgHud.style.display = 'none';
           }
+          // Show DROP button only when holding minigun; hide PICK UP when holding minigun
+          try {
+            const btnDrop = document.getElementById('btnDropMinigun');
+            if (btnDrop) btnDrop.style.display = (meP.powerWeapon === 'minigun') ? 'block' : 'none';
+          } catch {}
         } catch {}
 
         // Pickup prompt (with sticky holdover so pickId doesn't flicker between ticks)
@@ -672,7 +678,8 @@
           const pickups = (s.pickups || []);
           let show = false;
           let targetId = null;
-          if (btnPickup && meP && pickups.length && state.started) {
+          // Don't show PICK UP if player already holds the minigun
+          if (btnPickup && meP && pickups.length && state.started && !meP.powerWeapon) {
             for (const it of pickups) {
               if (it.type !== 'minigun') continue;
               if (it.kind === 'pad' && (it.availInMs||0) > 0) continue;
@@ -3722,6 +3729,26 @@ function spawnDent(pos, normal, size, kind) {
       // Use only pointerdown (covers both mouse and touch on iOS Safari; avoid double-firing with touchstart)
       el.addEventListener('pointerdown', act, { passive:false });
     })();
+
+    // DROP MINIGUN button
+    (() => {
+      const el = document.getElementById('btnDropMinigun');
+      if (!el) return;
+      const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+      let lastDrop = 0;
+      const act = (e) => {
+        prevent(e);
+        const now = Date.now();
+        if (now - lastDrop < 500) return; // debounce
+        el.style.background = 'rgba(255,60,60,0.4)';
+        setTimeout(() => { el.style.background = 'rgba(255,60,60,0.18)'; }, 150);
+        if (!socket || socket.readyState !== 1) { showKill('Server disconnected!'); return; }
+        lastDrop = now;
+        try { socket.send(JSON.stringify({ t:'dropMinigun' })); } catch {}
+      };
+      el.addEventListener('pointerdown', act, { passive:false });
+    })();
+
     holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
     // sprint removed
 
