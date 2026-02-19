@@ -10,9 +10,37 @@
       b.isPickable = true;
       return b;
     }
-    addBlock(0,0,0, 3,3,3);
-    addBlock(-8,0,6, 4,2,6);
-    addBlock(10,0,-6, 6,3,3);
+
+    const MAP_OBSTACLES = {
+      arena: [
+        { x: 0, y: 0, z: 0, w: 3, h: 3, d: 3 },
+        { x: -8, y: 0, z: 6, w: 4, h: 2, d: 6 },
+        { x: 10, y: 0, z: -6, w: 6, h: 3, d: 3 },
+      ],
+      mansion: [
+        { x: 0, y: 0, z: 0, w: 12, h: 4, d: 8 },
+        { x: -10, y: 0, z: -3, w: 6, h: 4, d: 10 },
+        { x: 10, y: 0, z: -3, w: 6, h: 4, d: 10 },
+        { x: -6, y: 0, z: 9, w: 4, h: 2.4, d: 4 },
+        { x: 6, y: 0, z: 9, w: 4, h: 2.4, d: 4 },
+        { x: 0, y: 0, z: 14, w: 8, h: 3, d: 2.5 },
+        { x: -15, y: 0, z: 6, w: 2.5, h: 3, d: 8 },
+        { x: 15, y: 0, z: 6, w: 2.5, h: 3, d: 8 },
+      ],
+    };
+    const mapBlocks = [];
+    function applyMapVisual(mapId) {
+      const list = MAP_OBSTACLES[mapId] || MAP_OBSTACLES.arena;
+      while (mapBlocks.length) {
+        try { mapBlocks.pop().dispose(); } catch {}
+      }
+      for (const o of list) {
+        mapBlocks.push(addBlock(o.x, o.y, o.z, o.w, o.h, o.d));
+      }
+      try { window.__hbCurrentMapVisual = mapId || 'arena'; } catch {}
+    }
+    try { window.__hbApplyMapVisual = applyMapVisual; } catch {}
+    applyMapVisual('arena');
 
     // Aim reticle
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI('ui2');
@@ -765,4 +793,3 @@ function showWinner(msg) {
         requestAnimationFrame(tick);
       } catch {}
     }
-

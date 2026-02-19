@@ -173,7 +173,7 @@
     .controlLabelStrong { opacity:.85; font-weight:800; }
     .controlLabelHeavy { opacity:.9; font-weight:900; }
     .controlNote { font-size:12px; opacity:.6; }
-    #weapon { cursor:pointer; padding:8px 10px; }
+    #weapon, #map, #mapLobby { cursor:pointer; padding:8px 10px; }
     .hudActions { margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     .btnGhost {
       border-radius:10px;
@@ -218,8 +218,18 @@
       padding:14px;
     }
     .lobbyTitle { font-weight:900; font-size:18px; }
+    .lobbyMapRow {
+      display:flex;
+      gap:8px;
+      align-items:center;
+      pointer-events:auto;
+      background: rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.14);
+      border-radius:10px;
+      padding:6px 8px;
+    }
     #lobbyPlayers { margin-top:10px; font-size:13px; opacity:.9; }
-    .lobbyRow { margin-top:12px; display:flex; gap:10px; align-items:center; }
+    .lobbyRow { margin-top:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     #startBtn {
       border-radius:12px;
       border:1px solid rgba(255,255,255,0.15);

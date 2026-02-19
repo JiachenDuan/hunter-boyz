@@ -340,6 +340,7 @@
     const autoReloadEl = document.getElementById('autoReload');
     const reloadBtn = document.getElementById('btnReload');
     const weaponEl = document.getElementById('weapon');
+    const mapEls = [document.getElementById('map'), document.getElementById('mapLobby')].filter(Boolean);
 
     // --- Weapon picker modal ---
     const weaponModal = document.getElementById('weaponModal');
@@ -401,13 +402,43 @@
     // Persist username + settings locally so re-joining is fast.
     const NAME_KEY = 'hunterBoyz.name';
     const AUTO_RELOAD_KEY = 'hunterBoyz.autoReload';
+    const MAP_KEY = 'hunterBoyz.mapId';
     try {
       const saved = localStorage.getItem(NAME_KEY);
       if (saved && !nameInput.value) nameInput.value = saved;
 
       const savedAR = localStorage.getItem(AUTO_RELOAD_KEY);
       if (savedAR !== null && autoReloadEl) autoReloadEl.checked = (savedAR === '1');
+      const savedMap = localStorage.getItem(MAP_KEY);
+      if (savedMap) {
+        mapEls.forEach((el) => { try { el.value = savedMap; } catch {} });
+      }
     } catch {}
+
+    function getSelectedMapId() {
+      const lobby = document.getElementById('mapLobby');
+      const settings = document.getElementById('map');
+      return (lobby?.value || settings?.value || 'arena');
+    }
+    function syncMapSelects(mapId) {
+      mapEls.forEach((el) => { try { el.value = mapId; } catch {} });
+    }
+
+    function sendMapSelection() {
+      const mapId = getSelectedMapId();
+      syncMapSelects(mapId);
+      try { localStorage.setItem(MAP_KEY, mapId); } catch {}
+      if (!socket || socket.readyState !== 1) return;
+      if (!state.joined) return;
+      if (state.started) return;
+      try { socket.send(JSON.stringify({ t:'setMap', mapId })); } catch {}
+    }
+    mapEls.forEach((el) => el.addEventListener('change', () => {
+      const mapId = (el.value || 'arena');
+      syncMapSelects(mapId);
+      sendMapSelection();
+      try { log(`Map selected: ${mapId}`); } catch {}
+    }));
 
     function syncReloadButtonVisibility() {
       const on = !!autoReloadEl?.checked;
@@ -457,6 +488,7 @@
         const v = (nameInput.value || '').trim();
         if (v) localStorage.setItem(NAME_KEY, v);
         if (autoReloadEl) localStorage.setItem(AUTO_RELOAD_KEY, autoReloadEl.checked ? '1' : '0');
+        localStorage.setItem(MAP_KEY, getSelectedMapId());
       } catch {}
 
       // Hide settings while playing; you can reopen via Settings.
@@ -480,6 +512,7 @@
 
     function doStart(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
+      sendMapSelection();
       pendingStart = true;
       trySendStart();
     }

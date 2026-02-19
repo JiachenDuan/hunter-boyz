@@ -24,6 +24,7 @@
       started: false,
       isHost: false,
       settingsOpen: false,
+      mapId: 'arena',
     };
 
     const players = new Map(); // id -> mesh
@@ -252,6 +253,16 @@
         roundEndsAtMs = 0;
       }
       state.isHost = (s.game?.hostId && myId) ? (s.game.hostId === myId) : false;
+      const nextMapId = String(s.game?.mapId || 'arena');
+      if (state.mapId !== nextMapId) {
+        state.mapId = nextMapId;
+        try {
+          const mapEls = [document.getElementById('map'), document.getElementById('mapLobby')].filter(Boolean);
+          mapEls.forEach((el) => { try { el.value = nextMapId; } catch {} });
+        } catch {}
+        try { window.__hbApplyMapVisual?.(nextMapId); } catch {}
+        try { clearDents(); } catch {}
+      }
       // Build id removed (no longer displayed).
 
       // lobby UI

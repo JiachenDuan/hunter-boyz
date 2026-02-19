@@ -112,19 +112,52 @@ const wss = new WebSocket.Server({ server });
  */
 
 const TICK_HZ = 15;
-const WORLD = {
-  bounds: { minX: -25, maxX: 25, minZ: -25, maxZ: 25 },
-  spawnPoints: [
-    { x: -10, y: 1.8, z: -10 },
-    { x: 10, y: 1.8, z: -10 },
-    { x: 0, y: 1.8, z: 12 },
-  ],
-  // Must roughly match client scene blocks for collision.
-  obstacles: [
-    { x: 0, y: 1.5, z: 0, w: 3, h: 3, d: 3 },
-    { x: -8, y: 1, z: 6, w: 4, h: 2, d: 6 },
-    { x: 10, y: 1.5, z: -6, w: 6, h: 3, d: 3 },
-  ],
+const MAPS = {
+  arena: {
+    id: 'arena',
+    label: 'Arena (Default)',
+    bounds: { minX: -25, maxX: 25, minZ: -25, maxZ: 25 },
+    spawnPoints: [
+      { x: -10, y: 1.8, z: -10 },
+      { x: 10, y: 1.8, z: -10 },
+      { x: 0, y: 1.8, z: 12 },
+    ],
+    obstacles: [
+      { x: 0, y: 1.5, z: 0, w: 3, h: 3, d: 3 },
+      { x: -8, y: 1, z: 6, w: 4, h: 2, d: 6 },
+      { x: 10, y: 1.5, z: -6, w: 6, h: 3, d: 3 },
+    ],
+    pickupPads: [
+      { id: 'pad_mg_1', type: 'minigun', x: 0, y: 1.8, z: 0 },
+      { id: 'pad_mg_2', type: 'minigun', x: -12, y: 1.8, z: 10 },
+    ],
+  },
+  mansion: {
+    id: 'mansion',
+    label: 'Mansion (CS style)',
+    bounds: { minX: -25, maxX: 25, minZ: -25, maxZ: 25 },
+    spawnPoints: [
+      { x: -18, y: 1.8, z: -18 },
+      { x: 18, y: 1.8, z: 18 },
+      { x: -18, y: 1.8, z: 18 },
+      { x: 18, y: 1.8, z: -18 },
+    ],
+    // Mansion-ish shape: large center building + side wings + courtyard cover.
+    obstacles: [
+      { x: 0, y: 2, z: 0, w: 12, h: 4, d: 8 },
+      { x: -10, y: 2, z: -3, w: 6, h: 4, d: 10 },
+      { x: 10, y: 2, z: -3, w: 6, h: 4, d: 10 },
+      { x: -6, y: 1.2, z: 9, w: 4, h: 2.4, d: 4 },
+      { x: 6, y: 1.2, z: 9, w: 4, h: 2.4, d: 4 },
+      { x: 0, y: 1.5, z: 14, w: 8, h: 3, d: 2.5 },
+      { x: -15, y: 1.5, z: 6, w: 2.5, h: 3, d: 8 },
+      { x: 15, y: 1.5, z: 6, w: 2.5, h: 3, d: 8 },
+    ],
+    pickupPads: [
+      { id: 'pad_mg_1', type: 'minigun', x: -9, y: 1.8, z: 12 },
+      { id: 'pad_mg_2', type: 'minigun', x: 9, y: 1.8, z: 12 },
+    ],
+  },
 };
 
 const BUILD = String(Date.now());
@@ -137,6 +170,7 @@ const GAME = {
   hostId: null,
   roundOverAt: 0,
   roundEndsAt: 0,
+  mapId: 'arena',
 };
 
 let nextId = 1;
@@ -162,10 +196,33 @@ const clientToPlayer = new Map(); // clientId -> playerId
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function nowMs() { return Date.now(); }
+function getActiveMap() { return MAPS[GAME.mapId] || MAPS.arena; }
+function applyMapConfig(mapId) {
+  const map = MAPS[mapId] || MAPS.arena;
+  GAME.mapId = map.id;
+
+  for (const p of pickupPads) {
+    p.heldBy = null;
+    p.respawnAt = 0;
+  }
+  const pads = map.pickupPads || [];
+  for (let i = 0; i < pickupPads.length; i++) {
+    const src = pads[i] || pads[0];
+    if (!src) continue;
+    pickupPads[i].id = src.id || pickupPads[i].id;
+    pickupPads[i].type = src.type || 'minigun';
+    pickupPads[i].x = src.x;
+    pickupPads[i].y = src.y;
+    pickupPads[i].z = src.z;
+  }
+  minigunDrop = null;
+}
+applyMapConfig(GAME.mapId);
 
 function makePlayer(name) {
   const id = String(nextId++);
-  const sp = WORLD.spawnPoints[(Number(id) - 1) % WORLD.spawnPoints.length];
+  const world = getActiveMap();
+  const sp = world.spawnPoints[(Number(id) - 1) % world.spawnPoints.length];
   const hue = (Number(id) * 137) % 360;
   return {
     id,
@@ -205,7 +262,7 @@ function serializeState() {
   return {
     ts: nowMs(),
     build: BUILD,
-    game: { started: GAME.started, hostId: GAME.started ? GAME.hostId : GAME.hostId, roundEndsAt: GAME.roundEndsAt },
+    game: { started: GAME.started, hostId: GAME.started ? GAME.hostId : GAME.hostId, roundEndsAt: GAME.roundEndsAt, mapId: GAME.mapId },
     pickups: serializePickups(),
     players: Array.from(players.values()).map(p => ({
       id: p.id,
@@ -242,7 +299,8 @@ function broadcast(obj) {
 }
 
 function respawn(p) {
-  const sp = WORLD.spawnPoints[Math.floor(Math.random() * WORLD.spawnPoints.length)];
+  const world = getActiveMap();
+  const sp = world.spawnPoints[Math.floor(Math.random() * world.spawnPoints.length)];
   p.x = sp.x; p.y = sp.y; p.z = sp.z;
   p.vy = 0;
   p.hp = 100;
@@ -531,7 +589,7 @@ wss.on('connection', (ws) => {
           clients.set(ws, existingId);
           playerConn.set(existingId, ws);
 
-          ws.send(JSON.stringify({ t: 'welcome', id: existingId, state: serializeState(), world: WORLD }));
+          ws.send(JSON.stringify({ t: 'welcome', id: existingId, state: serializeState(), world: getActiveMap() }));
           broadcast({ t: 'state', state: serializeState() });
           return;
         } else {
@@ -549,7 +607,7 @@ wss.on('connection', (ws) => {
 
       if (!GAME.hostId) GAME.hostId = p.id;
 
-      ws.send(JSON.stringify({ t: 'welcome', id: p.id, state: serializeState(), world: WORLD }));
+      ws.send(JSON.stringify({ t: 'welcome', id: p.id, state: serializeState(), world: getActiveMap() }));
       broadcast({ t: 'state', state: serializeState() });
       return;
     }
@@ -562,6 +620,16 @@ wss.on('connection', (ws) => {
     if (msg.t === 'start') {
       // Anyone can start (LAN party vibe).
       GAME.started = true;
+      broadcast({ t: 'state', state: serializeState() });
+      return;
+    }
+
+    if (msg.t === 'setMap') {
+      if (GAME.started) return;
+      const nextMap = String(msg.mapId || '');
+      if (!MAPS[nextMap]) return;
+      applyMapConfig(nextMap);
+      for (const pp of players.values()) respawn(pp);
       broadcast({ t: 'state', state: serializeState() });
       return;
     }
@@ -729,8 +797,9 @@ if (msg.t === 'input') {
       const nextX = p.x + (rightX * mx + fwdX * mz) * speed * dt;
       const nextZ = p.z + (rightZ * mx + fwdZ * mz) * speed * dt;
 
+      const world = getActiveMap();
       function collides(x, z) {
-        for (const o of WORLD.obstacles) {
+        for (const o of world.obstacles) {
           const minX = o.x - o.w/2 - radius;
           const maxX = o.x + o.w/2 + radius;
           const minZ = o.z - o.d/2 - radius;
@@ -741,8 +810,8 @@ if (msg.t === 'input') {
       }
 
       // try x, then z (axis-separable)
-      let xTry = clamp(nextX, WORLD.bounds.minX, WORLD.bounds.maxX);
-      let zTry = clamp(nextZ, WORLD.bounds.minZ, WORLD.bounds.maxZ);
+      let xTry = clamp(nextX, world.bounds.minX, world.bounds.maxX);
+      let zTry = clamp(nextZ, world.bounds.minZ, world.bounds.maxZ);
 
       if (!collides(xTry, p.z)) p.x = xTry;
       if (!collides(p.x, zTry)) p.z = zTry;
@@ -1112,7 +1181,7 @@ setInterval(() => {
     const dt = 1 / TICK_HZ;
     const grav = -18;
     const groundY = 1.8;
-    const b = WORLD.bounds;
+    const b = getActiveMap().bounds;
 
     for (const gr of grenades) {
       if (gr.exploded) continue;

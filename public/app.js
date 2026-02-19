@@ -24,6 +24,7 @@
       started: false,
       isHost: false,
       settingsOpen: false,
+      mapId: 'arena',
     };
 
     const players = new Map(); // id -> mesh
@@ -252,6 +253,16 @@
         roundEndsAtMs = 0;
       }
       state.isHost = (s.game?.hostId && myId) ? (s.game.hostId === myId) : false;
+      const nextMapId = String(s.game?.mapId || 'arena');
+      if (state.mapId !== nextMapId) {
+        state.mapId = nextMapId;
+        try {
+          const mapEls = [document.getElementById('map'), document.getElementById('mapLobby')].filter(Boolean);
+          mapEls.forEach((el) => { try { el.value = nextMapId; } catch {} });
+        } catch {}
+        try { window.__hbApplyMapVisual?.(nextMapId); } catch {}
+        try { clearDents(); } catch {}
+      }
       // Build id removed (no longer displayed).
 
       // lobby UI
@@ -1881,9 +1892,37 @@
       b.isPickable = true;
       return b;
     }
-    addBlock(0,0,0, 3,3,3);
-    addBlock(-8,0,6, 4,2,6);
-    addBlock(10,0,-6, 6,3,3);
+
+    const MAP_OBSTACLES = {
+      arena: [
+        { x: 0, y: 0, z: 0, w: 3, h: 3, d: 3 },
+        { x: -8, y: 0, z: 6, w: 4, h: 2, d: 6 },
+        { x: 10, y: 0, z: -6, w: 6, h: 3, d: 3 },
+      ],
+      mansion: [
+        { x: 0, y: 0, z: 0, w: 12, h: 4, d: 8 },
+        { x: -10, y: 0, z: -3, w: 6, h: 4, d: 10 },
+        { x: 10, y: 0, z: -3, w: 6, h: 4, d: 10 },
+        { x: -6, y: 0, z: 9, w: 4, h: 2.4, d: 4 },
+        { x: 6, y: 0, z: 9, w: 4, h: 2.4, d: 4 },
+        { x: 0, y: 0, z: 14, w: 8, h: 3, d: 2.5 },
+        { x: -15, y: 0, z: 6, w: 2.5, h: 3, d: 8 },
+        { x: 15, y: 0, z: 6, w: 2.5, h: 3, d: 8 },
+      ],
+    };
+    const mapBlocks = [];
+    function applyMapVisual(mapId) {
+      const list = MAP_OBSTACLES[mapId] || MAP_OBSTACLES.arena;
+      while (mapBlocks.length) {
+        try { mapBlocks.pop().dispose(); } catch {}
+      }
+      for (const o of list) {
+        mapBlocks.push(addBlock(o.x, o.y, o.z, o.w, o.h, o.d));
+      }
+      try { window.__hbCurrentMapVisual = mapId || 'arena'; } catch {}
+    }
+    try { window.__hbApplyMapVisual = applyMapVisual; } catch {}
+    applyMapVisual('arena');
 
     // Aim reticle
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI('ui2');
@@ -2636,7 +2675,6 @@ function showWinner(msg) {
         requestAnimationFrame(tick);
       } catch {}
     }
-
 
     // Grenade client-side sim (visual only)
     const _grenades = new Map();
@@ -3504,6 +3542,7 @@ function spawnDent(pos, normal, size, kind) {
     const autoReloadEl = document.getElementById('autoReload');
     const reloadBtn = document.getElementById('btnReload');
     const weaponEl = document.getElementById('weapon');
+    const mapEls = [document.getElementById('map'), document.getElementById('mapLobby')].filter(Boolean);
 
     // --- Weapon picker modal ---
     const weaponModal = document.getElementById('weaponModal');
@@ -3565,13 +3604,43 @@ function spawnDent(pos, normal, size, kind) {
     // Persist username + settings locally so re-joining is fast.
     const NAME_KEY = 'hunterBoyz.name';
     const AUTO_RELOAD_KEY = 'hunterBoyz.autoReload';
+    const MAP_KEY = 'hunterBoyz.mapId';
     try {
       const saved = localStorage.getItem(NAME_KEY);
       if (saved && !nameInput.value) nameInput.value = saved;
 
       const savedAR = localStorage.getItem(AUTO_RELOAD_KEY);
       if (savedAR !== null && autoReloadEl) autoReloadEl.checked = (savedAR === '1');
+      const savedMap = localStorage.getItem(MAP_KEY);
+      if (savedMap) {
+        mapEls.forEach((el) => { try { el.value = savedMap; } catch {} });
+      }
     } catch {}
+
+    function getSelectedMapId() {
+      const lobby = document.getElementById('mapLobby');
+      const settings = document.getElementById('map');
+      return (lobby?.value || settings?.value || 'arena');
+    }
+    function syncMapSelects(mapId) {
+      mapEls.forEach((el) => { try { el.value = mapId; } catch {} });
+    }
+
+    function sendMapSelection() {
+      const mapId = getSelectedMapId();
+      syncMapSelects(mapId);
+      try { localStorage.setItem(MAP_KEY, mapId); } catch {}
+      if (!socket || socket.readyState !== 1) return;
+      if (!state.joined) return;
+      if (state.started) return;
+      try { socket.send(JSON.stringify({ t:'setMap', mapId })); } catch {}
+    }
+    mapEls.forEach((el) => el.addEventListener('change', () => {
+      const mapId = (el.value || 'arena');
+      syncMapSelects(mapId);
+      sendMapSelection();
+      try { log(`Map selected: ${mapId}`); } catch {}
+    }));
 
     function syncReloadButtonVisibility() {
       const on = !!autoReloadEl?.checked;
@@ -3621,6 +3690,7 @@ function spawnDent(pos, normal, size, kind) {
         const v = (nameInput.value || '').trim();
         if (v) localStorage.setItem(NAME_KEY, v);
         if (autoReloadEl) localStorage.setItem(AUTO_RELOAD_KEY, autoReloadEl.checked ? '1' : '0');
+        localStorage.setItem(MAP_KEY, getSelectedMapId());
       } catch {}
 
       // Hide settings while playing; you can reopen via Settings.
@@ -3644,6 +3714,7 @@ function spawnDent(pos, normal, size, kind) {
 
     function doStart(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
+      sendMapSelection();
       pendingStart = true;
       trySendStart();
     }
