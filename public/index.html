@@ -677,11 +677,12 @@
           } else {
             mgHud.style.display = 'none';
           }
-          // Show DROP button only when holding minigun; hide PICK UP when holding minigun
-          try {
-            const btnDrop = document.getElementById('btnDropMinigun');
-            if (btnDrop) btnDrop.style.display = (meP.powerWeapon === 'minigun') ? 'block' : 'none';
-          } catch {}
+        } catch {}
+
+        // DROP GUN button: always sync outside the mgHud try/catch so errors can't prevent it hiding
+        try {
+          const btnDrop = document.getElementById('btnDropMinigun');
+          if (btnDrop) btnDrop.style.display = (meP && meP.powerWeapon === 'minigun') ? 'block' : 'none';
         } catch {}
 
         // Pickup prompt (with sticky holdover so pickId doesn't flicker between ticks)
