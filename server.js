@@ -142,16 +142,42 @@ const MAPS = {
       { x: -18, y: 1.8, z: 18 },
       { x: 18, y: 1.8, z: -18 },
     ],
-    // Mansion-ish shape: large center building + side wings + courtyard cover.
+    // Closer to classic CS mansion flow: perimeter lanes + central house + courtyard cover.
     obstacles: [
-      { x: 0, y: 2, z: 0, w: 12, h: 4, d: 8 },
-      { x: -10, y: 2, z: -3, w: 6, h: 4, d: 10 },
-      { x: 10, y: 2, z: -3, w: 6, h: 4, d: 10 },
-      { x: -6, y: 1.2, z: 9, w: 4, h: 2.4, d: 4 },
-      { x: 6, y: 1.2, z: 9, w: 4, h: 2.4, d: 4 },
-      { x: 0, y: 1.5, z: 14, w: 8, h: 3, d: 2.5 },
-      { x: -15, y: 1.5, z: 6, w: 2.5, h: 3, d: 8 },
-      { x: 15, y: 1.5, z: 6, w: 2.5, h: 3, d: 8 },
+      // Perimeter walls with gaps so rotations are possible.
+      { x: -9, y: 2.2, z: -21, w: 16, h: 4.4, d: 2 },
+      { x: 9, y: 2.2, z: -21, w: 16, h: 4.4, d: 2 },
+      { x: -9, y: 2.2, z: 21, w: 16, h: 4.4, d: 2 },
+      { x: 9, y: 2.2, z: 21, w: 16, h: 4.4, d: 2 },
+      { x: -21, y: 2.2, z: -9, w: 2, h: 4.4, d: 16 },
+      { x: -21, y: 2.2, z: 9, w: 2, h: 4.4, d: 16 },
+      { x: 21, y: 2.2, z: -9, w: 2, h: 4.4, d: 16 },
+      { x: 21, y: 2.2, z: 9, w: 2, h: 4.4, d: 16 },
+
+      // Main mansion shell (front opening, side doors).
+      { x: 0, y: 2.2, z: -10, w: 14, h: 4.4, d: 2 },
+      { x: -4.5, y: 2.2, z: 6, w: 5, h: 4.4, d: 2 },
+      { x: 4.5, y: 2.2, z: 6, w: 5, h: 4.4, d: 2 },
+      { x: -7, y: 2.2, z: -6, w: 2, h: 4.4, d: 6 },
+      { x: -7, y: 2.2, z: 2, w: 2, h: 4.4, d: 6 },
+      { x: 7, y: 2.2, z: -6, w: 2, h: 4.4, d: 6 },
+      { x: 7, y: 2.2, z: 2, w: 2, h: 4.4, d: 6 },
+
+      // Interior shaping for room/hallway duels.
+      { x: 0, y: 2.2, z: -2, w: 2, h: 4.4, d: 8 },
+      { x: -3, y: 1.2, z: 0, w: 2, h: 2.4, d: 3 },
+      { x: 3, y: 1.2, z: 0, w: 2, h: 2.4, d: 3 },
+
+      // Side structures to emulate garage / side route pressure.
+      { x: -13, y: 2.2, z: -2, w: 6, h: 4.4, d: 8 },
+      { x: 13, y: 2.2, z: -1, w: 5, h: 4.4, d: 7 },
+
+      // Front courtyard cover.
+      { x: 0, y: 1.1, z: 13, w: 4, h: 2.2, d: 4 },
+      { x: -8, y: 1.1, z: 12, w: 5, h: 2.2, d: 3 },
+      { x: 8, y: 1.1, z: 12, w: 5, h: 2.2, d: 3 },
+      { x: -15, y: 1.2, z: 9, w: 4, h: 2.4, d: 6 },
+      { x: 15, y: 1.2, z: 9, w: 4, h: 2.4, d: 6 },
     ],
     pickupPads: [
       { id: 'pad_mg_1', type: 'minigun', x: -9, y: 1.8, z: 12 },
