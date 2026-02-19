@@ -547,22 +547,27 @@
           // Third-person minigun model shown when player holds minigun pickup.
           const tppMinigun = new BABYLON.TransformNode(`p_${p.id}_minigun`, scene);
           tppMinigun.parent = root;
-          tppMinigun.position.set(0.36, 1.02, 0.34);
+          tppMinigun.position.set(0.32, 1.02, 0.34);
 
-          const tppMgBody = BABYLON.MeshBuilder.CreateBox(`p_${p.id}_minigun_body`, { width: 0.22, height: 0.14, depth: 0.20 }, scene);
-          tppMgBody.parent = tppMinigun;
-          tppMgBody.material = gunMat;
+          const tppMgRotor = new BABYLON.TransformNode(`p_${p.id}_minigun_rotor`, scene);
+          tppMgRotor.parent = tppMinigun;
+          tppMgRotor.position.z = 0.20;
 
-          const tppMgBarrel = BABYLON.MeshBuilder.CreateCylinder(`p_${p.id}_minigun_barrel`, { diameter: 0.09, height: 0.32, tessellation: 10 }, scene);
-          tppMgBarrel.parent = tppMinigun;
-          tppMgBarrel.rotation.x = Math.PI / 2;
-          tppMgBarrel.position.z = 0.20;
-          tppMgBarrel.material = gunMat;
+          const tppMgHub = BABYLON.MeshBuilder.CreateCylinder(`p_${p.id}_minigun_hub`, { diameter: 0.05, height: 0.30, tessellation: 10 }, scene);
+          tppMgHub.parent = tppMgRotor;
+          tppMgHub.rotation.x = Math.PI / 2;
+          tppMgHub.material = gunMat;
 
-          const tppMgAmmo = BABYLON.MeshBuilder.CreateBox(`p_${p.id}_minigun_ammo`, { width: 0.12, height: 0.10, depth: 0.14 }, scene);
-          tppMgAmmo.parent = tppMinigun;
-          tppMgAmmo.position.set(-0.13, -0.02, -0.01);
-          tppMgAmmo.material = gunMat;
+          for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2;
+            const bx = Math.cos(a) * 0.038;
+            const by = Math.sin(a) * 0.038;
+            const b = BABYLON.MeshBuilder.CreateCylinder(`p_${p.id}_minigun_barrel_${i}`, { diameter: 0.015, height: 0.34, tessellation: 8 }, scene);
+            b.parent = tppMgRotor;
+            b.rotation.x = Math.PI / 2;
+            b.position.set(bx, by, 0);
+            b.material = gunMat;
+          }
           tppMinigun.setEnabled(false);
 
           // 3D nameplate above character (in-world, not UI overlay)
@@ -639,10 +644,11 @@
           root.metadata = {
             target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z),
             targetYaw: p.yaw,
+            targetMgSpin: 0,
             namePlate,
             fartFx,
             tppWeaponVisible: 'gun',
-            weapons: { gun, minigun: tppMinigun },
+            weapons: { gun, minigun: tppMinigun, minigunRotor: tppMgRotor },
           };
           players.set(p.id, root);
           mesh = root;
@@ -665,6 +671,7 @@
           mesh.metadata.target.y = (p.y || 1.8) - 0.8;
           mesh.metadata.target.z = p.z;
           mesh.metadata.targetYaw = p.yaw;
+          mesh.metadata.targetMgSpin = p.mgSpin || 0;
 
           // Fart cloud above head when fart debuff is active
           try {

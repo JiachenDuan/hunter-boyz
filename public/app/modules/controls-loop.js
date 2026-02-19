@@ -687,6 +687,15 @@
         while (dy > Math.PI) dy -= Math.PI * 2;
         while (dy < -Math.PI) dy += Math.PI * 2;
         mesh.rotation.y += dy * 0.25;
+
+        // Third-person minigun barrels: spin while spooling/firing.
+        try {
+          const rotor = mesh.metadata?.weapons?.minigunRotor;
+          if (rotor && mesh.metadata?.tppWeaponVisible === 'minigun') {
+            const spin = Math.max(0, Math.min(1, mesh.metadata.targetMgSpin || 0));
+            rotor.rotation.z += 0.12 + spin * 0.85;
+          }
+        } catch {}
       }
 
       try {
