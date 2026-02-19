@@ -756,6 +756,17 @@ if (msg.t === 'input') {
         // Pickup-only power weapon override
         if (p.powerWeapon === 'minigun') weapon = 'minigun';
 
+        // Minigun spin-up/down must update every input tick regardless of fire cooldown.
+        // If we put spin inside the fireCdMs gate, lastShotAt gets set on first entry,
+        // then the gate blocks every subsequent tick, and spin never builds up.
+        if (p.powerWeapon === 'minigun') {
+          const mDefSpin = getWeapon('minigun');
+          const dtSec = Math.max(0.001, Math.min(0.25, Number(msg.dt || 0.066)));
+          p.mgSpin = clamp((p.mgSpin||0) + (mDefSpin.spinUpPerSec||3.0) * dtSec, 0, 1);
+          p.mgHeat = clamp((p.mgHeat||0) - (mDefSpin.coolPerSec||0.55) * dtSec, 0, 1);
+          if (p.mgOverheat && (p.mgHeat||0) <= (mDefSpin.recoverAt||0.35)) p.mgOverheat = 0;
+        }
+
         const wDef = getWeapon(weapon);
         const fireCdMs = (wDef && wDef.fireCdMs) ? wDef.fireCdMs : 250;
 
@@ -837,19 +848,11 @@ if (msg.t === 'input') {
             broadcast({ t:'shot', weapon, from:p.id, sx:p.x, sy:p.y, sz:p.z, yaw:p.yaw, pitch:p.pitch, ex:p.x, ey:p.y, ez:p.z, hit:null, hitHp:null });
 
           } else if (weapon === 'minigun') {
-            // Minigun handled like rifle hitscan but uses power ammo + heat + spin-up.
+            // Minigun hitscan — spin/heat already updated above outside the fire-CD gate.
             const mDef = getWeapon('minigun');
             if (!p.powerWeapon || p.powerWeapon !== 'minigun') return;
-
-            const dtSec = Math.max(0.001, Number(msg.dt || 0.066));
-            const want = !!msg.shoot;
-            p.mgSpin = clamp((p.mgSpin||0) + (want ? (mDef.spinUpPerSec||3.0) : -(mDef.spinDownPerSec||4.5)) * dtSec, 0, 1);
-            // Cool even while not firing
-            p.mgHeat = clamp((p.mgHeat||0) - (mDef.coolPerSec||0.55) * dtSec, 0, 1);
-
-            if (p.mgOverheat && (p.mgHeat||0) <= (mDef.recoverAt||0.35)) p.mgOverheat = 0;
             if (p.mgOverheat) return;
-            if ((p.mgSpin||0) < 0.2) return;
+            if ((p.mgSpin||0) < 0.2) return; // still spinning up
             if ((p.powerAmmo||0) <= 0) { p.powerWeapon = null; p.powerAmmo = 0; return; }
 
             const rpm = (mDef.rpmMin||300) + ((mDef.rpmMax||1200) - (mDef.rpmMin||300)) * (p.mgSpin||0);
