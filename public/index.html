@@ -7,13 +7,190 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <canvas id="renderCanvas"></canvas>
-  <div id="ui"></div>
+  <canvas id="renderCanvas" style="width:100%; height:100%; touch-action:none;"></canvas>
+
+  <div id="ui">
+    <div id="hud">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="font-weight:800; letter-spacing:0.2px;">Hunter Boyz</div>
+        <div id="connDot" style="margin-left:8px; width:10px; height:10px; border-radius:999px; background: rgba(255,80,80,0.95); box-shadow: 0 0 0 2px rgba(0,0,0,0.25);"></div>
+        <button id="settingsBtn" style="margin-left:auto; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:800;">Settings</button>
+      </div>
+
+      <div id="settingsPanel" style="margin-top:10px; display:none;">
+        <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
+          <input id="name" placeholder="Name" maxlength="16" />
+          <button id="joinBtn">Join</button>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12px; opacity:.8;">Look</label>
+          <input id="sensTurn" type="range" min="0.6" max="3.0" step="0.1" value="2.2" style="width:140px;" />
+        </div>
+
+        <div style=\"margin-top:10px;\">
+          <label style=\"opacity:.85; font-weight:800;\">Aim (vertical) sensitivity</label>
+          <input id=\"sensAim\" type=\"range\" min=\"0.8\" max=\"4.0\" step=\"0.1\" value=\"2.2\" style=\"width:100%;\">
+        </div>
+
+        <div style=\"margin-top:10px;\">
+          <label style=\"opacity:.85; font-weight:800;\">Move stick deadzone</label>
+          <input id=\"deadzone\" type=\"range\" min=\"0.05\" max=\"0.30\" step=\"0.01\" value=\"0.14\" style=\"width:100%;\">
+        </div>
+
+        <div style=\"margin-top:10px; display:flex; align-items:center; gap:10px;\">
+          <input id=\"autoRun\" type=\"checkbox\">
+          <label for=\"autoRun\" style=\"opacity:.9; font-weight:900;\">Auto-run</label>
+        </div>
+
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12px; opacity:.8;">Auto-fire</label>
+          <input id="autofire" type="checkbox" />
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12px; opacity:.8;">Auto-reload</label>
+          <input id="autoReload" type="checkbox" checked />
+          <span style="font-size:12px; opacity:.6;">(hide Reload button)</span>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12px; opacity:.8;">Weapon</label>
+          <select id="weapon" class="pill" style="cursor:pointer; padding:8px 10px;">
+            <option value="rifle">Rifle</option>
+            <option value="shotgun">Shotgun</option>
+            <option value="sniper">Sniper</option>
+            <option value="fart">Fart gun</option>
+            <option value="rocket">Rocket</option>
+            <option value="knife">Knife</option>
+            <option value="grenade_frag">Frag grenade</option>
+            <option value="grenade_impact">Impact grenade</option>
+          </select>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <label style="font-size:12px; opacity:.8;">Aim assist</label>
+          <input id="aimAssist" type="checkbox" checked />
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button id="snapBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Send snapshot</button>
+          <button id="copyLinkBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color:#e6edf3; padding:8px 10px; font-weight:700;">Copy link</button>
+          <button id="soundBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.18); background: rgba(80,255,140,0.10); color:#d6ffe6; padding:8px 10px; font-weight:800;">Enable sound</button>
+          <button id="resetLobbyBtn" style="border-radius:10px; border:1px solid rgba(255,255,255,0.18); background: rgba(255,80,80,0.12); color:#ffdede; padding:8px 10px; font-weight:800;">Reset lobby</button>
+          <div style="font-size:12px; opacity:.75;">(snapshot saves on server)</div>
+        </div>
+      </div>
+
+      <div id="log" style="margin-top:10px;">Tip: tap Settings to hide this panel while playing.</div>
+    </div>
+
+    <div id="lobby" style="position:absolute; inset:0; display:none; align-items:center; justify-content:center; pointer-events:auto; background: rgba(0,0,0,0.45);">
+      <div style="width:min(520px, 92vw); background: rgba(10,14,26,0.92); border:1px solid rgba(255,255,255,0.14); border-radius:16px; padding:14px;">
+        <div style="font-weight:900; font-size:18px;">Lobby</div>
+        <div id="lobbyPlayers" style="margin-top:10px; font-size:13px; opacity:.9;"></div>
+        <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+          <button id="startBtn" style="border-radius:12px; border:1px solid rgba(255,255,255,0.15); background: rgba(124,92,255,0.95); color:white; padding:10px 12px; font-weight:800;">Start</button>
+          <div id="waitMsg" style="font-size:12px; opacity:.85;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="respawn" style="position:absolute; inset:0; display:none; align-items:center; justify-content:center; pointer-events:none; background: rgba(0,0,0,0.25);">
+      <div style="background: rgba(10,14,26,0.85); border:1px solid rgba(255,255,255,0.14); border-radius:16px; padding:14px 16px; font-weight:900;">Respawning…</div>
+    </div>
+
+    <div id="score"></div>
+    <div id="status" style="position:absolute; left:50%; transform:translateX(-50%); bottom:14px; width:min(520px, 92vw); pointer-events:none;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="flex:1; height:10px; border-radius:999px; background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.14); overflow:hidden;">
+          <div id="hpFill" style="height:100%; width:100%; background: rgba(80,255,140,0.85);"></div>
+        </div>
+        <div id="hpText" style="font-weight:900; font-size:12px; opacity:.9;">HP 100</div>
+        <div id="ammoText" style="font-weight:900; font-size:12px; opacity:.85;">Ammo 12</div>
+        <div id="weaponText" style="font-weight:900; font-size:12px; opacity:.75;">Weapon rifle</div>
+      </div>
+      <div id="hitToast" style="margin-top:10px; text-align:center; font-weight:900; font-size:18px; opacity:0; transition: opacity 120ms ease; color: rgba(255,240,120,0.95); text-shadow: 0 2px 10px rgba(0,0,0,0.6);">HIT!</div>
+      <div id="hitDetail" style="margin-top:6px; text-align:center; font-weight:800; font-size:13px; opacity:0; transition: opacity 120ms ease; color: rgba(230,237,243,0.9);">-</div>
+    </div>
+
+        <div id="dmgVignette" style="position:fixed; inset:0; pointer-events:none; z-index:94; opacity:0; transition: opacity 120ms ease; background: radial-gradient(circle at center, rgba(0,0,0,0) 55%, rgba(255,0,0,0.22) 100%);"></div>
+
+<!-- Winner banner -->
+    <div id="winnerBanner" style="position:fixed; top:18%; left:50%; transform:translateX(-50%); padding:12px 14px; border-radius:14px; background: rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18); color:#e6edf3; font-weight:900; font-size:18px; letter-spacing:0.4px; opacity:0; transition: opacity 120ms ease; pointer-events:none; z-index:95;">WINNER: -    <!-- Round countdown timer (top center) -->
+    <div id="roundTimer" style="position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:96; pointer-events:none; font-weight:900; font-size:14px; letter-spacing:0.6px; color: rgba(230,237,243,0.95); background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:999px; padding:8px 12px; min-width: 86px; text-align:center;">02:00</div>
+
+</div>
+
+    <!-- Hitmarker overlay (centered X) -->
+    <div id="hitmarker" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; opacity:0; z-index:90;">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="4" y1="4" x2="11" y2="11" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="24" y1="4" x2="17" y2="11" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="4" y1="24" x2="11" y2="17" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="24" y1="24" x2="17" y2="17" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div id="moveStick" class="stick"><div id="moveNub" class="nub"></div></div>
+    <div id="lookPad" class="stick"></div>
+    <div id="btnJump"><div class="btnLabel"><div class="btnIcon">⇧</div></div></div>
+    <!-- sprint removed -->
+    <div id="btnScope" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); right: calc(var(--pad) + var(--btn) + var(--btn-gap)); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.18); border-color: rgba(255,255,255,0.35); opacity: 0.92; z-index: 20;"><div class="btnLabel"><div class="btnIcon">⌖</div></div></div>
+    <div id="btnReload"><div class="btnLabel"><div class="btnIcon">↻</div></div></div>
+    <div id="btnShoot"><div class="btnLabel"><div class="btnIcon">◎</div></div></div>
+
+    <div id="btnWeaponPick"><div class="btnLabel"><div class="btnIcon">🔫</div></div></div>
+
+
+    <div id="btnPickup" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); left: calc(var(--pad) + var(--btn) + 10px); padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,0.18); background: rgba(255,220,120,0.16); color:#fff3c4; font-weight:900; letter-spacing:0.4px; pointer-events:auto; touch-action:none; display:none; z-index:30;">PICK UP</div>
+    <div id="btnDropMinigun" style="position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); left: calc(var(--pad) + var(--btn) + 10px); padding:10px 12px; border-radius:14px; border:1px solid rgba(255,80,80,0.4); background: rgba(255,60,60,0.18); color:#ffb3b3; font-weight:900; letter-spacing:0.4px; pointer-events:auto; touch-action:none; display:none; z-index:30;">DROP GUN</div>
+
+    <div id="mgHud" style="position:fixed; top:46px; left:50%; transform:translateX(-50%); z-index:110; display:none; gap:8px; align-items:center; pointer-events:none;">
+      <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.14); border-radius:999px; padding:6px 10px; font-weight:900; font-size:12px; color:#e6edf3;">MINIGUN</div>
+      <div style="width:80px; height:10px; background:rgba(255,255,255,0.10); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.12);" title="Spin">
+        <div id="mgSpin" style="height:100%; width:0%; background:linear-gradient(90deg, rgba(100,180,255,0.85), rgba(60,140,255,0.85));"></div>
+      </div>
+      <div style="width:140px; height:10px; background:rgba(255,255,255,0.10); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.12);">
+        <div id="mgAmmo" style="height:100%; width:100%; background:linear-gradient(90deg, rgba(120,255,160,0.85), rgba(80,220,120,0.85));"></div>
+      </div>
+      <div style="width:120px; height:10px; background:rgba(255,255,255,0.10); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.12);">
+        <div id="mgHeat" style="height:100%; width:0%; background:linear-gradient(90deg, rgba(255,200,80,0.85), rgba(255,80,80,0.85));"></div>
+      </div>
+    </div>
+
+    <!-- Weapon picker modal -->
+
+    <div id="scoreModal" style="position:fixed; inset:0; display:none; align-items:flex-end; justify-content:center; z-index:120; background: rgba(0,0,0,0.35);">
+      <div id="scoreModalInner" style="width:min(520px, 96vw); max-height: 60vh; overflow:auto; background: rgba(0,0,0,0.78); border:1px solid rgba(255,255,255,0.16); border-radius:18px; padding:14px; margin: 0 0 14px 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="font-weight:900; letter-spacing:0.4px;">SCOREBOARD</div>
+          <button id="btnScoreClose" style="border-radius:12px; border:1px solid rgba(255,255,255,0.22); background: rgba(0,0,0,0.18); color:#e6edf3; padding:8px 10px; font-weight:900;">Close</button>
+        </div>
+        <div id="scoreboardBody" style="font-size:13px; line-height:1.45;"></div>
+      </div>
+    </div>
+
+    <div id="weaponModal">
+      <div id="weaponModalInner">
+        <div class="wm-header">
+          <span>Pick Weapon</span>
+          <div class="wm-close" id="weaponModalClose">✕</div>
+        </div>
+        <div class="wm-grid">
+          <div class="wm-opt" data-weapon="rifle">🔫 Rifle</div>
+          <div class="wm-opt" data-weapon="shotgun">💥 Shotgun</div>
+          <div class="wm-opt" data-weapon="sniper">🎯 Sniper</div>
+          <div class="wm-opt" data-weapon="fart">💨 Fart Gun</div>
+          <div class="wm-opt" data-weapon="rocket">🚀 Rocket</div>
+          <div class="wm-opt" data-weapon="knife">🔪 Knife</div>
+          <div class="wm-opt" data-weapon="grenade_frag">💣 Frag</div>
+          <div class="wm-opt" data-weapon="grenade_impact">💥 Impact</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
   <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
   <script src="weapons.js"></script>
-  <script src="boot.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

@@ -166,6 +166,18 @@
           if (msg.t === 'slash') onSlashMsg(msg);
           if (msg.t === 'pickup') {
             showKill(`${msg.id} picked up ${msg.what}`);
+            // Third-person: switch weapon only for the pickup owner.
+            try {
+              if (msg.what === 'minigun') {
+                for (const [pid, root] of players.entries()) {
+                  const w = root?.metadata?.weapons;
+                  if (!w) continue;
+                  const isOwner = String(pid) === String(msg.id);
+                  if (w.gun) w.gun.setEnabled(!isOwner);
+                  if (w.minigun) w.minigun.setEnabled(isOwner);
+                }
+              }
+            } catch {}
             // Immediately switch to minigun in-hand without waiting for next state tick
             if (msg.id === myId && msg.what === 'minigun' && fpRig) {
               try {
@@ -183,6 +195,13 @@
             }
           }
           if (msg.t === 'minigunEmpty') {
+            // Third-person: revert this player back to default gun.
+            try {
+              const root = players.get(String(msg.id));
+              const w = root?.metadata?.weapons;
+              if (w?.gun) w.gun.setEnabled(true);
+              if (w?.minigun) w.minigun.setEnabled(false);
+            } catch {}
             if (msg.id === myId) {
               showKill('⚠️ Minigun out of ammo!');
               // Immediately switch back to selected weapon
@@ -553,6 +572,27 @@
           gun.position.set(0.32, 1.05, 0.38);
           gun.material = gunMat;
 
+          // Third-person minigun model shown when player holds minigun pickup.
+          const tppMinigun = new BABYLON.TransformNode(`p_${p.id}_minigun`, scene);
+          tppMinigun.parent = root;
+          tppMinigun.position.set(0.36, 1.02, 0.34);
+
+          const tppMgBody = BABYLON.MeshBuilder.CreateBox(`p_${p.id}_minigun_body`, { width: 0.22, height: 0.14, depth: 0.20 }, scene);
+          tppMgBody.parent = tppMinigun;
+          tppMgBody.material = gunMat;
+
+          const tppMgBarrel = BABYLON.MeshBuilder.CreateCylinder(`p_${p.id}_minigun_barrel`, { diameter: 0.09, height: 0.32, tessellation: 10 }, scene);
+          tppMgBarrel.parent = tppMinigun;
+          tppMgBarrel.rotation.x = Math.PI / 2;
+          tppMgBarrel.position.z = 0.20;
+          tppMgBarrel.material = gunMat;
+
+          const tppMgAmmo = BABYLON.MeshBuilder.CreateBox(`p_${p.id}_minigun_ammo`, { width: 0.12, height: 0.10, depth: 0.14 }, scene);
+          tppMgAmmo.parent = tppMinigun;
+          tppMgAmmo.position.set(-0.13, -0.02, -0.01);
+          tppMgAmmo.material = gunMat;
+          tppMinigun.setEnabled(false);
+
           // 3D nameplate above character (in-world, not UI overlay)
           let namePlate = null;
           try {
@@ -624,7 +664,13 @@
             fartFx = { poop, mat: cm, parts: [s1,s2,s3] };
           } catch {}
 
-          root.metadata = { target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z), targetYaw: p.yaw, namePlate, fartFx };
+          root.metadata = {
+            target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z),
+            targetYaw: p.yaw,
+            namePlate,
+            fartFx,
+            weapons: { gun, minigun: tppMinigun },
+          };
           players.set(p.id, root);
           mesh = root;
         }
@@ -662,6 +708,14 @@
               }
             }
           } catch {}
+
+          // Keep third-person weapon mesh in sync with power weapon state.
+          try {
+            const w = mesh.metadata.weapons;
+            const hasMinigun = (p.powerWeapon === 'minigun');
+            if (w?.gun) w.gun.setEnabled(!hasMinigun);
+            if (w?.minigun) w.minigun.setEnabled(hasMinigun);
+          } catch {}
         }
 
         if (p.id !== myId) {
@@ -679,8 +733,10 @@
           camera.position.z = p.z;
           camera.rotation.y = p.yaw;
           camera.rotation.x = p.pitch;
-          try { fpRig?.setGun?.(document.getElementById('weapon')?.value); } catch {}
+          try {
+            const eff = (p.powerWeapon === 'minigun') ? 'minigun' : (document.getElementById('weapon')?.value || 'rifle');
+            fpRig?.setGun?.(eff);
+          } catch {}
         }
       }
     }
-
