@@ -2128,16 +2128,17 @@
       function setGun(kind) {
         const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket' || kind === 'minigun' || kind === 'knife' || kind === 'grenade_frag' || kind === 'grenade_impact') ? kind : 'rifle';
         for (const [name, node] of Object.entries(guns)) {
-          const enable = (name === k);
-          // Use isVisible on every descendant mesh directly — most reliable across browsers.
-          // setEnabled cascade is unreliable (setEnabled(true) doesn't re-enable children).
+          const show = (name === k);
+          // IMPORTANT: do NOT disable gun root nodes. Disabling a parent can make descendants
+          // non-renderable regardless of isVisible, and re-enabling doesn't reliably restore.
+          // Keep everything enabled; toggle visibility only.
+          try { node.setEnabled(true); } catch {}
+
           node.getDescendants(false).forEach(d => {
-            if (!d.isEnabled || typeof d.isVisible === 'undefined') return;
-            if (enable && d.metadata && d.metadata._intentionallyHidden) return; // keep hidden
-            try { d.isVisible = enable; } catch {}
+            if (typeof d.isVisible === 'undefined') return;
+            if (show && d.metadata && d.metadata._intentionallyHidden) return; // keep hidden
+            try { d.isVisible = show; } catch {}
           });
-          // Also toggle the root node itself
-          try { node.setEnabled(enable); } catch {}
         }
       }
       // Default
