@@ -875,7 +875,17 @@ if (msg.t === 'input') {
             if (!p.powerWeapon || p.powerWeapon !== 'minigun') return;
             if (p.mgOverheat) return;
             if ((p.mgSpin||0) < 0.2) return; // still spinning up
-            if ((p.powerAmmo||0) <= 0) { p.powerWeapon = null; p.powerAmmo = 0; return; }
+            if ((p.powerAmmo||0) <= 0) {
+              p.powerWeapon = null;
+              p.powerAmmo = 0;
+              // Release any pad hold
+              for (const pad of pickupPads) {
+                if (pad.heldBy === p.id) { pad.heldBy = null; pad.respawnAt = nowMs() + 30_000; }
+              }
+              broadcast({ t: 'minigunEmpty', id: p.id });
+              broadcast({ t: 'state', state: serializeState() });
+              return;
+            }
 
             const rpm = (mDef.rpmMin||300) + ((mDef.rpmMax||1200) - (mDef.rpmMin||300)) * (p.mgSpin||0);
             const cd = Math.max(25, Math.round(60000 / rpm));
