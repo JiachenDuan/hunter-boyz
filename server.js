@@ -171,6 +171,15 @@ const MAPS = {
       { x: -2.0, y: 0, z: -18.0, w: 2.4, h: 1.15, d: 2.4 },
       { x: -8.0, y: 0, z: -11.0, w: 2.2, h: 1.15, d: 2.2 },
       { x: 2.0, y: 0, z: -7.5, w: 2.2, h: 1.15, d: 2.2 },
+
+      // Courtyard-right "sniper tower" (climb via jump-steps)
+      // Placement logic: right-side has strong courtyard/door sight, but the climb is exposed.
+      { x: 17.6, y: 0, z: -17.0, w: 2.6, h: 0.95, d: 2.6 }, // Step 1
+      { x: 18.6, y: 0, z: -15.6, w: 2.2, h: 1.20, d: 2.2 }, // Step 2
+      { x: 19.2, y: 0, z: -13.6, w: 3.2, h: 1.55, d: 3.2 }, // Top platform
+      { x: 21.1, y: 0, z: -13.6, w: 1.0, h: 3.6, d: 4.6 },  // Backboard (limits 360° + provides partial cover)
+      { x: 19.2, y: 0, z: -11.6, w: 2.2, h: 1.0, d: 0.9 },   // Low rail (prevents easy straight-on trades)
+
     ],
     pickupPads: [
       { id: 'pad_mg_1', type: 'minigun', x: -9, y: 1.8, z: 12 },
