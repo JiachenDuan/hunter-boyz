@@ -210,7 +210,7 @@ const MAPS = {
 
 const BUILD = String(Date.now());
 const WIN_SCORE = 8;
-const ROUND_MS = 120_000;
+const ROUND_MS = 90_000;
 const AFK_MS = 90_000;
 
 const GAME = {
@@ -1400,6 +1400,7 @@ setInterval(() => {
         GAME.started = false;
         GAME.roundOverAt = 0;
         GAME.roundEndsAt = 0;
+        GAME.firstBlood = false;
         broadcast({ t: 'state', state: serializeState() });
       } catch {}
     }, 5000);

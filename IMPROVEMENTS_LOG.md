@@ -23,3 +23,4 @@
 - 2026-02-20 14:40 PST — Shortened rounds: win score lowered from 10 to 8 for faster pacing
 - 2026-02-20 14:52 PST — Added reload sound tick (server-triggered; audible for nearby players) for more arcade feedback
 - 2026-02-20 15:00 PST — Added low-HP warning beep (<=25 HP) for arcade tension
+- 2026-02-20 15:10 PST — Shortened round timer from 120s to 90s (faster pacing even without reaching win score)
