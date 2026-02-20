@@ -222,6 +222,23 @@
             spawnExplosion(msg);
           }
           if (msg.t === 'grenadeSpawn') onGrenadeSpawn(msg);
+          if (msg.t === 'toast' && msg.kind === 'streak') {
+            // Server-confirmed streak bonus toast
+            try {
+              const n = msg.n || 2;
+              const label = (n === 2) ? 'DOUBLE' : (n === 3) ? 'TRIPLE' : (n === 4) ? 'QUAD' : (n === 5) ? 'PENTA' : `x${n}`;
+              const el = document.getElementById('streakToast');
+              if (el) {
+                el.textContent = `✨ ${label} BONUS +${msg.bonus || 1}`;
+                el.classList.add('show');
+                clearTimeout(window.__kb_streakT2);
+                window.__kb_streakT2 = setTimeout(() => { try { el.classList.remove('show'); } catch {} }, 900);
+              }
+              if (String(msg.id) === String(myId)) {
+                try { SFX.hit(); } catch {}
+              }
+            } catch {}
+          }
           if (msg.t === 'slash') onSlashMsg(msg);
           if (msg.t === 'pickup') {
             showKill(`${msg.id} picked up ${msg.what}`);

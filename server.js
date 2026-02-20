@@ -492,6 +492,21 @@ function doDamage({ shooter, target, amount }) {
 
     if (shooter) {
       shooter.score += 1;
+
+      // Party-game spice: tiny kill bonus for multi-kills in a short window.
+      // Keeps stakes high without changing weapon balance.
+      try {
+        const winMs = 4200;
+        const last = shooter._lastKillAt || 0;
+        const within = (t - last) <= winMs;
+        shooter._streak = within ? ((shooter._streak || 0) + 1) : 1;
+        shooter._lastKillAt = t;
+        if (shooter._streak >= 2) {
+          shooter.score += 1; // bonus point
+          broadcast({ t: 'toast', kind: 'streak', id: shooter.id, n: shooter._streak, bonus: 1 });
+        }
+      } catch {}
+
       broadcast({ t: 'kill', killer: shooter.id, killerName: shooter.name, victim: target.id, victimName: target.name });
     } else {
       broadcast({ t: 'kill', killer: null, killerName: '—', victim: target.id, victimName: target.name });

@@ -17,3 +17,4 @@
 - 2026-02-20 13:00 PST — Sound button now shows explicit OFF→ON state (and styling) instead of ambiguous 'Enable sound'
 - 2026-02-20 13:11 PST — HP HUD now shows spawn protection timer (🛡️ Ns) while invulnerable
 - 2026-02-20 14:01 PST — Added kill-streak hype toast (DOUBLE/TRIPLE/...) when you get rapid consecutive kills
+- 2026-02-20 14:10 PST — Added server-confirmed multi-kill bonus point (+1) within ~4s + toast feedback
