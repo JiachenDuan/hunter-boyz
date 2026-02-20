@@ -407,6 +407,29 @@
       pointer-events:none;
       z-index:95;
     }
+    #streakToast {
+      position:fixed;
+      top:26%;
+      left:50%;
+      transform:translateX(-50%) scale(0.96);
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(255,200,60,0.14);
+      border:1px solid rgba(255,200,60,0.35);
+      color: rgba(255,245,220,0.98);
+      font-weight: 1000;
+      font-size: 18px;
+      letter-spacing: 0.9px;
+      text-shadow: 0 3px 14px rgba(0,0,0,0.6);
+      opacity:0;
+      transition: opacity 120ms ease, transform 120ms ease;
+      pointer-events:none;
+      z-index:95;
+    }
+    #streakToast.show {
+      opacity: 1;
+      transform:translateX(-50%) scale(1);
+    }
     #roundTimer {
       position:fixed;
       top:10px;

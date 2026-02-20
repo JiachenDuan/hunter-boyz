@@ -167,7 +167,39 @@
           }
           if (msg.t === 'state') applyState(msg.state);
           if (msg.t === 'shot') renderShot(msg);
-          if (msg.t === 'kill') showKill(`${msg.killerName || msg.killer} eliminated ${msg.victimName || msg.victim}`);
+          if (msg.t === 'kill') {
+            showKill(`${msg.killerName || msg.killer} eliminated ${msg.victimName || msg.victim}`);
+            // Local kill-streak hype (party-game chaos): consecutive kills within a short window.
+            try {
+              if (String(msg.killer) === String(myId)) {
+                const now = performance.now();
+                const winMs = 4200;
+                if (!window.__kb_lastKillAt || (now - window.__kb_lastKillAt) > winMs) window.__kb_streak = 0;
+                window.__kb_lastKillAt = now;
+                window.__kb_streak = (window.__kb_streak || 0) + 1;
+
+                const n = window.__kb_streak;
+                if (n >= 2) {
+                  const names = {
+                    2: 'DOUBLE KILL',
+                    3: 'TRIPLE KILL',
+                    4: 'QUAD KILL',
+                    5: 'PENTAKILL',
+                    6: 'UNSTOPPABLE',
+                  };
+                  const label = names[n] || `KILL x${n}`;
+                  const el = document.getElementById('streakToast');
+                  if (el) {
+                    el.textContent = `🔥 ${label}!`;
+                    el.classList.add('show');
+                    clearTimeout(window.__kb_streakT);
+                    window.__kb_streakT = setTimeout(() => { try { el.classList.remove('show'); } catch {} }, 900);
+                  }
+                  try { SFX.hit(); } catch {}
+                }
+              }
+            } catch {}
+          }
           if (msg.t === 'winner') showWinner(msg);
           if (msg.t === 'fartPuff') spawnFartPuff(msg.to);
           if (msg.t === 'fartDot') spawnFartDot(msg.to, msg.dmg || 5);
