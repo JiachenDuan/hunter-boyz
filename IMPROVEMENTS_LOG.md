@@ -8,3 +8,4 @@
 - 2026-02-20 11:30 PST — Connection status now shows reconnect attempt count (RECONNECT 1/2/3…)
 - 2026-02-20 11:40 PST — Weapon picker modal now animates in (fade/slide) for nicer UX
 - 2026-02-20 11:50 PST — Weapon picker button/chip now toggles the modal (tap again to close)
+- 2026-02-20 12:00 PST — Ammo HUD now pulses/turns red when low (<=3) and highlights yellow while reloading

@@ -334,6 +334,19 @@
     #hpFill { height:100%; width:100%; background: rgba(80,255,140,0.85); }
     #hpText { font-weight:900; font-size:12px; opacity:.9; }
     #ammoText { font-weight:900; font-size:12px; opacity:.85; }
+    @keyframes ammoPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+      100% { transform: scale(1); }
+    }
+    #ammoText.isLow {
+      color: rgba(255,120,90,0.98);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.55);
+      animation: ammoPulse 0.75s ease-in-out infinite;
+    }
+    #ammoText.isReloading {
+      color: rgba(255,240,120,0.95);
+    }
     #weaponText { font-weight:900; font-size:12px; opacity:.75; }
     #hitToast {
       margin-top:10px;

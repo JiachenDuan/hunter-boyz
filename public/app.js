@@ -337,7 +337,14 @@
 
         const ammo = (typeof meP.ammo === 'number') ? meP.ammo : 0;
         const rel = (meP.reloadInMs || 0);
-        document.getElementById('ammoText').textContent = rel > 0 ? `Reloading…` : `Ammo ${ammo}`;
+        const ammoEl = document.getElementById('ammoText');
+        if (ammoEl) {
+          ammoEl.textContent = rel > 0 ? `Reloading…` : `Ammo ${ammo}`;
+          try {
+            ammoEl.classList.toggle('isReloading', rel > 0);
+            ammoEl.classList.toggle('isLow', rel <= 0 && ammo <= 3);
+          } catch {}
+        }
         try {
           const effW = (meP.powerWeapon === 'minigun') ? 'minigun' : (document.getElementById('weapon')?.value || 'rifle');
           const wLabel = (window.WEAPONS?.getWeapon(effW)?.label) || effW;
