@@ -145,6 +145,25 @@
 
     .hudTopRow { display:flex; align-items:center; gap:10px; }
     .hudTitle { font-weight:800; letter-spacing:0.2px; }
+    .weaponChip {
+      display:none;
+      align-items:center;
+      gap:6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+      opacity: 0.92;
+      white-space: nowrap;
+      max-width: 34vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Show current weapon when HUD is compact (settings hidden) */
+    #hud.hudCompact .weaponChip { display:inline-flex; }
     #connDot {
       margin-left:8px;
       width:10px;

@@ -3697,13 +3697,35 @@ function spawnDent(pos, normal, size, kind) {
       syncReloadButtonVisibility();
     });
 
+    const weaponChipEl = document.getElementById('weaponChip');
+    function weaponLabel(id) {
+      const map = {
+        rifle: 'Rifle',
+        shotgun: 'Shotgun',
+        sniper: 'Sniper',
+        fart: 'Fart',
+        rocket: 'Rocket',
+        knife: 'Knife',
+        grenade_frag: 'Frag',
+        grenade_impact: 'Impact',
+        minigun: 'Minigun',
+      };
+      return map[id] || String(id || '');
+    }
+    function syncWeaponChip() {
+      if (!weaponChipEl || !weaponEl) return;
+      weaponChipEl.textContent = `🔫 ${weaponLabel(weaponEl.value)}`;
+    }
+
     // Swap first-person gun model when weapon changes
     weaponEl?.addEventListener('change', () => {
       try { ensureFirstPersonRig()?.setGun?.(weaponEl.value); } catch {}
       // If switching away from sniper, force scope off.
       if (weaponEl.value !== 'sniper') state.scope = false;
       updateScopeUI();
+      syncWeaponChip();
     });
+    syncWeaponChip();
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
