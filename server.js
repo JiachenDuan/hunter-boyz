@@ -143,109 +143,45 @@ const MAPS = {
       { x: -2, y: 1.8, z: -22.5 },
       { x: 2, y: 1.8, z: -22.5 },
     ],
-    // Mansion v2: asymmetrical assault layout (defender-favored) inspired by cs_mansion.
-    // Notes:
-    // - Obstacles are axis-aligned boxes used for BOTH collision (server) and visuals (client).
-    // - This is still a flat map (no true second floor). We "fake" windows/entries via gaps.
-    // - Player collision radius is ~0.7, so leave corridors >= ~2.2 wide.
+    // Mansion v2 (lite): same assault concept, ~50% fewer obstacles for readability.
     obstacles: [
-      // ─────────────────────────────────────────────────────────────────────
-      // 1) High brick perimeter + main gate opening (north side)
-      // ─────────────────────────────────────────────────────────────────────
-      // North wall (leave a gate gap at center)
+      // Perimeter + gate gap (north)
       { x: -14.5, y: 0, z: -23, w: 19, h: 4.6, d: 2 },
       { x: 14.5, y: 0, z: -23, w: 19, h: 4.6, d: 2 },
-      // East / West / South walls
       { x: -23, y: 0, z: 0, w: 2, h: 4.6, d: 46 },
       { x: 23, y: 0, z: 0, w: 2, h: 4.6, d: 46 },
       { x: 0, y: 0, z: 23, w: 46, h: 4.6, d: 2 },
-
-      // Gate posts (visual landmark)
       { x: -4.5, y: 0, z: -23, w: 1.5, h: 4.6, d: 2.2 },
       { x: 4.5, y: 0, z: -23, w: 1.5, h: 4.6, d: 2.2 },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // 2) The Death Courtyard (open killzone) + drained pool low-cover
-      // ─────────────────────────────────────────────────────────────────────
-      // Minimal hard cover in the open; defenders have long sight lines.
-      { x: 0, y: 0, z: -14, w: 3.6, h: 2.0, d: 3.6 }, // small statue/planter (center)
-      { x: 12, y: 0, z: -15, w: 3.8, h: 2.2, d: 5.5 }, // sparse right-side cover
+      // Death Courtyard (keep it mostly open)
+      { x: 0, y: 0, z: -14, w: 3.6, h: 2.0, d: 3.6 },
 
-      // Drained pool: low walls (players can use as cover but remain vulnerable)
-      // Outer rim
-      { x: -11, y: 0, z: -14, w: 1.0, h: 1.3, d: 9.0 },  // left rim
-      { x: -5, y: 0, z: -14, w: 1.0, h: 1.3, d: 9.0 },   // right rim
-      { x: -8, y: 0, z: -18.5, w: 7.0, h: 1.3, d: 1.0 }, // top rim
-      { x: -8, y: 0, z: -9.5, w: 7.0, h: 1.3, d: 1.0 },  // bottom rim
-      // A little "pool steps" block (micro cover)
-      { x: -10.8, y: 0, z: -10.5, w: 1.0, h: 0.9, d: 1.8 },
+      // Drained pool (simplified rim)
+      { x: -11, y: 0, z: -14, w: 1.0, h: 1.2, d: 9.0 },
+      { x: -5, y: 0, z: -14, w: 1.0, h: 1.2, d: 9.0 },
+      { x: -8, y: 0, z: -18.5, w: 7.0, h: 1.2, d: 1.0 },
+      { x: -8, y: 0, z: -9.5, w: 7.0, h: 1.2, d: 1.0 },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // 3) Mansion exterior facade + forced front chokepoint (double doors)
-      // ─────────────────────────────────────────────────────────────────────
-      // Facade is segmented so we can create: door gap + two "window" gaps.
-      // The gaps are the "utility-required" entry lines.
-      // Left facade segment
+      // Mansion facade + door choke (remove window mullions)
       { x: -9.5, y: 0, z: -6, w: 11, h: 4.6, d: 2 },
-      // Right facade segment
       { x: 9.5, y: 0, z: -6, w: 11, h: 4.6, d: 2 },
-      // Door frame blocks (tighten the door choke)
       { x: -1.8, y: 0, z: -6, w: 1.2, h: 4.6, d: 2.2 },
       { x: 1.8, y: 0, z: -6, w: 1.2, h: 4.6, d: 2.2 },
-      // "Window" mullions (create narrow jump-in gaps at x≈±6)
-      { x: -6.0, y: 0, z: -6, w: 1.0, h: 4.6, d: 2.2 },
-      { x: 6.0, y: 0, z: -6, w: 1.0, h: 4.6, d: 2.2 },
 
-      // ─────────────────────────────────────────────────────────────────────
-      // 4) Interior layout: foyer + central staircase spine + security room
-      // ─────────────────────────────────────────────────────────────────────
-      // Interior outer shell (back wall)
+      // Interior shell + central spine
       { x: 0, y: 0, z: 10.5, w: 22, h: 4.6, d: 2 },
-      // Side walls (leave rotation space behind them)
       { x: -11, y: 0, z: 2.0, w: 2, h: 4.6, d: 17 },
       { x: 11, y: 0, z: 2.0, w: 2, h: 4.6, d: 17 },
-
-      // Central staircase spine (single strong divider; creates readable left/right wings)
       { x: 0, y: 0, z: 1.0, w: 2.2, h: 4.6, d: 13 },
 
-      // Security Room (right wing): small fortified box with one entry
-      // Outer box
-      { x: 7.5, y: 0, z: 2.5, w: 7.0, h: 4.6, d: 2.0 }, // north wall
-      { x: 7.5, y: 0, z: 7.8, w: 7.0, h: 4.6, d: 2.0 }, // south wall
-      { x: 4.2, y: 0, z: 5.2, w: 2.0, h: 4.6, d: 7.4 }, // west wall
-      { x: 10.8, y: 0, z: 5.2, w: 2.0, h: 4.6, d: 7.4 }, // east wall
+      // Security room hint (2 walls only)
+      { x: 7.5, y: 0, z: 2.8, w: 7.0, h: 4.6, d: 2.0 },
+      { x: 7.5, y: 0, z: 7.6, w: 7.0, h: 4.6, d: 2.0 },
 
-      // Study / Objective room (back-right): another holdable room
-      { x: 7.5, y: 0, z: 13.5, w: 8.5, h: 4.6, d: 2.0 }, // north wall
-      { x: 7.5, y: 0, z: 19.0, w: 8.5, h: 4.6, d: 2.0 }, // south wall
-      { x: 3.0, y: 0, z: 16.2, w: 2.0, h: 4.6, d: 7.0 }, // west wall
-      { x: 12.0, y: 0, z: 16.2, w: 2.0, h: 4.6, d: 7.0 }, // east wall
-
-      // ─────────────────────────────────────────────────────────────────────
-      // 5) Underground flank ("sewer") — high-risk corridor along west side
-      // ─────────────────────────────────────────────────────────────────────
-      // We represent the sewer as a narrow, dark lane behind walls.
-      // Entrance is in the courtyard (north-west). Exit dumps into left interior wing.
-      // Corridor walls (two parallel walls forming a 3.4-wide tunnel)
+      // Sewer flank (simplified: straight tunnel only)
       { x: -19.0, y: 0, z: -9.0, w: 1.2, h: 4.6, d: 26.0 },
       { x: -15.6, y: 0, z: -9.0, w: 1.2, h: 4.6, d: 26.0 },
-      // Turn into the mansion (eastward)
-      { x: -16.6, y: 0, z: 3.5, w: 8.0, h: 4.6, d: 1.2 },
-      { x: -16.6, y: 0, z: 0.5, w: 8.0, h: 4.6, d: 1.2 },
-      // "Grate" blocks to make the entrance feel deliberate (forces commitment)
-      { x: -17.3, y: 0, z: -18.0, w: 3.8, h: 2.0, d: 1.2 },
-
-      // Left interior wing shaping so sewer exit has meaningful angles
-      { x: -6.5, y: 0, z: 2.0, w: 2.0, h: 4.6, d: 12.0 },
-      { x: -8.8, y: 0, z: 8.0, w: 6.0, h: 4.6, d: 2.0 },
-
-      // ─────────────────────────────────────────────────────────────────────
-      // 6) Courtyard side-lanes (limited, but exist) — encourage split pushes
-      // ─────────────────────────────────────────────────────────────────────
-      // Right lane pinch (forces utility to cross)
-      { x: 17.0, y: 0, z: -14.0, w: 2.0, h: 4.6, d: 18.0 },
-      // Left lane pinch (near sewer) keeps it high-risk
-      { x: -21.0, y: 0, z: -16.0, w: 2.0, h: 4.6, d: 10.0 },
     ],
     pickupPads: [
       { id: 'pad_mg_1', type: 'minigun', x: -9, y: 1.8, z: 12 },
