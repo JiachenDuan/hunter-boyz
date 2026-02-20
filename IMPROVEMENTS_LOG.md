@@ -18,3 +18,4 @@
 - 2026-02-20 13:11 PST — HP HUD now shows spawn protection timer (🛡️ Ns) while invulnerable
 - 2026-02-20 14:01 PST — Added kill-streak hype toast (DOUBLE/TRIPLE/...) when you get rapid consecutive kills
 - 2026-02-20 14:10 PST — Added server-confirmed multi-kill bonus point (+1) within ~4s + toast feedback
+- 2026-02-20 14:20 PST — Added REVENGE bonus (+1) when you kill the player who killed you last (with toast)

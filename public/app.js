@@ -239,6 +239,20 @@
               }
             } catch {}
           }
+          if (msg.t === 'toast' && msg.kind === 'revenge') {
+            try {
+              const el = document.getElementById('streakToast');
+              if (el) {
+                el.textContent = `😈 REVENGE +${msg.bonus || 1}`;
+                el.classList.add('show');
+                clearTimeout(window.__kb_revengeT);
+                window.__kb_revengeT = setTimeout(() => { try { el.classList.remove('show'); } catch {} }, 900);
+              }
+              if (String(msg.id) === String(myId)) {
+                try { SFX.kill(); } catch {}
+              }
+            } catch {}
+          }
           if (msg.t === 'slash') onSlashMsg(msg);
           if (msg.t === 'pickup') {
             showKill(`${msg.id} picked up ${msg.what}`);

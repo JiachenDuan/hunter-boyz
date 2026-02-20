@@ -507,6 +507,17 @@ function doDamage({ shooter, target, amount }) {
         }
       } catch {}
 
+      // Revenge bonus: if you kill the player who killed you last, +1.
+      try {
+        if (shooter._lastKilledBy && String(shooter._lastKilledBy) === String(target.id)) {
+          shooter.score += 1;
+          broadcast({ t: 'toast', kind: 'revenge', id: shooter.id, against: target.id, bonus: 1 });
+        }
+      } catch {}
+
+      // Track last killer (for revenge)
+      try { target._lastKilledBy = shooter.id; } catch {}
+
       broadcast({ t: 'kill', killer: shooter.id, killerName: shooter.name, victim: target.id, victimName: target.name });
     } else {
       broadcast({ t: 'kill', killer: null, killerName: '—', victim: target.id, victimName: target.name });
