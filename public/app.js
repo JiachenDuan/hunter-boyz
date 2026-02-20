@@ -3526,7 +3526,7 @@ function spawnDent(pos, normal, size, kind) {
     holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
     // sprint removed
 
-    // Reload: tap
+    // Reload: tap (debounced to avoid iOS double-fire)
     (() => {
       const el = document.getElementById('btnReload');
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
@@ -3536,9 +3536,17 @@ function spawnDent(pos, normal, size, kind) {
         if (!socket || socket.readyState !== 1) return;
         socket.send(JSON.stringify({ t:'reload' }));
       };
-      el.addEventListener('click', fire);
-      el.addEventListener('pointerdown', fire, { passive:false });
-      el.addEventListener('touchend', fire, { passive:false });
+
+      let lastReloadAt = 0;
+      const fireOnce = (e) => {
+        const now = Date.now();
+        if (now - lastReloadAt < 450) return;
+        lastReloadAt = now;
+        fire(e);
+      };
+
+      // Use pointerdown only (covers mouse + touch); avoid click/touchend duplicates on mobile Safari.
+      el.addEventListener('pointerdown', fireOnce, { passive:false });
     })();
 
     // Scope: toggle (only affects sniper)

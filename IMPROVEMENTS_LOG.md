@@ -1,0 +1,1 @@
+- 2026-02-20 10:21 PST — Debounced Reload button on iOS (avoid double reload on tap)
