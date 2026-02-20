@@ -551,7 +551,7 @@ function doDamage({ shooter, target, amount }) {
       GAME.roundOverAt = t;
       broadcast({ t: 'winner', winnerId: shooter.id, winnerName: shooter.name });
 
-      // After 5s, reset scores + respawn all + return to lobby
+      // After 3s, reset scores + respawn all + return to lobby (faster loop)
       setTimeout(() => {
         try {
           for (const p of players.values()) {
@@ -565,7 +565,7 @@ function doDamage({ shooter, target, amount }) {
           GAME.firstBlood = false;
           broadcast({ t: 'state', state: serializeState() });
         } catch {}
-      }, 5000);
+      }, 3000);
     }
 
     return { hitId: target.id, hitHp: target.hp, killed: true };
