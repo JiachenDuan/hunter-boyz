@@ -219,6 +219,7 @@ const GAME = {
   roundOverAt: 0,
   roundEndsAt: 0,
   mapId: 'arena',
+  firstBlood: false,
 };
 
 let nextId = 1;
@@ -507,6 +508,15 @@ function doDamage({ shooter, target, amount }) {
         }
       } catch {}
 
+      // First blood bonus: first kill of the round is worth +1.
+      try {
+        if (GAME.started && !GAME.roundOverAt && !GAME.firstBlood) {
+          GAME.firstBlood = true;
+          shooter.score += 1;
+          broadcast({ t: 'toast', kind: 'firstblood', id: shooter.id, bonus: 1 });
+        }
+      } catch {}
+
       // Revenge bonus: if you kill the player who killed you last, +1.
       try {
         if (shooter._lastKilledBy && String(shooter._lastKilledBy) === String(target.id)) {
@@ -539,6 +549,7 @@ function doDamage({ shooter, target, amount }) {
           GAME.started = false;
           GAME.roundOverAt = 0;
           GAME.roundEndsAt = 0;
+          GAME.firstBlood = false;
           broadcast({ t: 'state', state: serializeState() });
         } catch {}
       }, 5000);
@@ -694,6 +705,7 @@ wss.on('connection', (ws) => {
     if (msg.t === 'start') {
       // Anyone can start (LAN party vibe).
       GAME.started = true;
+      GAME.firstBlood = false;
       broadcast({ t: 'state', state: serializeState() });
       return;
     }

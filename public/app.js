@@ -253,6 +253,20 @@
               }
             } catch {}
           }
+          if (msg.t === 'toast' && msg.kind === 'firstblood') {
+            try {
+              const el = document.getElementById('streakToast');
+              if (el) {
+                el.textContent = `🩸 FIRST BLOOD +${msg.bonus || 1}`;
+                el.classList.add('show');
+                clearTimeout(window.__kb_firstBloodT);
+                window.__kb_firstBloodT = setTimeout(() => { try { el.classList.remove('show'); } catch {} }, 1000);
+              }
+              if (String(msg.id) === String(myId)) {
+                try { SFX.kill(); } catch {}
+              }
+            } catch {}
+          }
           if (msg.t === 'slash') onSlashMsg(msg);
           if (msg.t === 'pickup') {
             showKill(`${msg.id} picked up ${msg.what}`);
