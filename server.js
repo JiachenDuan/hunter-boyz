@@ -145,6 +145,16 @@ const MAPS = {
       { x: 3.5, y: 1.8, z: -24.85 },
       { x: -1.5, y: 1.8, z: -24.3 },
       { x: 1.5, y: 1.8, z: -24.3 },
+
+      // Mid-map spawns: reduce repeat spawn-trading at the north gate and spread fights out.
+      // (All positions avoid perimeter walls at x=±23 / z=±23 and the facade wall at z=-6.)
+      { x: -10.0, y: 1.8, z: -10.0 },
+      { x: 10.0, y: 1.8, z: -10.0 },
+      // Interior/back spawns: give a "reset" option and keep late-round flow moving.
+      { x: -6.0, y: 1.8, z: 14.0 },
+      { x: 6.0, y: 1.8, z: 14.0 },
+      // South yard spawn (inside bounds, outside the south wall thickness)
+      { x: 0.0, y: 1.8, z: 21.0 },
     ],
     // Mansion v2 (ultra-lite): ~50% fewer obstacles again + a few jump-up props.
     // Goal: cleaner readability, less clutter, but still has: perimeter → courtyard → door choke → interior.
