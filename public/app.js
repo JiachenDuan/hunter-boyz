@@ -131,6 +131,10 @@
         reconnectAttempts = Math.min(reconnectAttempts + 1, 8);
         const delay = Math.min(500 * Math.pow(1.6, reconnectAttempts), 6000);
         setConnState('connecting');
+        try {
+          const txt = document.getElementById('connText');
+          if (txt) txt.textContent = `RECONNECT ${reconnectAttempts}`;
+        } catch {}
         log(`Reconnecting… (${Math.round(delay)}ms)`);
         reconnectTimer = setTimeout(() => {
           reconnectTimer = null;
