@@ -3942,9 +3942,7 @@ function spawnDent(pos, normal, size, kind) {
       log('Sound enabled.');
       try {
         soundBtn.textContent = 'Sound: ON';
-        soundBtn.style.background = 'rgba(80,255,140,0.14)';
-        soundBtn.style.borderColor = 'rgba(80,255,140,0.45)';
-        soundBtn.style.color = '#d6ffe6';
+        soundBtn.classList.add('soundOn');
       } catch {}
     }
     soundBtn.addEventListener('click', doEnableSound);
@@ -3966,6 +3964,13 @@ function spawnDent(pos, normal, size, kind) {
       // Compact whenever settings are closed.
       try { hudEl.classList.toggle('hudCompact', !state.settingsOpen); } catch {}
     }
+    // Ensure sound button starts in OFF state (sound is locked until user gesture on iOS).
+    try {
+      if (soundBtn) {
+        soundBtn.textContent = 'Sound: OFF';
+        soundBtn.classList.remove('soundOn');
+      }
+    } catch {}
     syncHudCompact();
 
     let lastSettingsToggleAt = 0;

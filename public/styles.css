@@ -251,10 +251,16 @@
     #soundBtn {
       border-radius:10px;
       border:1px solid rgba(255,255,255,0.18);
-      background: rgba(80,255,140,0.10);
-      color:#d6ffe6;
+      background: rgba(255,255,255,0.08);
+      color:#e6edf3;
       padding:8px 10px;
-      font-weight:800;
+      font-weight:900;
+      letter-spacing: 0.3px;
+    }
+    #soundBtn.soundOn {
+      background: rgba(80,255,140,0.12);
+      border-color: rgba(80,255,140,0.45);
+      color:#d6ffe6;
     }
     #resetLobbyBtn {
       border-radius:10px;
