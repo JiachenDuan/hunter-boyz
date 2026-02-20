@@ -3894,7 +3894,13 @@ function spawnDent(pos, normal, size, kind) {
         await navigator.clipboard.writeText(link);
         log('Link copied. Paste into the other phone.');
       } catch {
-        log('Copy failed. Link: ' + link);
+        // Fallback (older iOS / clipboard permissions): prompt so user can copy manually.
+        try {
+          window.prompt('Copy this link:', link);
+          log('Copy link: select + copy from the prompt.');
+        } catch {
+          log('Copy failed. Link: ' + link);
+        }
       }
     }
 
