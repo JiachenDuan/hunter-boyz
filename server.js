@@ -140,8 +140,9 @@ const MAPS = {
       // Attack-side spawns: outside the main gate (north)
       // NOTE: keep these outside the north wall segment at z=-23 (depth=2 spans z∈[-24,-22]).
       // Otherwise players can spawn intersecting the wall and get "stuck"/jittery.
-      { x: -3.5, y: 1.8, z: -24.7 },
-      { x: 3.5, y: 1.8, z: -24.7 },
+      // Slightly past the collision-expanded wall edge (radius=0.7) so spawns never intersect.
+      { x: -3.5, y: 1.8, z: -24.85 },
+      { x: 3.5, y: 1.8, z: -24.85 },
       { x: -1.5, y: 1.8, z: -24.3 },
       { x: 1.5, y: 1.8, z: -24.3 },
     ],
