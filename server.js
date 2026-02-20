@@ -138,10 +138,12 @@ const MAPS = {
     bounds: { minX: -25, maxX: 25, minZ: -25, maxZ: 25 },
     spawnPoints: [
       // Attack-side spawns: outside the main gate (north)
-      { x: -6, y: 1.8, z: -24 },
-      { x: 6, y: 1.8, z: -24 },
-      { x: -2, y: 1.8, z: -22.5 },
-      { x: 2, y: 1.8, z: -22.5 },
+      // NOTE: keep these outside the north wall segment at z=-23 (depth=2 spans z∈[-24,-22]).
+      // Otherwise players can spawn intersecting the wall and get "stuck"/jittery.
+      { x: -3.5, y: 1.8, z: -24.7 },
+      { x: 3.5, y: 1.8, z: -24.7 },
+      { x: -1.5, y: 1.8, z: -24.3 },
+      { x: 1.5, y: 1.8, z: -24.3 },
     ],
     // Mansion v2 (ultra-lite): ~50% fewer obstacles again + a few jump-up props.
     // Goal: cleaner readability, less clutter, but still has: perimeter → courtyard → door choke → interior.
