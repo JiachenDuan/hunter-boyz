@@ -3640,9 +3640,11 @@ function spawnDent(pos, normal, size, kind) {
     function openWeaponModal() {
       syncPickerHighlight();
       weaponModal.classList.add('open');
+      try { btnWeaponPick?.classList?.add('isActive'); } catch {}
     }
     function closeWeaponModal() {
       weaponModal.classList.remove('open');
+      try { btnWeaponPick?.classList?.remove('isActive'); } catch {}
     }
     function toggleWeaponModal() {
       try {

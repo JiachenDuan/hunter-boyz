@@ -92,6 +92,13 @@
       background: rgba(255,200,60,0.15);
       display:flex; align-items:center; justify-content:center;
       z-index: 12;
+      transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+    }
+    #btnWeaponPick:active { transform: scale(0.95); filter: saturate(1.1) brightness(1.15); }
+    /* When the weapon modal is open, make the button look "active" */
+    #btnWeaponPick.isActive {
+      box-shadow: 0 0 0 2px rgba(255,200,60,0.20), 0 0 26px rgba(255,200,60,0.22);
+      transform: scale(0.98);
     }
     /* Weapon picker modal */
     #weaponModal {
