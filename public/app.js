@@ -222,6 +222,24 @@
             spawnExplosion(msg);
           }
           if (msg.t === 'grenadeSpawn') onGrenadeSpawn(msg);
+          if (msg.t === 'sfx' && msg.kind === 'reload') {
+            // play reload tick for nearby players (or self)
+            try {
+              // If we don't have audio unlocked, this will no-op (fine).
+              const me = String(msg.id) === String(myId);
+              if (me) { SFX.reload?.(); }
+              else {
+                // simple distance cull
+                const meP = (lastServerState?.players || []).find(p=>String(p.id)===String(myId));
+                if (meP) {
+                  const dx = (meP.x - msg.x);
+                  const dz = (meP.z - msg.z);
+                  const d = Math.hypot(dx, dz);
+                  if (d < 16) SFX.reload?.();
+                }
+              }
+            } catch {}
+          }
           if (msg.t === 'toast' && msg.kind === 'streak') {
             // Server-confirmed streak bonus toast
             try {
@@ -2515,6 +2533,7 @@
         },
         hit: () => tick(760, 60, 0.02),
         kill: () => tick(320, 120, 0.02),
+        reload: () => tick(520, 90, 0.015),
         whoosh: () => (function(){
           play((c)=>{
             const t0=c.currentTime+0.001;

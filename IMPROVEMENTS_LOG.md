@@ -21,3 +21,4 @@
 - 2026-02-20 14:20 PST — Added REVENGE bonus (+1) when you kill the player who killed you last (with toast)
 - 2026-02-20 14:31 PST — Added FIRST BLOOD bonus (+1) for the first kill each round (with toast)
 - 2026-02-20 14:40 PST — Shortened rounds: win score lowered from 10 to 8 for faster pacing
+- 2026-02-20 14:52 PST — Added reload sound tick (server-triggered; audible for nearby players) for more arcade feedback

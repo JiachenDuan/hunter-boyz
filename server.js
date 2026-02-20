@@ -756,6 +756,11 @@ wss.on('connection', (ws) => {
       if (t < p.reloadUntil) return;
       if (p.ammo >= 12) return;
       p.reloadUntil = t + 900;
+
+      // Arcade juice: play a reload sound for the reloader (and nearby players).
+      try {
+        broadcast({ t:'sfx', kind:'reload', x:p.x, y:p.y, z:p.z, id: p.id });
+      } catch {}
       return;
     }
 
