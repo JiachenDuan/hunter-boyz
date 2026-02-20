@@ -3669,6 +3669,16 @@ function spawnDent(pos, normal, size, kind) {
       if (e.target === weaponModal) { e.preventDefault(); closeWeaponModal(); }
     });
 
+    // Desktop QoL: ESC closes weapon modal
+    document.addEventListener('keydown', (e) => {
+      try {
+        if (e.key === 'Escape' && weaponModal?.classList?.contains('open')) {
+          e.preventDefault();
+          closeWeaponModal();
+        }
+      } catch {}
+    });
+
     wmOpts.forEach(opt => {
       opt.addEventListener('pointerdown', (e) => {
         e.preventDefault(); e.stopPropagation();
