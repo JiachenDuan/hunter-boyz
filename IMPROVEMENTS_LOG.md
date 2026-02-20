@@ -22,3 +22,4 @@
 - 2026-02-20 14:31 PST — Added FIRST BLOOD bonus (+1) for the first kill each round (with toast)
 - 2026-02-20 14:40 PST — Shortened rounds: win score lowered from 10 to 8 for faster pacing
 - 2026-02-20 14:52 PST — Added reload sound tick (server-triggered; audible for nearby players) for more arcade feedback
+- 2026-02-20 15:00 PST — Added low-HP warning beep (<=25 HP) for arcade tension

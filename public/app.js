@@ -2534,6 +2534,7 @@
         hit: () => tick(760, 60, 0.02),
         kill: () => tick(320, 120, 0.02),
         reload: () => tick(520, 90, 0.015),
+        lowhp: () => tick(210, 140, 0.018),
         whoosh: () => (function(){
           play((c)=>{
             const t0=c.currentTime+0.001;
@@ -4095,6 +4096,20 @@ function spawnDent(pos, normal, size, kind) {
     let seq = 0;
     let lastSend = performance.now();
     engine.runRenderLoop(() => {
+      // Low-HP warning beep (arcade tension)
+      try {
+        const me = (lastServerState && myId) ? lastServerState.players.find(p=>String(p.id)===String(myId)) : null;
+        const hp = me?.hp ?? null;
+        const inv = me?.invulnInMs ?? 0;
+        if (hp != null && hp > 0 && hp <= 25 && inv <= 0) {
+          const now = performance.now();
+          if (!window.__kb_lowHpAt || (now - window.__kb_lowHpAt) > 1200) {
+            window.__kb_lowHpAt = now;
+            try { SFX.lowhp?.(); } catch {}
+          }
+        }
+      } catch {}
+
       // ── Recoil decay: smoothly return gun position + camera shake ──
       if (fpRig?.gunRoot) {
         const gz = fpRig.gunRoot.position.z;
