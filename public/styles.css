@@ -360,7 +360,8 @@
     #ammoText.isReloading {
       color: rgba(255,240,120,0.95);
     }
-    #weaponText { font-weight:900; font-size:12px; opacity:.75; }
+    /* Redundant: we already show the weapon via the gun icon. */
+    #weaponText { display:none !important; }
     #hitToast {
       margin-top:10px;
       text-align:center;
