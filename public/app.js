@@ -169,6 +169,11 @@
           if (msg.t === 'shot') renderShot(msg);
           if (msg.t === 'kill') {
             showKill(`${msg.killerName || msg.killer} eliminated ${msg.victimName || msg.victim}`);
+            // Extra juice for YOUR kills
+            try {
+              if (String(msg.killer) === String(myId)) flashKillVignette();
+            } catch {}
+
             // Local kill-streak hype (party-game chaos): consecutive kills within a short window.
             try {
               if (String(msg.killer) === String(myId)) {
@@ -3011,6 +3016,16 @@ function showKill(text) {
       clearTimeout(showKill._t);
       showKill._t = setTimeout(() => { d.style.opacity = '0'; }, 1200);
       SFX.kill();
+    }
+
+    function flashKillVignette() {
+      try {
+        const v = document.getElementById('killVignette');
+        if (!v) return;
+        v.style.opacity = '1';
+        clearTimeout(flashKillVignette._t);
+        flashKillVignette._t = setTimeout(() => { try { v.style.opacity = '0'; } catch {} }, 140);
+      } catch {}
     }
 
     function showHitToast(detail) {

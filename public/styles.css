@@ -389,6 +389,16 @@
       transition: opacity 120ms ease;
       background: radial-gradient(circle at center, rgba(0,0,0,0) 55%, rgba(255,0,0,0.22) 100%);
     }
+    #killVignette {
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:94;
+      opacity:0;
+      transition: opacity 90ms ease;
+      background: radial-gradient(circle at center, rgba(0,0,0,0) 55%, rgba(80,255,140,0.22) 100%);
+      mix-blend-mode: screen;
+    }
     #winnerBanner {
       position:fixed;
       top:18%;

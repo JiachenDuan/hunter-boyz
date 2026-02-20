@@ -24,3 +24,4 @@
 - 2026-02-20 14:52 PST — Added reload sound tick (server-triggered; audible for nearby players) for more arcade feedback
 - 2026-02-20 15:00 PST — Added low-HP warning beep (<=25 HP) for arcade tension
 - 2026-02-20 15:10 PST — Shortened round timer from 120s to 90s (faster pacing even without reaching win score)
+- 2026-02-20 15:20 PST — Added green kill-confirm vignette flash on your kills (extra arcade juice)
