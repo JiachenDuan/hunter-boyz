@@ -3637,10 +3637,19 @@ function spawnDent(pos, normal, size, kind) {
     function closeWeaponModal() {
       weaponModal.classList.remove('open');
     }
+    function toggleWeaponModal() {
+      try {
+        if (weaponModal.classList.contains('open')) closeWeaponModal();
+        else openWeaponModal();
+      } catch {
+        // fallback
+        try { openWeaponModal(); } catch {}
+      }
+    }
 
     btnWeaponPick?.addEventListener('pointerdown', (e) => {
       e.preventDefault(); e.stopPropagation();
-      openWeaponModal();
+      toggleWeaponModal();
     });
 
     weaponModalClose?.addEventListener('pointerdown', (e) => {
@@ -3751,10 +3760,10 @@ function spawnDent(pos, normal, size, kind) {
       weaponChipEl.textContent = `🔫 ${weaponLabel(weaponEl.value)}`;
     }
 
-    // Quick weapon access: tap the chip (when visible) to open the weapon picker.
+    // Quick weapon access: tap the chip (when visible) to toggle the weapon picker.
     weaponChipEl?.addEventListener('pointerdown', (e) => {
       try { e.preventDefault(); e.stopPropagation(); } catch {}
-      try { openWeaponModal?.(); } catch {}
+      try { toggleWeaponModal?.(); } catch {}
     }, { passive:false });
 
     // Swap first-person gun model when weapon changes
