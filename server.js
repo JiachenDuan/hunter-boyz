@@ -209,7 +209,7 @@ const MAPS = {
 };
 
 const BUILD = String(Date.now());
-const WIN_SCORE = 10;
+const WIN_SCORE = 8;
 const ROUND_MS = 120_000;
 const AFK_MS = 90_000;
 
@@ -533,7 +533,7 @@ function doDamage({ shooter, target, amount }) {
       broadcast({ t: 'kill', killer: null, killerName: '—', victim: target.id, victimName: target.name });
     }
 
-    // First-to-10 wins the round
+    // First-to-8 wins the round (faster, more chaotic rounds)
     if (!GAME.roundOverAt && shooter && shooter.score >= WIN_SCORE) {
       GAME.roundOverAt = t;
       broadcast({ t: 'winner', winnerId: shooter.id, winnerName: shooter.name });
