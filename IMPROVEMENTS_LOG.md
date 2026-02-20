@@ -13,3 +13,4 @@
 - 2026-02-20 12:20 PST — Ammo HUD pulse no longer nudges layout (ammo text now inline-block w/ centered transform origin)
 - 2026-02-20 12:30 PST — Weapon picker button now shows active glow when modal is open (clearer state)
 - 2026-02-20 12:40 PST — Copy Link now falls back to a prompt if clipboard write fails (better iOS reliability)
+- 2026-02-20 12:50 PST — Enable sound button now visually switches to "Sound: ON" after tapping (clear feedback)

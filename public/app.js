@@ -3940,6 +3940,12 @@ function spawnDent(pos, normal, size, kind) {
       try { SFX.enable(); } catch {}
       try { SFX.hit(); } catch {}
       log('Sound enabled.');
+      try {
+        soundBtn.textContent = 'Sound: ON';
+        soundBtn.style.background = 'rgba(80,255,140,0.14)';
+        soundBtn.style.borderColor = 'rgba(80,255,140,0.45)';
+        soundBtn.style.color = '#d6ffe6';
+      } catch {}
     }
     soundBtn.addEventListener('click', doEnableSound);
     soundBtn.addEventListener('pointerdown', doEnableSound, { passive: false });
