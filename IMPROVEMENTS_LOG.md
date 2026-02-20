@@ -6,3 +6,4 @@
 - 2026-02-20 11:10 PST — Connection dot now pulses while reconnecting (more noticeable RECONNECT state)
 - 2026-02-20 11:20 PST — Round timer now highlights green in LOBBY state (clearer when round not started)
 - 2026-02-20 11:30 PST — Connection status now shows reconnect attempt count (RECONNECT 1/2/3…)
+- 2026-02-20 11:40 PST — Weapon picker modal now animates in (fade/slide) for nicer UX
