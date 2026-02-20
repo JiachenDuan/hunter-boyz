@@ -1927,7 +1927,8 @@
         { x: -2.0, y: 0, z: -18.0, w: 2.4, h: 1.15, d: 2.4 },
         { x: 2.0, y: 0, z: -18.0, w: 2.4, h: 1.15, d: 2.4 },
         { x: -8.0, y: 0, z: -11.0, w: 2.2, h: 1.15, d: 2.2 },
-        { x: 2.0, y: 0, z: -7.5, w: 2.2, h: 1.15, d: 2.2 },
+        // Nudge away from the facade wall at z=-6 to avoid overlapping collision/visual clutter.
+        { x: 2.0, y: 0, z: -9.0, w: 2.2, h: 1.15, d: 2.2 },
 
         // Courtyard-right "sniper tower" (climb via jump-steps)
         { x: 17.6, y: 0, z: -17.0, w: 2.6, h: 0.95, d: 2.6 },
