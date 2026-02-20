@@ -3738,6 +3738,12 @@ function spawnDent(pos, normal, size, kind) {
       weaponChipEl.textContent = `🔫 ${weaponLabel(weaponEl.value)}`;
     }
 
+    // Quick weapon access: tap the chip (when visible) to open the weapon picker.
+    weaponChipEl?.addEventListener('pointerdown', (e) => {
+      try { e.preventDefault(); e.stopPropagation(); } catch {}
+      try { openWeaponModal?.(); } catch {}
+    }, { passive:false });
+
     // Swap first-person gun model when weapon changes
     weaponEl?.addEventListener('change', () => {
       try { ensureFirstPersonRig()?.setGun?.(weaponEl.value); } catch {}

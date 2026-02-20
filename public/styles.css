@@ -161,6 +161,13 @@
       max-width: 34vw;
       overflow: hidden;
       text-overflow: ellipsis;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .weaponChip:active {
+      transform: scale(0.97);
+      filter: saturate(1.1) brightness(1.15);
     }
     /* Show current weapon when HUD is compact (settings hidden) */
     #hud.hudCompact .weaponChip { display:inline-flex; }
