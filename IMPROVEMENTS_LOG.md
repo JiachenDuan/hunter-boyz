@@ -10,3 +10,4 @@
 - 2026-02-20 11:50 PST — Weapon picker button/chip now toggles the modal (tap again to close)
 - 2026-02-20 12:00 PST — Ammo HUD now pulses/turns red when low (<=3) and highlights yellow while reloading
 - 2026-02-20 12:10 PST — Weapon picker modal can now be closed with ESC (desktop QoL)
+- 2026-02-20 12:20 PST — Ammo HUD pulse no longer nudges layout (ammo text now inline-block w/ centered transform origin)

@@ -333,7 +333,7 @@
     }
     #hpFill { height:100%; width:100%; background: rgba(80,255,140,0.85); }
     #hpText { font-weight:900; font-size:12px; opacity:.9; }
-    #ammoText { font-weight:900; font-size:12px; opacity:.85; }
+    #ammoText { font-weight:900; font-size:12px; opacity:.85; display:inline-block; transform-origin: 50% 50%; }
     @keyframes ammoPulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.06); }
