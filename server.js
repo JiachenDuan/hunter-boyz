@@ -161,8 +161,8 @@ const MAPS = {
       // Mansion facade + door choke
       { x: -9.5, y: 0, z: -6, w: 11, h: 4.6, d: 2 },
       { x: 9.5, y: 0, z: -6, w: 11, h: 4.6, d: 2 },
-      { x: -2.1, y: 0, z: -6, w: 1.2, h: 4.6, d: 2.2 },
-      { x: 2.1, y: 0, z: -6, w: 1.2, h: 4.6, d: 2.2 },
+      { x: -1.7, y: 0, z: -6, w: 1.2, h: 4.6, d: 2.2 },
+      { x: 1.7, y: 0, z: -6, w: 1.2, h: 4.6, d: 2.2 },
 
       // Interior: just the back wall (super readable)
       { x: 0, y: 0, z: 10.5, w: 22, h: 4.6, d: 2 },
