@@ -4,3 +4,4 @@
 - 2026-02-20 10:50 PST — Compact HUD now shows connection status text (ONLINE/RECONNECT/OFFLINE) next to the dot
 - 2026-02-20 11:01 PST — Tapping the compact HUD weapon chip now opens the weapon picker modal
 - 2026-02-20 11:10 PST — Connection dot now pulses while reconnecting (more noticeable RECONNECT state)
+- 2026-02-20 11:20 PST — Round timer now highlights green in LOBBY state (clearer when round not started)

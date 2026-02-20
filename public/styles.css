@@ -391,6 +391,12 @@
       min-width:86px;
       text-align:center;
     }
+    /* Make lobby state visually distinct so it's obvious the round hasn't started */
+    #roundTimer.isLobby {
+      background: rgba(80,255,140,0.10);
+      border-color: rgba(80,255,140,0.35);
+      color: rgba(210,255,230,0.95);
+    }
     #hitmarker {
       position:fixed;
       top:50%;

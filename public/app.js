@@ -68,11 +68,13 @@
       if (!el) return;
       const now = Date.now();
       const left = Math.max(0, (roundEndsAtMs || 0) - now);
-      const str = roundEndsAtMs ? fmtMs(left) : 'LOBBY';
+      const inLobby = !roundEndsAtMs;
+      const str = inLobby ? 'LOBBY' : fmtMs(left);
       if (str !== lastTimerStr) {
         lastTimerStr = str;
         el.textContent = str;
       }
+      try { el.classList.toggle('isLobby', inLobby); } catch {}
       requestAnimationFrame(updateRoundTimer);
     }
     requestAnimationFrame(updateRoundTimer);
