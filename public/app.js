@@ -498,10 +498,14 @@
           }
         } catch {}
 
-        // show spawn protection by tinting HP bar
+        // show spawn protection by tinting HP bar + small HUD hint
         const inv = (meP.invulnInMs || 0);
         if (inv > 0) {
           fill.style.filter = 'saturate(0.5) brightness(1.2)';
+          try {
+            const secs = Math.ceil(inv / 1000);
+            document.getElementById('hpText').textContent = `HP ${hp}  🛡️ ${secs}s`;
+          } catch {}
         } else {
           fill.style.filter = 'none';
         }
