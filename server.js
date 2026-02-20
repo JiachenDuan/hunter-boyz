@@ -143,45 +143,34 @@ const MAPS = {
       { x: -2, y: 1.8, z: -22.5 },
       { x: 2, y: 1.8, z: -22.5 },
     ],
-    // Mansion v2 (lite): same assault concept, ~50% fewer obstacles for readability.
+    // Mansion v2 (ultra-lite): ~50% fewer obstacles again + a few jump-up props.
+    // Goal: cleaner readability, less clutter, but still has: perimeter → courtyard → door choke → interior.
+    // Jump props are low boxes (h~1.15) you can mantle/jump onto.
     obstacles: [
-      // Perimeter + gate gap (north)
+      // Perimeter + main gate gap (north)
       { x: -14.5, y: 0, z: -23, w: 19, h: 4.6, d: 2 },
       { x: 14.5, y: 0, z: -23, w: 19, h: 4.6, d: 2 },
       { x: -23, y: 0, z: 0, w: 2, h: 4.6, d: 46 },
       { x: 23, y: 0, z: 0, w: 2, h: 4.6, d: 46 },
       { x: 0, y: 0, z: 23, w: 46, h: 4.6, d: 2 },
-      { x: -4.5, y: 0, z: -23, w: 1.5, h: 4.6, d: 2.2 },
-      { x: 4.5, y: 0, z: -23, w: 1.5, h: 4.6, d: 2.2 },
 
-      // Death Courtyard (keep it mostly open)
-      { x: 0, y: 0, z: -14, w: 3.6, h: 2.0, d: 3.6 },
+      // Drained pool (very simple: two low rims)
+      { x: -11, y: 0, z: -14, w: 1.0, h: 1.15, d: 9.0 },
+      { x: -5, y: 0, z: -14, w: 1.0, h: 1.15, d: 9.0 },
 
-      // Drained pool (simplified rim)
-      { x: -11, y: 0, z: -14, w: 1.0, h: 1.2, d: 9.0 },
-      { x: -5, y: 0, z: -14, w: 1.0, h: 1.2, d: 9.0 },
-      { x: -8, y: 0, z: -18.5, w: 7.0, h: 1.2, d: 1.0 },
-      { x: -8, y: 0, z: -9.5, w: 7.0, h: 1.2, d: 1.0 },
-
-      // Mansion facade + door choke (remove window mullions)
+      // Mansion facade + door choke
       { x: -9.5, y: 0, z: -6, w: 11, h: 4.6, d: 2 },
       { x: 9.5, y: 0, z: -6, w: 11, h: 4.6, d: 2 },
       { x: -1.8, y: 0, z: -6, w: 1.2, h: 4.6, d: 2.2 },
       { x: 1.8, y: 0, z: -6, w: 1.2, h: 4.6, d: 2.2 },
 
-      // Interior shell + central spine
+      // Interior: just the back wall (super readable)
       { x: 0, y: 0, z: 10.5, w: 22, h: 4.6, d: 2 },
-      { x: -11, y: 0, z: 2.0, w: 2, h: 4.6, d: 17 },
-      { x: 11, y: 0, z: 2.0, w: 2, h: 4.6, d: 17 },
-      { x: 0, y: 0, z: 1.0, w: 2.2, h: 4.6, d: 13 },
 
-      // Security room hint (2 walls only)
-      { x: 7.5, y: 0, z: 2.8, w: 7.0, h: 4.6, d: 2.0 },
-      { x: 7.5, y: 0, z: 7.6, w: 7.0, h: 4.6, d: 2.0 },
-
-      // Sewer flank (simplified: straight tunnel only)
-      { x: -19.0, y: 0, z: -9.0, w: 1.2, h: 4.6, d: 26.0 },
-      { x: -15.6, y: 0, z: -9.0, w: 1.2, h: 4.6, d: 26.0 },
+      // Jump-up props (low cover + movement options)
+      { x: -2.0, y: 0, z: -18.0, w: 2.4, h: 1.15, d: 2.4 },
+      { x: -8.0, y: 0, z: -11.0, w: 2.2, h: 1.15, d: 2.2 },
+      { x: 2.0, y: 0, z: -7.5, w: 2.2, h: 1.15, d: 2.2 },
     ],
     pickupPads: [
       { id: 'pad_mg_1', type: 'minigun', x: -9, y: 1.8, z: 12 },

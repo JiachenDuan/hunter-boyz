@@ -18,22 +18,17 @@
         { x: 10, y: 0, z: -6, w: 6, h: 3, d: 3 },
       ],
       mansion: [
-        // Mansion v2 (lite): keep visuals aligned with server.js
+        // Mansion v2 (ultra-lite): keep visuals aligned with server.js
         // Perimeter + gate
         { x: -14.5, y: 0, z: -23, w: 19, h: 4.6, d: 2 },
         { x: 14.5, y: 0, z: -23, w: 19, h: 4.6, d: 2 },
         { x: -23, y: 0, z: 0, w: 2, h: 4.6, d: 46 },
         { x: 23, y: 0, z: 0, w: 2, h: 4.6, d: 46 },
         { x: 0, y: 0, z: 23, w: 46, h: 4.6, d: 2 },
-        { x: -4.5, y: 0, z: -23, w: 1.5, h: 4.6, d: 2.2 },
-        { x: 4.5, y: 0, z: -23, w: 1.5, h: 4.6, d: 2.2 },
 
-        // Courtyard + pool
-        { x: 0, y: 0, z: -14, w: 3.6, h: 2.0, d: 3.6 },
-        { x: -11, y: 0, z: -14, w: 1.0, h: 1.2, d: 9.0 },
-        { x: -5, y: 0, z: -14, w: 1.0, h: 1.2, d: 9.0 },
-        { x: -8, y: 0, z: -18.5, w: 7.0, h: 1.2, d: 1.0 },
-        { x: -8, y: 0, z: -9.5, w: 7.0, h: 1.2, d: 1.0 },
+        // Pool (two low rims)
+        { x: -11, y: 0, z: -14, w: 1.0, h: 1.15, d: 9.0 },
+        { x: -5, y: 0, z: -14, w: 1.0, h: 1.15, d: 9.0 },
 
         // Facade + door choke
         { x: -9.5, y: 0, z: -6, w: 11, h: 4.6, d: 2 },
@@ -41,19 +36,13 @@
         { x: -1.8, y: 0, z: -6, w: 1.2, h: 4.6, d: 2.2 },
         { x: 1.8, y: 0, z: -6, w: 1.2, h: 4.6, d: 2.2 },
 
-        // Interior shell + spine
+        // Interior back wall
         { x: 0, y: 0, z: 10.5, w: 22, h: 4.6, d: 2 },
-        { x: -11, y: 0, z: 2.0, w: 2, h: 4.6, d: 17 },
-        { x: 11, y: 0, z: 2.0, w: 2, h: 4.6, d: 17 },
-        { x: 0, y: 0, z: 1.0, w: 2.2, h: 4.6, d: 13 },
 
-        // Security hint
-        { x: 7.5, y: 0, z: 2.8, w: 7.0, h: 4.6, d: 2.0 },
-        { x: 7.5, y: 0, z: 7.6, w: 7.0, h: 4.6, d: 2.0 },
-
-        // Sewer flank (straight)
-        { x: -19.0, y: 0, z: -9.0, w: 1.2, h: 4.6, d: 26.0 },
-        { x: -15.6, y: 0, z: -9.0, w: 1.2, h: 4.6, d: 26.0 },
+        // Jump props
+        { x: -2.0, y: 0, z: -18.0, w: 2.4, h: 1.15, d: 2.4 },
+        { x: -8.0, y: 0, z: -11.0, w: 2.2, h: 1.15, d: 2.2 },
+        { x: 2.0, y: 0, z: -7.5, w: 2.2, h: 1.15, d: 2.2 },
       ],
     };
     const mapBlocks = [];
