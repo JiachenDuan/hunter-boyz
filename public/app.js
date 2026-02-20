@@ -290,6 +290,21 @@
               }
             } catch {}
           }
+          if (msg.t === 'toast' && msg.kind === 'clutch') {
+            try {
+              const el = document.getElementById('streakToast');
+              if (el) {
+                el.textContent = `🍀 1HP CLUTCH!`;
+                el.classList.add('show');
+                clearTimeout(window.__kb_clutchT);
+                window.__kb_clutchT = setTimeout(() => { try { el.classList.remove('show'); } catch {} }, 950);
+              }
+              // If it's you, add an extra warning beep for drama.
+              if (String(msg.id) === String(myId)) {
+                try { SFX.lowhp?.(); } catch {}
+              }
+            } catch {}
+          }
           if (msg.t === 'slash') onSlashMsg(msg);
           if (msg.t === 'pickup') {
             showKill(`${msg.id} picked up ${msg.what}`);

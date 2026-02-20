@@ -473,6 +473,19 @@ function doDamage({ shooter, target, amount }) {
   const t = nowMs();
   if (!target || target.hp <= 0) return { hitId: null, hitHp: null, killed: false };
   if (t < (target.invulnUntil || 0)) return { hitId: null, hitHp: null, killed: false };
+
+  // 1HP clutch: if you're above 0 and this hit would kill you, there's a small chance to survive at 1 HP.
+  // Adds party-game chaos moments without changing average TTK too much.
+  try {
+    if (target.hp > 1 && (target.hp - amount) <= 0) {
+      if (Math.random() < 0.12) {
+        target.hp = 1;
+        broadcast({ t:'toast', kind:'clutch', id: target.id });
+        return { hitId: target.id, hitHp: target.hp, killed: false };
+      }
+    }
+  } catch {}
+
   target.hp -= amount;
   if (target.hp <= 0) {
     target.hp = 0;
