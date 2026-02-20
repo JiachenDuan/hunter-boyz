@@ -162,6 +162,8 @@ const MAPS = {
 
       // Courtyard micro-cover: breaks the longest gate→door sightline (helps attackers cross).
       { x: 0.0, y: 0, z: -12.0, w: 3.0, h: 1.15, d: 1.0 },
+      // Extra offset cover on courtyard-left: gives a second crossing option without adding clutter.
+      { x: -6.0, y: 0, z: -12.0, w: 2.4, h: 1.15, d: 1.0 },
 
       // Mansion facade + door choke
       { x: -9.5, y: 0, z: -6, w: 11, h: 4.6, d: 2 },
