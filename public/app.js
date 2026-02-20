@@ -2006,6 +2006,14 @@
         scopeLines.isVisible = scoped;
         ret.isVisible = !scoped;
 
+        // HUD hint: when compact HUD is active, show scoped state on the weapon chip.
+        try {
+          if (weaponSel === 'sniper') {
+            const chip = document.getElementById('weaponChip');
+            if (chip) chip.textContent = `🔫 Sniper${scoped ? ' 🎯' : ''}`;
+          }
+        } catch {}
+
         // Rocket launcher: bigger reticle (big splash)
         if (!scoped) {
           if (weaponSel === 'rocket') {

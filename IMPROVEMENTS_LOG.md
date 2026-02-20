@@ -1,2 +1,3 @@
 - 2026-02-20 10:21 PST — Debounced Reload button on iOS (avoid double reload on tap)
 - 2026-02-20 10:31 PST — Show current weapon chip (🔫) in compact HUD when Settings are closed
+- 2026-02-20 10:40 PST — Weapon chip now shows sniper scoped state (🎯) when you toggle scope
