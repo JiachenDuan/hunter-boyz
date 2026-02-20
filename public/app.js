@@ -2555,6 +2555,7 @@
         kill: () => tick(320, 120, 0.02),
         reload: () => tick(520, 90, 0.015),
         lowhp: () => tick(210, 140, 0.018),
+        dry: () => tick(980, 45, 0.012),
         whoosh: () => (function(){
           play((c)=>{
             const t0=c.currentTime+0.001;
@@ -4292,6 +4293,22 @@ function spawnDent(pos, normal, size, kind) {
           ) ? wSel : 'rifle';
 
           const autoReload = !!document.getElementById('autoReload')?.checked;
+
+          // Arcade feedback: dry-fire click when you're out of ammo (prevents silent confusion)
+          try {
+            if (state.shoot) {
+              const me = (lastServerState?.players || []).find(p => String(p.id) === String(myId));
+              const ammo = (typeof me?.ammo === 'number') ? me.ammo : null;
+              const rel = (me?.reloadInMs || 0);
+              if (ammo === 0 && rel <= 0) {
+                const now = performance.now();
+                if (!window.__kb_dryAt || (now - window.__kb_dryAt) > 260) {
+                  window.__kb_dryAt = now;
+                  SFX.dry?.();
+                }
+              }
+            }
+          } catch {}
 
           socket.send(JSON.stringify({
             t:'input',

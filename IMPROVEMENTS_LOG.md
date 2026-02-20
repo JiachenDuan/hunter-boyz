@@ -27,3 +27,4 @@
 - 2026-02-20 15:20 PST — Added green kill-confirm vignette flash on your kills (extra arcade juice)
 - 2026-02-20 15:30 PST — Added rare 1HP CLUTCH survive chance (12- 2026-02-20 15:30 PST — Added rare 1HP CLUTCH survive chance (12%) on otherwise-lethal hits + toast
 - 2026-02-20 15:40 PST — Faster match loop: post-win reset delay reduced from 5s to 3s
+- 2026-02-20 15:51 PST — Added dry-fire click SFX when shooting with 0 ammo (no more silent confusion)
