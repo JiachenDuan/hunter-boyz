@@ -3,3 +3,4 @@
 - 2026-02-20 10:40 PST — Weapon chip now shows sniper scoped state (🎯) when you toggle scope
 - 2026-02-20 10:50 PST — Compact HUD now shows connection status text (ONLINE/RECONNECT/OFFLINE) next to the dot
 - 2026-02-20 11:01 PST — Tapping the compact HUD weapon chip now opens the weapon picker modal
+- 2026-02-20 11:10 PST — Connection dot now pulses while reconnecting (more noticeable RECONNECT state)

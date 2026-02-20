@@ -80,6 +80,13 @@
       const el = document.getElementById('connDot');
       if (!el) return;
       const txt = document.getElementById('connText');
+      const wrap = el.parentElement;
+
+      try {
+        if (wrap) {
+          wrap.classList.toggle('isConnecting', state === 'connecting');
+        }
+      } catch {}
 
       if (state === 'online') {
         el.style.background = 'rgba(80,255,140,0.95)';
