@@ -164,14 +164,29 @@
     }
     /* Show current weapon when HUD is compact (settings hidden) */
     #hud.hudCompact .weaponChip { display:inline-flex; }
+    .connWrap {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      margin-left: 2px;
+    }
     #connDot {
-      margin-left:8px;
       width:10px;
       height:10px;
       border-radius:999px;
       background: rgba(255,80,80,0.95);
       box-shadow: 0 0 0 2px rgba(0,0,0,0.25);
+      flex: 0 0 auto;
     }
+    .connText {
+      display:none;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      opacity: 0.75;
+    }
+    /* Show connection text only when HUD is compact */
+    #hud.hudCompact .connText { display:block; }
     #settingsBtn {
       margin-left:auto;
       border-radius:10px;

@@ -79,9 +79,22 @@
     function setConnState(state /* 'online'|'offline'|'connecting' */) {
       const el = document.getElementById('connDot');
       if (!el) return;
-      if (state === 'online') el.style.background = 'rgba(80,255,140,0.95)';
-      else if (state === 'connecting') el.style.background = 'rgba(255,220,100,0.95)';
-      else el.style.background = 'rgba(255,80,80,0.95)';
+      const txt = document.getElementById('connText');
+
+      if (state === 'online') {
+        el.style.background = 'rgba(80,255,140,0.95)';
+        if (txt) txt.textContent = 'ONLINE';
+      }
+      else if (state === 'connecting') {
+        el.style.background = 'rgba(255,220,100,0.95)';
+        if (txt) txt.textContent = 'RECONNECT';
+      }
+      else {
+        el.style.background = 'rgba(255,80,80,0.95)';
+        if (txt) txt.textContent = 'OFFLINE';
+      }
+
+      try { el.title = (txt?.textContent || state); } catch {}
     }
 
     function connectAndJoin() {
