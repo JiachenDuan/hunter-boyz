@@ -160,6 +160,9 @@ const MAPS = {
       { x: -11, y: 0, z: -14, w: 1.0, h: 1.15, d: 9.0 },
       { x: -5, y: 0, z: -14, w: 1.0, h: 1.15, d: 9.0 },
 
+      // Courtyard micro-cover: breaks the longest gate→door sightline (helps attackers cross).
+      { x: 0.0, y: 0, z: -12.0, w: 3.0, h: 1.15, d: 1.0 },
+
       // Mansion facade + door choke
       { x: -9.5, y: 0, z: -6, w: 11, h: 4.6, d: 2 },
       { x: 9.5, y: 0, z: -6, w: 11, h: 4.6, d: 2 },
