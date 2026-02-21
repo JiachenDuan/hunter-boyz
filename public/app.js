@@ -3037,10 +3037,31 @@ function showKill(text) {
     function flashKillVignette() {
       try {
         const v = document.getElementById('killVignette');
-        if (!v) return;
-        v.style.opacity = '1';
-        clearTimeout(flashKillVignette._t);
-        flashKillVignette._t = setTimeout(() => { try { v.style.opacity = '0'; } catch {} }, 140);
+        if (v) {
+          v.style.opacity = '1';
+          clearTimeout(flashKillVignette._t);
+          flashKillVignette._t = setTimeout(() => { try { v.style.opacity = '0'; } catch {} }, 140);
+        }
+      } catch {}
+
+      // Extra arcade feedback: center "KILL!" flash
+      try {
+        const t = document.getElementById('hitToast');
+        if (t) {
+          const prev = t.textContent;
+          const prevColor = t.style.color;
+          t.textContent = 'KILL!';
+          t.style.color = 'rgba(80,255,140,0.98)';
+          t.style.opacity = '1';
+          clearTimeout(flashKillVignette._t2);
+          flashKillVignette._t2 = setTimeout(() => {
+            try {
+              t.textContent = prev;
+              t.style.color = prevColor;
+              t.style.opacity = '0';
+            } catch {}
+          }, 220);
+        }
       } catch {}
     }
 
