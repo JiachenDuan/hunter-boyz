@@ -339,6 +339,19 @@
               }
             } catch {}
           }
+          if (msg.t === 'toast' && msg.kind === 'ammoboost') {
+            try {
+              if (String(msg.id) !== String(myId)) return;
+              const el = document.getElementById('streakToast');
+              if (el) {
+                el.textContent = `🔋 AMMO +${msg.amt || 1}`;
+                el.classList.add('show');
+                clearTimeout(window.__kb_ammoBoostT);
+                window.__kb_ammoBoostT = setTimeout(() => { try { el.classList.remove('show'); } catch {} }, 650);
+              }
+              try { SFX.reload?.(); } catch {}
+            } catch {}
+          }
           if (msg.t === 'slash') onSlashMsg(msg);
           if (msg.t === 'pickup') {
             showKill(`${msg.id} picked up ${msg.what}`);

@@ -558,6 +558,16 @@ function doDamage({ shooter, target, amount }) {
         }
       } catch {}
 
+      // Aggro flow: small ammo refund on kill (keeps fights moving; less downtime).
+      try {
+        if (typeof shooter.ammo === 'number') {
+          const before = shooter.ammo;
+          shooter.ammo = Math.min(12, shooter.ammo + 2);
+          const gained = shooter.ammo - before;
+          if (gained > 0) broadcast({ t: 'toast', kind: 'ammoboost', id: shooter.id, amt: gained });
+        }
+      } catch {}
+
       // First blood bonus: first kill of the round is worth +1.
       try {
         if (GAME.started && !GAME.roundOverAt && !GAME.firstBlood) {
