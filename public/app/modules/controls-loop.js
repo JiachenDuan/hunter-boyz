@@ -280,6 +280,27 @@
       el.addEventListener('pointerdown', act, { passive:false });
     })();
 
+    // Tower teleport buttons
+    (() => {
+      function bind(id, msgId) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+        let last = 0;
+        const act = (e) => {
+          prevent(e);
+          const now = Date.now();
+          if (now - last < 350) return;
+          if (!socket || socket.readyState !== 1) { showKill('Server disconnected!'); return; }
+          last = now;
+          try { socket.send(JSON.stringify({ t:'teleport', id: msgId })); } catch {}
+        };
+        el.addEventListener('pointerdown', act, { passive:false });
+      }
+      bind('btnTowerUp', 'tower_up');
+      bind('btnTowerDown', 'tower_down');
+    })();
+
     // DROP MINIGUN button
     (() => {
       const el = document.getElementById('btnDropMinigun');

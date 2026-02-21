@@ -183,6 +183,10 @@ const MAPS = {
       // Interior: just the back wall (super readable)
       { x: 0, y: 0, z: 10.5, w: 22, h: 4.6, d: 2 },
 
+      // Sniper tower (very tall): teleport up/down to create a power position
+      { x: -18.0, y: 0, z: 18.0, w: 3.2, h: 22.0, d: 3.2 },   // tower column
+      { x: -18.0, y: 22.0, z: 18.0, w: 8.0, h: 1.2, d: 8.0 }, // top platform
+
       // Jump-up props (low cover + movement options)
       { x: -2.0, y: 0, z: -18.0, w: 2.4, h: 1.15, d: 2.4 },
       { x: 2.0, y: 0, z: -18.0, w: 2.4, h: 1.15, d: 2.4 },
@@ -327,6 +331,7 @@ function serializeState() {
       lastWinAt: GAME.lastWinAt,
     },
     pickups: serializePickups(),
+    teleports: serializeTeleports(),
     players: Array.from(players.values()).map(p => ({
       id: p.id,
       name: p.name,
@@ -642,6 +647,16 @@ function serializePickups() {
   return items;
 }
 
+function serializeTeleports() {
+  // Teleport pads are map-specific and purely positional.
+  // NOTE: y here is the player target y (eye height-ish), not a block base.
+  if (GAME.mapId !== 'mansion') return [];
+  return [
+    { id: 'tower_up', label: 'Tower ↑', x: -18.0, y: 1.8, z: 16.0, kind: 'up' },
+    { id: 'tower_down', label: 'Tower ↓', x: -18.0, y: 24.0, z: 18.0, kind: 'down' },
+  ];
+}
+
 function spawnGrenade({ kind, ownerId, x, y, z, yaw, pitch, now }) {
   const gDef = getWeapon(kind);
   const id = String(nextGrenadeId++);
@@ -867,6 +882,45 @@ wss.on('connection', (ws) => {
       }
       // Spawn a drop pickup at player's location so others can grab it
       minigunDrop = { x: p.x, y: p.y, z: p.z, expiresAt: t + 15_000 };
+      broadcast({ t: 'state', state: serializeState() });
+      return;
+    }
+
+    if (msg.t === 'teleport') {
+      if (!GAME.started) return;
+      if (p.hp <= 0) return;
+      // Mansion-only tower teleports
+      if (GAME.mapId !== 'mansion') return;
+      const t = nowMs();
+      const which = String(msg.id || '');
+      const pads = serializeTeleports();
+      const pad = pads.find(pp => pp.id === which);
+      if (!pad) return;
+
+      // Must be near the pad's source location.
+      // For down teleport, we allow it when player is on the tower platform height.
+      const d = Math.hypot((p.x - pad.x), (p.z - pad.z));
+      const onTower = (p.y || 0) > 16;
+      if (pad.kind === 'down') {
+        if (!(d <= 3.0 || onTower)) return;
+      } else {
+        if (d > 3.0) return;
+      }
+
+      // Cooldown to prevent spam
+      if (!p._tpOkAt) p._tpOkAt = 0;
+      if (t < p._tpOkAt) return;
+      p._tpOkAt = t + 1200;
+
+      if (which === 'tower_up') {
+        p.x = -18.0; p.y = 24.0; p.z = 18.0;
+      }
+      if (which === 'tower_down') {
+        p.x = -18.0; p.y = 1.8; p.z = 16.0;
+      }
+      // Reset some motion so teleport feels crisp
+      try { p.vx = 0; p.vy = 0; p.vz = 0; } catch {}
+
       broadcast({ t: 'state', state: serializeState() });
       return;
     }

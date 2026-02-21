@@ -408,6 +408,26 @@
           }
         } catch {}
 
+        // Tower teleports (mansion)
+        try {
+          const up = document.getElementById('btnTowerUp');
+          const dn = document.getElementById('btnTowerDown');
+          if (up) up.style.display = 'none';
+          if (dn) dn.style.display = 'none';
+          const tps = (s.teleports || []);
+          if (meP && state.started && String(s.game?.mapId||'') === 'mansion' && tps.length) {
+            const near = (id) => {
+              const it = tps.find(x => x.id === id);
+              if (!it) return false;
+              const d = Math.hypot(meP.x - it.x, meP.z - it.z);
+              return d <= 3.0;
+            };
+            if (up && near('tower_up')) up.style.display = 'block';
+            // Down: show when at top or near the down pad
+            if (dn && (((meP.y||0) > 16) || near('tower_down'))) dn.style.display = 'block';
+          }
+        } catch {}
+
         // Scope UI (sniper)
         updateScopeUI();
 

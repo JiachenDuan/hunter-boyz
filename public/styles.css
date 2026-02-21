@@ -495,7 +495,7 @@
       opacity:0.92;
       z-index:20;
     }
-    #btnPickup, #btnDropMinigun {
+    #btnPickup, #btnDropMinigun, #btnTowerUp, #btnTowerDown {
       position:absolute;
       bottom: calc(var(--bottom) + var(--btn) + 12px);
       left: calc(var(--pad) + var(--btn) + 10px);
@@ -517,6 +517,14 @@
       border:1px solid rgba(255,80,80,0.4);
       background: rgba(255,60,60,0.18);
       color:#ffb3b3;
+    }
+    #btnTowerUp, #btnTowerDown {
+      border:1px solid rgba(120,200,255,0.30);
+      background: rgba(120,200,255,0.14);
+      color:#d8f1ff;
+    }
+    #btnTowerDown {
+      left: calc(var(--pad) + var(--btn) + 140px);
     }
     #mgHud {
       position:fixed;

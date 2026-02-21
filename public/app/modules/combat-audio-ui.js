@@ -37,6 +37,10 @@
         // Interior back wall
         { x: 0, y: 0, z: 10.5, w: 22, h: 4.6, d: 2 },
 
+        // Sniper tower (visuals must match server.js)
+        { x: -18.0, y: 0, z: 18.0, w: 3.2, h: 22.0, d: 3.2 },
+        { x: -18.0, y: 22.0, z: 18.0, w: 8.0, h: 1.2, d: 8.0 },
+
         // Jump props
         { x: -2.0, y: 0, z: -18.0, w: 2.4, h: 1.15, d: 2.4 },
         { x: 2.0, y: 0, z: -18.0, w: 2.4, h: 1.15, d: 2.4 },
