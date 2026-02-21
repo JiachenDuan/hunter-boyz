@@ -53,3 +53,4 @@
 - 2026-02-20 20:01 PST — CS-ish stop feel: increased ground friction when no movement input (snappier counter-strafe decel)
 - 2026-02-20 20:11 PST — Movement tuning: capped mid-air strafe speed (keeps air control CS-like, prevents runaway bhop)
 - 2026-02-20 20:24 PST — Gunplay: added small rifle vertical recoil (server pitch kick per shot)
+- 2026-02-20 20:32 PST — CS-ish sniper: moving while scoped adds slight sway/inaccuracy (less laser while running)

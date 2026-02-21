@@ -437,11 +437,11 @@ function rayHit(shooter, maxDist = 30, yawOverride = null) {
   return { target: best.target, endX: shooter.x + dirX * best.proj, endZ: shooter.z + dirZ * best.proj };
 }
 
-function rayHit3D(shooter, maxDist = 80) {
+function rayHit3D(shooter, maxDist = 80, yawOverride = null, pitchOverride = null) {
   // 3D hitscan using yaw + pitch.
   // Convention: in our client, pitch increases when dragging finger downward (look down).
-  const yaw = shooter.yaw;
-  const pitch = shooter.pitch || 0;
+  const yaw = (typeof yawOverride === 'number') ? yawOverride : shooter.yaw;
+  const pitch = (typeof pitchOverride === 'number') ? pitchOverride : (shooter.pitch || 0);
   const cosP = Math.cos(pitch);
 
   const dirX = Math.sin(yaw) * cosP;
@@ -1300,7 +1300,15 @@ if (msg.t === 'input') {
 
           } else if (weapon === 'sniper') {
             // Sniper: body shot = 50% HP, headshot = instant kill.
-            const hit = rayHit3D(p, 80);
+            // CS-ish: moving while scoped is slightly less accurate.
+            const spd = Math.hypot(p.vx || 0, p.vz || 0);
+            const moveFrac = clamp((spd - 0.6) / 7.0, 0, 1);
+            const scoped = !!msg.scope;
+            const sway = scoped ? (moveFrac * 0.035) : (moveFrac * 0.015);
+            const yawShot = p.yaw + (Math.random() - 0.5) * sway;
+            const pitchShot = clamp((p.pitch || 0) + (Math.random() - 0.5) * sway * 0.7, -1.2, 1.2);
+
+            const hit = rayHit3D(p, 80, yawShot, pitchShot);
             const isHead = hit.part === 'head';
             const dmgAmt = isHead ? 999 : 50;
             const dmg = doDamage({ shooter: p, target: hit.target, amount: dmgAmt });
