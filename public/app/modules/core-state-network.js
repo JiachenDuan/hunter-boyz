@@ -386,12 +386,13 @@
               const dx = (meP.x - it.x);
               const dz = (meP.z - it.z);
               const d = Math.hypot(dx, dz);
-              if (d <= 3.5) { show = true; targetId = it.id; break; } // wider radius for reliability
+              if (d <= 6.0) { show = true; targetId = it.id; break; } // wider radius for reliability
             }
           }
           if (btnPickup) {
             if (show) {
               btnPickup.style.display = 'block';
+              btnPickup.textContent = 'PICK UP MINIGUN';
               btnPickup.dataset.pickId = targetId;
               btnPickup.dataset.pickIdTs = String(Date.now());
             } else {

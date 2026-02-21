@@ -506,7 +506,7 @@
       pointer-events:auto;
       touch-action:none;
       display:none;
-      z-index:30;
+      z-index:60; /* ensure it stays above sticks/pads */
     }
     #btnPickup {
       border:1px solid rgba(255,255,255,0.18);
