@@ -77,10 +77,39 @@ async function main(){
       }, { timeout: 8000 });
     } catch {}
 
+    // Also wait until the round timer is no longer showing LOBBY (i.e., countdown is live)
+    try {
+      await page.waitForFunction(() => {
+        const el = document.getElementById('roundTimer');
+        const t = (el && el.textContent || '').trim();
+        return t && t !== 'LOBBY';
+      }, { timeout: 8000 });
+    } catch {}
+
     // Belt + suspenders: hide lobby overlay if it’s still visible for any reason
     await page.evaluate(() => {
       const l = document.getElementById('lobby');
       if (l) l.style.display = 'none';
+      // Make it obvious this is an in-match capture
+      const badge = document.getElementById('__captureBadge') || (() => {
+        const d = document.createElement('div');
+        d.id = '__captureBadge';
+        d.textContent = 'CAPTURE';
+        d.style.position = 'fixed';
+        d.style.left = '10px';
+        d.style.bottom = '10px';
+        d.style.zIndex = '99999';
+        d.style.fontWeight = '900';
+        d.style.fontSize = '12px';
+        d.style.padding = '6px 10px';
+        d.style.borderRadius = '999px';
+        d.style.background = 'rgba(0,0,0,0.55)';
+        d.style.border = '1px solid rgba(255,255,255,0.18)';
+        d.style.color = 'rgba(230,237,243,0.9)';
+        document.body.appendChild(d);
+        return d;
+      })();
+      badge.style.display = 'block';
     });
 
     // Put them in a known line-up: shooter looks +Z, bot stands in front
