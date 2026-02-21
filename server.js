@@ -1183,7 +1183,13 @@ if (msg.t === 'input') {
             broadcast({ t:'shot', weapon:'minigun', from:p.id, sx:p.x, sy:p.y, sz:p.z, yaw:p.yaw, pitch:p.pitch, ex: hit.endX, ey: p.y, ez: hit.endZ, hit: hitId, hitHp });
 
           } else if (weapon === 'rifle') {
-            const hit = rayHit(p, 30);
+            // CS-ish: movement accuracy penalty (running shots are less accurate).
+            const spd = Math.hypot(p.vx || 0, p.vz || 0);
+            const moveFrac = clamp((spd - 1.0) / 8.5, 0, 1);
+            const spread = moveFrac * 0.10; // radians
+            const yawShot = p.yaw + (Math.random() - 0.5) * spread;
+
+            const hit = rayHit(p, 30, yawShot);
             let dmgAmt = 25;
             if (hit.target) {
               const d = dist2D(p, hit.target);
