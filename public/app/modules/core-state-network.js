@@ -120,6 +120,8 @@
         try { socket?.close(); } catch {}
         setConnState('connecting');
         socket = new WebSocket(url);
+        // Expose for automation/debug tooling
+        try { window.__socket = socket; } catch {}
 
         socket.addEventListener('open', () => {
           reconnectAttempts = 0;

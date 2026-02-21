@@ -64,8 +64,15 @@ async function main(){
     const shooterId = await waitForId(page);
     const botId = await waitForId(bot);
 
-    // Start the round (localhost-only debug endpoint)
+    // Switch to Mansion + start round (so tower teleports exist)
     await page.evaluate(async () => {
+      try {
+        if (window.__socket && window.__socket.readyState === 1) {
+          window.__socket.send(JSON.stringify({ t:'setMap', mapId:'mansion' }));
+          window.__socket.send(JSON.stringify({ t:'start' }));
+          return;
+        }
+      } catch {}
       try { await fetch('/debug/start', { method: 'POST' }); } catch {}
     });
 
@@ -112,36 +119,30 @@ async function main(){
       badge.style.display = 'block';
     });
 
-    // Put them in a known line-up: shooter looks +Z, bot stands in front
-    const shooter = { id: shooterId, x: 0, y: 1.8, z: 0, yaw: 0, pitch: 0, hp: 100 };
-    const victim = { id: botId, x: 0, y: 1.8, z: 6, yaw: Math.PI, pitch: 0, hp: 100 };
-
-    await page.evaluate(async (a, b) => {
+    // Teleport shooter to tower base, press tower up, then aim down for screenshot
+    await page.evaluate(async (fromId) => {
       const post = (path, body) => fetch(path, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      try { await post('/debug/teleport', a); } catch {}
-      try { await post('/debug/teleport', b); } catch {}
-    }, shooter, victim);
+      try {
+        // Move to tower base (mansion)
+        await post('/debug/teleport', { id: fromId, x: -18.0, y: 1.8, z: 18.0, yaw: 0, pitch: 0 });
+      } catch {}
+      try {
+        if (window.__socket && window.__socket.readyState === 1) {
+          window.__socket.send(JSON.stringify({ t:'teleport', id:'tower_up' }));
+        }
+      } catch {}
+      try {
+        // After teleport, adjust aim to look down a bit
+        await post('/debug/teleport', { id: fromId, x: -18.0, y: 24.0, z: 18.0, yaw: 0, pitch: -0.75 });
+      } catch {}
+    }, shooterId);
 
-    // Fire enough debug shots to guarantee a kill and trigger HIT/KILL banners
-    for (let i = 0; i < 4; i++) {
-      await page.evaluate(async (fromId) => {
-        try {
-          await fetch('/debug/shoot', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fromId }),
-          });
-        } catch {}
-      }, shooterId);
-      await sleep(120);
-    }
-
-    // Let UI animations render
-    await sleep(300);
+    // Let state + camera settle
+    await sleep(450);
 
     const ts = Date.now();
     const file = path.join(outDir, `iphone-${ts}.png`);
