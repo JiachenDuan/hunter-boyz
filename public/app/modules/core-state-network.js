@@ -243,6 +243,18 @@
       lastServerState = s;
       // Expose for automated capture tooling
       try { window.__lastState = s; } catch {}
+
+      // If server build changes, force a reload (prevents stale cached JS causing missing buttons/meshes).
+      try {
+        if (!window.__hbClientBuild) window.__hbClientBuild = String(s.build || '');
+        const b = String(s.build || '');
+        if (b && window.__hbClientBuild && b !== window.__hbClientBuild) {
+          try { showKill('Update applied — reloading…'); } catch {}
+          window.__hbClientBuild = b;
+          setTimeout(() => { try { location.reload(); } catch {} }, 250);
+          return;
+        }
+      } catch {}
       // game flags
       state.started = !!s.game?.started;
       const _prevStarted = !!applyState._started;
