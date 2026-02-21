@@ -528,7 +528,7 @@ function doDamage({ shooter, target, amount }) {
   target.hp -= amount;
   if (target.hp <= 0) {
     target.hp = 0;
-    target.respawnAt = t + 2000;
+    target.respawnAt = t + 1500;
     target.deaths = (target.deaths || 0) + 1;
 
     // Drop power weapon on death (minigun) for 8s.
@@ -1580,7 +1580,7 @@ setInterval(() => {
         broadcast({ t: 'fartDot', to: p.id, dmg: 5 });
         if (p.hp <= 0) {
           p.hp = 0;
-          p.respawnAt = t + 2000;
+          p.respawnAt = t + 1500;
         }
       }
     }
