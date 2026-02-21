@@ -1122,6 +1122,47 @@ if (msg.t === 'input') {
               hit: hitId,
               hitHp,
             });
+
+          } else if (weapon === 'shotgun') {
+            // Shotgun: multiple pellets (simulated as multiple rays).
+            const wDef = getWeapon('shotgun');
+            const pellets = wDef.pellets || 6;
+            const spread = wDef.spread || 0.14;
+            let anyHit = null;
+            let anyHp = null;
+
+            const traces = [];
+            for (let i = 0; i < pellets; i++) {
+              const yaw = p.yaw + (Math.random() - 0.5) * spread;
+              const hit = rayHit(p, wDef.range || 22, yaw);
+              traces.push({ ex: hit.endX, ez: hit.endZ });
+              if (hit.target) {
+                const d = dist2D(p, hit.target);
+                const pelletDmg = damageFalloff(wDef.pelletDmg || 10, d, { near: 3, far: (wDef.range || 22), minMult: 0.45 });
+                const dmg = doDamage({ shooter: p, target: hit.target, amount: pelletDmg });
+                if (dmg.hitId) { anyHit = anyHit || dmg.hitId; anyHp = anyHp ?? dmg.hitHp; }
+              }
+            }
+
+            hitId = anyHit;
+            hitHp = anyHp;
+            broadcast({
+              t: 'shot',
+              weapon,
+              from: p.id,
+              sx: p.x,
+              sy: p.y,
+              sz: p.z,
+              yaw: p.yaw,
+              pitch: p.pitch,
+              ex: p.x,
+              ey: p.y,
+              ez: p.z,
+              hit: hitId,
+              hitHp,
+              traces,
+            });
+
           } else if (weapon === 'sniper') {
             // Sniper: body shot = 50% HP, headshot = instant kill.
             const hit = rayHit3D(p, 80);
