@@ -965,7 +965,10 @@ if (msg.t === 'input') {
       if (onGround) {
         const spd = Math.hypot(p.vx, p.vz);
         if (spd > 0.0001) {
-          const drop = spd * friction * dt;
+          // If you're not inputting movement, stop a bit faster (CS-ish counter-strafe feel).
+          const noInput = (Math.abs(mx) + Math.abs(mz)) < 0.08;
+          const fr = noInput ? (friction * 1.55) : friction;
+          const drop = spd * fr * dt;
           const newSpd = Math.max(0, spd - drop);
           const k = newSpd / spd;
           p.vx *= k;
