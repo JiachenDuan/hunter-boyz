@@ -698,9 +698,10 @@
       // score
       const scoreDiv = document.getElementById('score');
       scoreDiv.innerHTML = '<div style="font-weight:800; margin-bottom:6px;">Score</div>' +
-        s.players.sort((a,b)=>b.score-a.score).map(p => {
+        s.players.sort((a,b)=> (b.score-a.score) || ((a.deaths||0)-(b.deaths||0))).map((p,i) => {
           const me = p.id === myId ? ' (you)' : '';
-          return `<div><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${p.name}${me}: ${p.score} <span style="opacity:.8">D ${p.deaths||0}</span> <span style="opacity:.65">HP ${p.hp}</span></div>`;
+          const rank = `<span style="display:inline-block; width:18px; opacity:.6;">${i+1}.</span>`;
+          return `<div>${rank}<span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${p.name}${me}: ${p.score} <span style="opacity:.8">D ${p.deaths||0}</span> <span style="opacity:.65">HP ${p.hp}</span></div>`;
         }).join('');
 
       const liveIds = new Set(s.players.map(p => p.id));
