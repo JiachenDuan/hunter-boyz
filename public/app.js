@@ -205,7 +205,8 @@
                     clearTimeout(window.__kb_streakT);
                     window.__kb_streakT = setTimeout(() => { try { el.classList.remove('show'); } catch {} }, 900);
                   }
-                  try { SFX.hit(); } catch {}
+                  // escalate SFX slightly as the streak grows
+                  try { (n >= 4 ? SFX.kill : SFX.hit)(); } catch {}
                 }
               }
             } catch {}

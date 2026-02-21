@@ -39,3 +39,4 @@
 - 2026-02-20 17:20 PST — Buffed fart gun visual feedback: bigger/longer fart puffs (more chaos readability)
 - 2026-02-20 17:30 PST — Faster AFK cleanup: idle players removed after 60s (keeps matches lively)
 - 2026-02-20 17:40 PST — Rocket direct hits now award +1 bonus point with 🚀 DIRECT HIT toast
+- 2026-02-20 17:51 PST — Kill-streak SFX now escalates (4+ kills plays a heavier confirm sound)
