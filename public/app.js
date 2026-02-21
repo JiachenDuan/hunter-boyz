@@ -2682,11 +2682,14 @@ function showWinner(msg) {
       try {
         const el = document.getElementById('winnerBanner');
         if (!el) return;
-        el.textContent = `WINNER: ${msg.winnerName || msg.winnerId}`;
+        el.textContent = `🏆 WINNER: ${msg.winnerName || msg.winnerId}`;
         el.style.opacity = '1';
         clearTimeout(showWinner._t);
         showWinner._t = setTimeout(() => { try { el.style.opacity = '0'; } catch {} }, 3000);
       } catch {}
+
+      // Extra victory stinger
+      try { SFX.kill(); setTimeout(() => { try { SFX.kill(); } catch {} }, 90); } catch {}
     }
 
     function spawnFartPuff(targetId) {
