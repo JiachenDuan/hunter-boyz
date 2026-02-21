@@ -95,6 +95,23 @@ This file exists so future changes don’t regress prior fixes or violate design
 - Don’t make the user change iOS Accessibility settings.
 - WebAudio unlock must be synchronous in gesture handler (avoid async in that path).
 
+## 10) Mansion tower teleport
+
+### Design
+- Tower column at (-18, 0, 18), 3.2×22×3.2. Top platform at (-18, 22, 18), 8×1.2×8.
+- Two teleport buttons: **TOWER ↑** (base → top) and **TOWER ↓** (top → base).
+- Buttons appear when player is within 6 units of the pad (horizontal). DOWN also shows when player Y > 16.
+- Server validates same 6-unit radius before accepting the teleport.
+
+### Key values
+- `tower_up` destination: `p.y = 25.0` (platform top 23.2 + eye height 1.8)
+- `tower_down` destination: `p.y = 1.8, p.z = 16.0` (ground, slightly south of column)
+
+### Physics — standable obstacles
+- ALL obstacles (not just ground) are standable surfaces. `effectiveGroundY(x, z)` scans `world.obstacles` and returns the highest `obstacleTop + 1.8` (eye height above surface) for any obstacle under the player.
+- `onGround` and gravity floor use `effectiveGroundY`, not a hardcoded 1.8.
+- XZ collision skips an obstacle when `playerFeetY >= obstacleTop - 0.05` (player is on top of it), so the column below doesn't block lateral movement on the platform above.
+
 ## 9) Recent key commits (for archaeology)
 - `a87ee58`: spark-line dedupe (fan-of-lines root cause)
 - `55205c7`: rapid-fire tracer stacking + sniper restyle

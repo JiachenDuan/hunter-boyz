@@ -907,15 +907,15 @@ wss.on('connection', (ws) => {
       const d = Math.hypot((p.x - pad.x), (p.z - pad.z));
       const onTower = (p.y || 0) > 16;
       if (pad.kind === 'down') {
-        if (!(d <= 3.0 || onTower)) return;
+        if (!(d <= 6.0 || onTower)) return;
       } else {
-        if (d > 3.0) return;
+        if (d > 6.0) return;
       }
 
       // Always available (party/DM vibe)
 
       if (which === 'tower_up') {
-        p.x = -18.0; p.y = 24.0; p.z = 18.0;
+        p.x = -18.0; p.y = 25.0; p.z = 18.0; // platform top 23.2 + eye height 1.8
       }
       if (which === 'tower_down') {
         p.x = -18.0; p.y = 1.8; p.z = 16.0;
@@ -1022,7 +1022,7 @@ if (msg.t === 'input') {
       if (typeof p.vz !== 'number') p.vz = 0;
       if (typeof p.rifleBloom !== 'number') p.rifleBloom = 0;
 
-      const groundY = 1.8;
+      const groundY = effectiveGroundY(p.x, p.z);
       const onGround = p.y <= groundY + 1e-3;
       const friction = 10.0;
       const groundAccel = 60.0;
@@ -1079,8 +1079,29 @@ if (msg.t === 'input') {
 
       // collision (simple capsule in XZ)
       const radius = 0.7;
-      function collides(x, z) {
+      const playerEyeHeight = 1.8;
+
+      // Returns the effective ground Y (eye-height) for the player's XZ position,
+      // considering all obstacles as standable surfaces.
+      function effectiveGroundY(x, z) {
+        let floor = playerEyeHeight; // base floor: feet at y=0, eyes at 1.8
         for (const o of world.obstacles) {
+          const top = o.y + o.h; // top surface of this obstacle
+          const eyeAtTop = top + playerEyeHeight;
+          if (eyeAtTop <= playerEyeHeight + 0.01) continue; // skip ground-level boxes
+          if (x >= o.x - o.w/2 && x <= o.x + o.w/2 &&
+              z >= o.z - o.d/2 && z <= o.z + o.d/2) {
+            if (eyeAtTop > floor) floor = eyeAtTop;
+          }
+        }
+        return floor;
+      }
+
+      function collides(x, z) {
+        const playerFeetY = p.y - playerEyeHeight;
+        for (const o of world.obstacles) {
+          // Skip obstacles the player is standing on top of (no lateral block from below)
+          if (playerFeetY >= o.y + o.h - 0.05) continue;
           const minX = o.x - o.w/2 - radius;
           const maxX = o.x + o.w/2 + radius;
           const minZ = o.z - o.d/2 - radius;
