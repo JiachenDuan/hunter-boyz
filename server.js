@@ -349,7 +349,27 @@ function broadcast(obj) {
 
 function respawn(p) {
   const world = getActiveMap();
-  const sp = world.spawnPoints[Math.floor(Math.random() * world.spawnPoints.length)];
+  // Prefer spawns away from other alive players to reduce instant spawn-kills.
+  let sp = null;
+  try {
+    const sps = world.spawnPoints || [];
+    for (let tries = 0; tries < 8; tries++) {
+      const cand = sps[Math.floor(Math.random() * sps.length)];
+      if (!cand) continue;
+      let minD = Infinity;
+      for (const other of players.values()) {
+        if (other.id === p.id) continue;
+        if (other.hp <= 0) continue;
+        const d = Math.hypot((other.x - cand.x), (other.z - cand.z));
+        if (d < minD) minD = d;
+      }
+      if (minD >= 10) { sp = cand; break; }
+      // keep best-so-far
+      if (!sp || minD > sp._minD) { sp = Object.assign({ _minD: minD }, cand); }
+    }
+    if (sp && sp._minD != null) delete sp._minD;
+  } catch {}
+  if (!sp) sp = world.spawnPoints[Math.floor(Math.random() * world.spawnPoints.length)];
   p.x = sp.x; p.y = sp.y; p.z = sp.z;
   p.vy = 0;
   p.hp = 100;
