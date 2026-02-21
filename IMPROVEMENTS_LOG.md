@@ -57,3 +57,4 @@
 - 2026-02-20 20:41 PST — Grenade throw feels snappier: increased initial grenade throw speed (16→18)
 - 2026-02-20 20:51 PST — CS-ish rocket: added movement inaccuracy (stop to rocket more reliably)
 - 2026-02-20 21:10 PST — Movement: slightly increased air acceleration (18→20) for snappier air-strafing
+- 2026-02-20 21:24 PST — Headshot feedback: sniper headshots now play a crunchier sound + show 💥 HEADSHOT! toast instantly

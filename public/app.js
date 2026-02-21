@@ -3290,17 +3290,31 @@ function spawnDent(pos, normal, size, kind) {
     function renderShot(s) {
       const color = s.hit ? new BABYLON.Color3(1.0, 0.35, 0.35) : new BABYLON.Color3(1.0, 0.9, 0.45);
 
-      // Hit-confirm tick when YOU hit someone (non-lethal). Adds arcade feel.
+      // Hit-confirm feedback when YOU hit someone.
       try {
         if (s.hit && String(s.from) === String(myId)) {
-          SFX.hit();
-          // tiny extra toast (kept short so it doesn't spam)
-          const t = document.getElementById('hitToast');
-          if (t) {
-            t.textContent = 'HIT!';
-            t.style.opacity = '1';
-            clearTimeout(renderShot._ht);
-            renderShot._ht = setTimeout(() => { try { t.style.opacity = '0'; } catch {} }, 180);
+          const isSniperHead = (String(s.weapon) === 'sniper' && String(s.part) === 'head');
+          if (isSniperHead) {
+            // Headshots should feel extra crunchy (CS-ish).
+            try { SFX.kill(); } catch {}
+            setTimeout(() => { try { SFX.hit(); } catch {} }, 70);
+            const st = document.getElementById('streakToast');
+            if (st) {
+              st.textContent = '💥 HEADSHOT!';
+              st.classList.add('show');
+              clearTimeout(renderShot._hs);
+              renderShot._hs = setTimeout(() => { try { st.classList.remove('show'); } catch {} }, 650);
+            }
+          } else {
+            SFX.hit();
+            // tiny extra toast (kept short so it doesn't spam)
+            const t = document.getElementById('hitToast');
+            if (t) {
+              t.textContent = 'HIT!';
+              t.style.opacity = '1';
+              clearTimeout(renderShot._ht);
+              renderShot._ht = setTimeout(() => { try { t.style.opacity = '0'; } catch {} }, 180);
+            }
           }
         }
       } catch {}
