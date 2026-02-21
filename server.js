@@ -959,6 +959,7 @@ if (msg.t === 'input') {
       const friction = 10.0;
       const groundAccel = 60.0;
       const airAccel = 18.0;
+      const bunnyBonus = 1.08; // light bhop-ish reward
 
       // Apply ground friction
       if (onGround) {
@@ -1025,7 +1026,20 @@ if (msg.t === 'input') {
       const gravity = -18;
       const jumpV = 7.5;
       const wantJump = !!msg.jump;
-      if (wantJump && onGround) p.vy = jumpV;
+      if (wantJump && onGround) {
+        // Light bhop-ish: if you're already moving, keep a bit of speed when jumping.
+        try {
+          const spd = Math.hypot(p.vx, p.vz);
+          const cap = speed * 1.25;
+          const boosted = Math.min(cap, spd * bunnyBonus);
+          if (spd > 0.1 && boosted > spd) {
+            const k = boosted / spd;
+            p.vx *= k;
+            p.vz *= k;
+          }
+        } catch {}
+        p.vy = jumpV;
+      }
       p.vy += gravity * dt;
       p.y += p.vy * dt;
       if (p.y < groundY) { p.y = groundY; p.vy = 0; }

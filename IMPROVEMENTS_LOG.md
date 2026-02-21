@@ -45,3 +45,4 @@
 - 2026-02-20 18:21 PST — Added ammo-on-kill (refund +2, capped) with 🔋 AMMO toast to keep fights flowing
 - 2026-02-20 18:31 PST — Sniper headshot kills now award +1 bonus point with 🎯 HEADSHOT toast
 - 2026-02-20 18:43 PST — CS-ish movement: added velocity-based ground accel/friction + air accel (less 'ice skating')
+- 2026-02-20 18:51 PST — Light bunny-hop-ish: small speed carry/boost on jump when already moving
