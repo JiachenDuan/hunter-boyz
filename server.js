@@ -296,6 +296,7 @@ function makePlayer(name) {
     ammo: 12,
     reloadUntil: 0,
     autoReload: true,
+    rifleBloom: 0,
     disconnectedAt: 0,
     fartUntil: 0,
     fartTickAt: 0,
@@ -391,6 +392,7 @@ function respawn(p) {
   p.invulnUntil = nowMs() + 1000;
   p.ammo = 12;
   p.reloadUntil = 0;
+  p.rifleBloom = 0;
   p.fartUntil = 0;
   p.fartTickAt = 0;
   p.disconnectedAt = 0;
@@ -947,6 +949,7 @@ if (msg.t === 'input') {
       // CS-ish accel/friction (lightweight)
       if (typeof p.vx !== 'number') p.vx = 0;
       if (typeof p.vz !== 'number') p.vz = 0;
+      if (typeof p.rifleBloom !== 'number') p.rifleBloom = 0;
 
       const groundY = 1.8;
       const onGround = p.y <= groundY + 1e-3;
@@ -1001,6 +1004,12 @@ if (msg.t === 'input') {
         }
         return false;
       }
+
+      // Tap-fire reward: bloom decays quickly when you stop shooting.
+      try {
+        const bloomDecayPerSec = 5.5;
+        p.rifleBloom = Math.max(0, p.rifleBloom - bloomDecayPerSec * dt);
+      } catch {}
 
       const nextX = p.x + p.vx * dt;
       const nextZ = p.z + p.vz * dt;
@@ -1177,10 +1186,14 @@ if (msg.t === 'input') {
             broadcast({ t:'shot', weapon:'minigun', from:p.id, sx:p.x, sy:p.y, sz:p.z, yaw:p.yaw, pitch:p.pitch, ex: hit.endX, ey: p.y, ez: hit.endZ, hit: hitId, hitHp });
 
           } else if (weapon === 'rifle') {
-            // CS-ish: movement accuracy penalty (running shots are less accurate).
+            // CS-ish: movement accuracy penalty + small recoil/bloom that rewards tap-firing.
             const spd = Math.hypot(p.vx || 0, p.vz || 0);
             const moveFrac = clamp((spd - 1.0) / 8.5, 0, 1);
-            const spread = moveFrac * 0.10; // radians
+
+            // Increase bloom per shot, capped.
+            try { p.rifleBloom = clamp((p.rifleBloom || 0) + 0.30, 0, 1.25); } catch {}
+
+            const spread = (moveFrac * 0.10) + ((p.rifleBloom || 0) * 0.06); // radians
             const yawShot = p.yaw + (Math.random() - 0.5) * spread;
 
             const hit = rayHit(p, 30, yawShot);
