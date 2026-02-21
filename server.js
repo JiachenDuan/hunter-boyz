@@ -287,6 +287,8 @@ function makePlayer(name) {
     x: sp.x,
     y: sp.y,
     z: sp.z,
+    vx: 0,
+    vz: 0,
     vy: 0,
     yaw: 0,
     pitch: 0,
@@ -388,6 +390,7 @@ function respawn(p) {
   } catch {}
   if (!sp) sp = world.spawnPoints[Math.floor(Math.random() * world.spawnPoints.length)];
   p.x = sp.x; p.y = sp.y; p.z = sp.z;
+  p.vx = 0; p.vz = 0;
   p.vy = 0;
   p.hp = 100;
   p.respawnAt = 0;
@@ -945,12 +948,54 @@ if (msg.t === 'input') {
       const mx = clamp(Number(mv.x || 0), -1, 1);
       const mz = clamp(Number(mv.z || 0), -1, 1);
 
+      const world = getActiveMap();
+
+      // CS-ish accel/friction (lightweight)
+      if (typeof p.vx !== 'number') p.vx = 0;
+      if (typeof p.vz !== 'number') p.vz = 0;
+
+      const groundY = 1.8;
+      const onGround = p.y <= groundY + 1e-3;
+      const friction = 10.0;
+      const groundAccel = 60.0;
+      const airAccel = 18.0;
+
+      // Apply ground friction
+      if (onGround) {
+        const spd = Math.hypot(p.vx, p.vz);
+        if (spd > 0.0001) {
+          const drop = spd * friction * dt;
+          const newSpd = Math.max(0, spd - drop);
+          const k = newSpd / spd;
+          p.vx *= k;
+          p.vz *= k;
+        }
+      }
+
+      // Wish direction + accel
+      let wishX = (rightX * mx + fwdX * mz);
+      let wishZ = (rightZ * mx + fwdZ * mz);
+      const wishLen = Math.hypot(wishX, wishZ);
+      if (wishLen > 1e-4) {
+        wishX /= wishLen;
+        wishZ /= wishLen;
+      } else {
+        wishX = 0; wishZ = 0;
+      }
+      const wishSpeed = speed * Math.min(1, wishLen);
+
+      const curSpeed = p.vx * wishX + p.vz * wishZ;
+      const addSpeed = wishSpeed - curSpeed;
+      if (addSpeed > 0) {
+        const accel = onGround ? groundAccel : airAccel;
+        let accelSpeed = accel * wishSpeed * dt;
+        if (accelSpeed > addSpeed) accelSpeed = addSpeed;
+        p.vx += wishX * accelSpeed;
+        p.vz += wishZ * accelSpeed;
+      }
+
       // collision (simple capsule in XZ)
       const radius = 0.7;
-      const nextX = p.x + (rightX * mx + fwdX * mz) * speed * dt;
-      const nextZ = p.z + (rightZ * mx + fwdZ * mz) * speed * dt;
-
-      const world = getActiveMap();
       function collides(x, z) {
         for (const o of world.obstacles) {
           const minX = o.x - o.w/2 - radius;
@@ -962,23 +1007,24 @@ if (msg.t === 'input') {
         return false;
       }
 
+      const nextX = p.x + p.vx * dt;
+      const nextZ = p.z + p.vz * dt;
+
       // try x, then z (axis-separable)
       let xTry = clamp(nextX, world.bounds.minX, world.bounds.maxX);
       let zTry = clamp(nextZ, world.bounds.minZ, world.bounds.maxZ);
 
-      if (!collides(xTry, p.z)) p.x = xTry;
-      if (!collides(p.x, zTry)) p.z = zTry;
+      if (!collides(xTry, p.z)) p.x = xTry; else p.vx = 0;
+      if (!collides(p.x, zTry)) p.z = zTry; else p.vz = 0;
 
       // look
       p.yaw = yaw;
       p.pitch = clamp(Number(msg.look?.pitch ?? p.pitch), -1.2, 1.2);
 
       // jump/gravity
-      const groundY = 1.8;
       const gravity = -18;
       const jumpV = 7.5;
       const wantJump = !!msg.jump;
-      const onGround = p.y <= groundY + 1e-3;
       if (wantJump && onGround) p.vy = jumpV;
       p.vy += gravity * dt;
       p.y += p.vy * dt;

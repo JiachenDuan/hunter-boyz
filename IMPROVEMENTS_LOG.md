@@ -44,3 +44,4 @@
 - 2026-02-20 18:11 PST — Shotgun point-blank kills (<=3.2m) now award +1 bonus point with toast
 - 2026-02-20 18:21 PST — Added ammo-on-kill (refund +2, capped) with 🔋 AMMO toast to keep fights flowing
 - 2026-02-20 18:31 PST — Sniper headshot kills now award +1 bonus point with 🎯 HEADSHOT toast
+- 2026-02-20 18:43 PST — CS-ish movement: added velocity-based ground accel/friction + air accel (less 'ice skating')
