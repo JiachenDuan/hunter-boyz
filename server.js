@@ -1044,7 +1044,7 @@ if (msg.t === 'input') {
 
       // jump/gravity
       const gravity = -18;
-      const jumpV = 7.5;
+      const jumpV = 7.8;
       const wantJump = !!msg.jump;
       if (wantJump && onGround) {
         // Light bhop-ish: if you're already moving, keep a bit of speed when jumping.
