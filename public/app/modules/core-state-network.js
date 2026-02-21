@@ -420,7 +420,7 @@
               const it = tps.find(x => x.id === id);
               if (!it) return false;
               const d = Math.hypot(meP.x - it.x, meP.z - it.z);
-              return d <= 3.0;
+              return d <= 6.0;
             };
             if (up && near('tower_up')) up.style.display = 'block';
             // Down: show when at top or near the down pad

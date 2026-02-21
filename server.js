@@ -652,7 +652,8 @@ function serializeTeleports() {
   // NOTE: y here is the player target y (eye height-ish), not a block base.
   if (GAME.mapId !== 'mansion') return [];
   return [
-    { id: 'tower_up', label: 'Tower ↑', x: -18.0, y: 1.8, z: 16.0, kind: 'up' },
+    // Place the UP pad right at the tower base so any side of the column works.
+    { id: 'tower_up', label: 'Tower ↑', x: -18.0, y: 1.8, z: 18.0, kind: 'up' },
     { id: 'tower_down', label: 'Tower ↓', x: -18.0, y: 24.0, z: 18.0, kind: 'down' },
   ];
 }
