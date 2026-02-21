@@ -104,9 +104,10 @@
         // Up/down look ~25% slower
         state.look.pitch += dy * 0.00165 * sensAim;
         // Limit looking up/down so you don't get lost on mobile.
-        // (radians) ~ -35° down to +20° up
-        const MIN_PITCH = -0.55;
-        const MAX_PITCH = 0.20; // allow slight looking up
+        // positive pitch = look down, negative = look up
+        // MAX_PITCH=1.5 (~86°) allows aiming down from the tower
+        const MIN_PITCH = -1.2; // ~69° up
+        const MAX_PITCH = 1.5;  // ~86° down (needed for tower sniping)
         state.look.pitch = Math.max(MIN_PITCH, Math.min(MAX_PITCH, state.look.pitch));
       }
 

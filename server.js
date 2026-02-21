@@ -1130,7 +1130,7 @@ if (msg.t === 'input') {
 
       // look
       p.yaw = yaw;
-      p.pitch = clamp(Number(msg.look?.pitch ?? p.pitch), -1.2, 1.2);
+      p.pitch = clamp(Number(msg.look?.pitch ?? p.pitch), -1.2, 1.5);
 
       // jump/gravity
       const gravity = -18;
@@ -1305,7 +1305,7 @@ if (msg.t === 'input') {
             const focusMult = (p.focusUntil && tNow < p.focusUntil) ? 0.55 : 1.0;
 
             // Add a small pitch recoil on every rifle shot; decays via client smoothing naturally.
-            try { p.pitch = clamp((p.pitch || 0) - 0.020, -1.2, 1.2); } catch {}
+            try { p.pitch = clamp((p.pitch || 0) - 0.020, -1.2, 1.5); } catch {}
 
             const spread = ((moveFrac * 0.10) + ((p.rifleBloom || 0) * 0.06)) * focusMult; // radians
             const yawShot = p.yaw + (Math.random() - 0.5) * spread;
