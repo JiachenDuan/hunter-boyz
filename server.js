@@ -958,7 +958,7 @@ if (msg.t === 'input') {
       const onGround = p.y <= groundY + 1e-3;
       const friction = 10.0;
       const groundAccel = 60.0;
-      const airAccel = 18.0;
+      const airAccel = 20.0;
       const bunnyBonus = 1.08; // light bhop-ish reward
       const maxAirSpeed = speed * 1.10;
 
