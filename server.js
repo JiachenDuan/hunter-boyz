@@ -960,6 +960,7 @@ if (msg.t === 'input') {
       const groundAccel = 60.0;
       const airAccel = 18.0;
       const bunnyBonus = 1.08; // light bhop-ish reward
+      const maxAirSpeed = speed * 1.10;
 
       // Apply ground friction
       if (onGround) {
@@ -996,6 +997,16 @@ if (msg.t === 'input') {
         if (accelSpeed > addSpeed) accelSpeed = addSpeed;
         p.vx += wishX * accelSpeed;
         p.vz += wishZ * accelSpeed;
+      }
+
+      // Cap air speed a bit (keeps bhop-ish under control)
+      if (!onGround) {
+        const spd = Math.hypot(p.vx, p.vz);
+        if (spd > maxAirSpeed) {
+          const k = maxAirSpeed / spd;
+          p.vx *= k;
+          p.vz *= k;
+        }
       }
 
       // collision (simple capsule in XZ)
