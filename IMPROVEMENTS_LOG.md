@@ -33,3 +33,4 @@
 - 2026-02-20 16:20 PST — Added hit-confirm tick + brief HIT! flash when your shot hits a player (arcade feedback)
 - 2026-02-20 16:30 PST — Round timer now enters panic mode (red pulsing) in the last 10 seconds
 - 2026-02-20 16:40 PST — Explosion SFX now distance-culls (nearby booms only) to keep audio readable
+- 2026-02-20 16:50 PST — Fart DOT damage numbers now show a 💨 prefix (clearer debuff feedback)

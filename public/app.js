@@ -2745,10 +2745,10 @@ function showWinner(msg) {
         ctx.fillStyle = 'rgba(0,0,0,0.0)';
         ctx.fillRect(0, 0, 256, 128);
         ctx.font = '900 72px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial';
-        ctx.fillStyle = 'rgba(120,255,160,0.95)';
+        ctx.fillStyle = 'rgba(140,255,180,0.98)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`-${dmg || 5}`, 128, 70);
+        ctx.fillText(`💨-${dmg || 5}`, 128, 70);
         dt.update();
 
         const mat = new BABYLON.StandardMaterial(`dot_mat_${targetId}_${Date.now()}`, scene);
