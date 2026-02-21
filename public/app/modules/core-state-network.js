@@ -286,7 +286,14 @@
         startBtn.style.display = 'inline-block';
         startBtn.disabled = false;
         startBtn.style.opacity = '1';
-        waitMsg.textContent = 'Anyone can tap Start.';
+        try {
+          const lw = s.game?.lastWinnerName;
+          const ls = s.game?.lastWinnerScore;
+          if (lw) waitMsg.textContent = `Last winner: ${lw} 🏆${(typeof ls === 'number') ? ` (${ls})` : ''}`;
+          else waitMsg.textContent = 'Anyone can tap Start.';
+        } catch {
+          waitMsg.textContent = 'Anyone can tap Start.';
+        }
       } else {
         lobby.style.display = 'none';
         // hide settings while playing unless user explicitly opened it

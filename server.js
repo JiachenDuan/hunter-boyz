@@ -112,6 +112,10 @@ const wss = new WebSocket.Server({ server });
  */
 
 const TICK_HZ = 15;
+
+// Round config
+const INTERMISSION_MS = 3000;
+
 const MAPS = {
   arena: {
     id: 'arena',
@@ -220,6 +224,10 @@ const GAME = {
   roundEndsAt: 0,
   mapId: 'arena',
   firstBlood: false,
+  lastWinnerId: null,
+  lastWinnerName: null,
+  lastWinnerScore: 0,
+  lastWinAt: 0,
 };
 
 let nextId = 1;
@@ -311,7 +319,16 @@ function serializeState() {
   return {
     ts: nowMs(),
     build: BUILD,
-    game: { started: GAME.started, hostId: GAME.started ? GAME.hostId : GAME.hostId, roundEndsAt: GAME.roundEndsAt, mapId: GAME.mapId },
+    game: {
+      started: GAME.started,
+      hostId: GAME.hostId,
+      roundEndsAt: GAME.roundEndsAt,
+      mapId: GAME.mapId,
+      lastWinnerId: GAME.lastWinnerId,
+      lastWinnerName: GAME.lastWinnerName,
+      lastWinnerScore: GAME.lastWinnerScore,
+      lastWinAt: GAME.lastWinAt,
+    },
     pickups: serializePickups(),
     players: Array.from(players.values()).map(p => ({
       id: p.id,
@@ -1472,8 +1489,21 @@ setInterval(() => {
       if (!best || (p.score||0) > (best.score||0)) best = p;
     }
     GAME.roundOverAt = t;
-    broadcast({ t: 'winner', winnerId: best ? best.id : null, winnerName: best ? best.name : '—' });
 
+    // Remember champion so lobby can show it.
+    GAME.lastWinnerId = best ? best.id : null;
+    GAME.lastWinnerName = best ? best.name : '—';
+    GAME.lastWinnerScore = best ? (best.score || 0) : 0;
+    GAME.lastWinAt = t;
+
+    broadcast({
+      t: 'winner',
+      winnerId: GAME.lastWinnerId,
+      winnerName: GAME.lastWinnerName,
+      winnerScore: GAME.lastWinnerScore,
+    });
+
+    // Intermission → reset → auto-start next round (keeps pace high).
     setTimeout(() => {
       try {
         for (const p of players.values()) {
@@ -1486,8 +1516,18 @@ setInterval(() => {
         GAME.roundEndsAt = 0;
         GAME.firstBlood = false;
         broadcast({ t: 'state', state: serializeState() });
+
+        setTimeout(() => {
+          try {
+            GAME.started = true;
+            GAME.roundOverAt = 0;
+            GAME.roundEndsAt = nowMs() + ROUND_MS;
+            GAME.firstBlood = false;
+            broadcast({ t: 'state', state: serializeState() });
+          } catch {}
+        }, INTERMISSION_MS);
       } catch {}
-    }, 5000);
+    }, 1500);
   }
 
   // AFK cleanup
