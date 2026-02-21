@@ -738,6 +738,8 @@ wss.on('connection', (ws) => {
     if (msg.t === 'start') {
       // Anyone can start (LAN party vibe).
       GAME.started = true;
+      GAME.roundOverAt = 0;
+      GAME.roundEndsAt = nowMs() + ROUND_MS;
       GAME.firstBlood = false;
       broadcast({ t: 'state', state: serializeState() });
       return;

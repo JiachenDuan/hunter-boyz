@@ -34,3 +34,4 @@
 - 2026-02-20 16:30 PST — Round timer now enters panic mode (red pulsing) in the last 10 seconds
 - 2026-02-20 16:40 PST — Explosion SFX now distance-culls (nearby booms only) to keep audio readable
 - 2026-02-20 16:50 PST — Fart DOT damage numbers now show a 💨 prefix (clearer debuff feedback)
+- 2026-02-20 17:00 PST — Fixed round timer: starting a match now sets roundEndsAt (90s rounds actually count down/end)
