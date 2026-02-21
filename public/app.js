@@ -2699,8 +2699,8 @@ function showWinner(msg) {
         const base = root.position.clone();
         base.y += 2.05;
         const meshes = [];
-        for (let i = 0; i < 5; i++) {
-          const m = BABYLON.MeshBuilder.CreateSphere(`puff_${targetId}_${Date.now()}_${i}`, { diameter: 0.18, segments: 6 }, scene);
+        for (let i = 0; i < 8; i++) {
+          const m = BABYLON.MeshBuilder.CreateSphere(`puff_${targetId}_${Date.now()}_${i}`, { diameter: 0.20, segments: 6 }, scene);
           m.position = base.add(new BABYLON.Vector3((Math.random()-0.5)*0.28, (Math.random()-0.5)*0.18, (Math.random()-0.5)*0.28));
           m.isPickable = false;
           const mat = new BABYLON.StandardMaterial(`puffm_${targetId}_${Date.now()}_${i}`, scene);
@@ -2712,7 +2712,7 @@ function showWinner(msg) {
           meshes.push({ m, mat });
         }
         const start = performance.now();
-        const dur = 330;
+        const dur = 420;
         const tick = () => {
           const t = performance.now() - start;
           const k = Math.min(1, t / dur);

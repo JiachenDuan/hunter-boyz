@@ -36,3 +36,4 @@
 - 2026-02-20 16:50 PST — Fart DOT damage numbers now show a 💨 prefix (clearer debuff feedback)
 - 2026-02-20 17:00 PST — Fixed round timer: starting a match now sets roundEndsAt (90s rounds actually count down/end)
 - 2026-02-20 17:10 PST — Winner banner now shows 🏆 and plays a quick victory stinger (double kill tick)
+- 2026-02-20 17:20 PST — Buffed fart gun visual feedback: bigger/longer fart puffs (more chaos readability)
