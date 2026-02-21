@@ -19,6 +19,7 @@ async function main(){
   });
 
   try {
+    // Page 1: iPhone (the screenshot)
     const page = await browser.newPage();
 
     // iPhone 14-ish viewport
@@ -39,12 +40,72 @@ async function main(){
       document.getElementById('name').value = 'iPhoneTest';
     });
     await page.evaluate(() => document.getElementById('joinBtn').dispatchEvent(new Event('click', { bubbles: true })));
-    await sleep(800);
+
+    // Page 2: a victim bot so we can reliably trigger HIT/KILL UI for the screenshot
+    const bot = await browser.newPage();
+    await bot.setViewport({ width: 800, height: 600, deviceScaleFactor: 2 });
+    await bot.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+    await bot.evaluate(() => {
+      document.getElementById('settingsPanel').style.display = 'block';
+      document.getElementById('name').value = 'Bot';
+    });
+    await bot.evaluate(() => document.getElementById('joinBtn').dispatchEvent(new Event('click', { bubbles: true })));
+
+    // Wait for ids to appear (we expose window.__myId in app.js)
+    async function waitForId(p) {
+      for (let i = 0; i < 60; i++) {
+        const id = await p.evaluate(() => window.__myId || null);
+        if (id) return String(id);
+        await sleep(100);
+      }
+      throw new Error('Timed out waiting for player id');
+    }
+
+    const shooterId = await waitForId(page);
+    const botId = await waitForId(bot);
+
+    // Start the round (localhost-only debug endpoint)
+    await page.evaluate(async () => {
+      try { await fetch('/debug/start', { method: 'POST' }); } catch {}
+    });
+
+    // Put them in a known line-up: shooter looks +Z, bot stands in front
+    const shooter = { id: shooterId, x: 0, y: 1.8, z: 0, yaw: 0, pitch: 0, hp: 100 };
+    const victim = { id: botId, x: 0, y: 1.8, z: 6, yaw: Math.PI, pitch: 0, hp: 100 };
+
+    await page.evaluate(async (a, b) => {
+      const post = (path, body) => fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      try { await post('/debug/teleport', a); } catch {}
+      try { await post('/debug/teleport', b); } catch {}
+    }, shooter, victim);
+
+    // Fire enough debug shots to guarantee a kill and trigger HIT/KILL banners
+    for (let i = 0; i < 4; i++) {
+      await page.evaluate(async (fromId) => {
+        try {
+          await fetch('/debug/shoot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fromId }),
+          });
+        } catch {}
+      }, shooterId);
+      await sleep(120);
+    }
+
+    // Let UI animations render
+    await sleep(300);
 
     const ts = Date.now();
     const file = path.join(outDir, `iphone-${ts}.png`);
     await page.screenshot({ path: file, fullPage: false });
     console.log(JSON.stringify({ file }, null, 2));
+
+    try { await bot.close(); } catch {}
   } finally {
     await browser.close();
   }

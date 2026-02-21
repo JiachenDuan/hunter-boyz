@@ -132,6 +132,8 @@
           const msg = JSON.parse(ev.data);
           if (msg.t === 'welcome') {
             myId = msg.id;
+            // Expose for automation/debug tooling (e.g., puppeteer capture scripts)
+            try { window.__myId = myId; } catch {}
             world = msg.world;
             state.joined = true;
             joinInFlight = false;
