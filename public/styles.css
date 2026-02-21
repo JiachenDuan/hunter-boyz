@@ -466,6 +466,19 @@
       border-color: rgba(80,255,140,0.35);
       color: rgba(210,255,230,0.95);
     }
+    /* Panic mode: last 10s */
+    @keyframes timerPulse {
+      0% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.07); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+    #roundTimer.isEnding {
+      background: rgba(255,80,80,0.16);
+      border-color: rgba(255,80,80,0.45);
+      color: rgba(255,220,220,0.98);
+      box-shadow: 0 0 0 2px rgba(255,80,80,0.12), 0 0 28px rgba(255,80,80,0.12);
+      animation: timerPulse 0.7s ease-in-out infinite;
+    }
     #hitmarker {
       position:fixed;
       top:50%;

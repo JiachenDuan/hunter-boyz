@@ -74,7 +74,10 @@
         lastTimerStr = str;
         el.textContent = str;
       }
-      try { el.classList.toggle('isLobby', inLobby); } catch {}
+      try {
+        el.classList.toggle('isLobby', inLobby);
+        el.classList.toggle('isEnding', !inLobby && left <= 10_000);
+      } catch {}
       requestAnimationFrame(updateRoundTimer);
     }
     requestAnimationFrame(updateRoundTimer);
