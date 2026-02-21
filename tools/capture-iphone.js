@@ -69,13 +69,19 @@ async function main(){
       try { await fetch('/debug/start', { method: 'POST' }); } catch {}
     });
 
-    // Wait until the lobby UI actually hides (state.started applied)
+    // Wait until the round actually starts (server state says started)
     try {
       await page.waitForFunction(() => {
-        const l = document.getElementById('lobby');
-        return !!l && (l.style.display === 'none');
-      }, { timeout: 5000 });
+        const s = window.__lastState;
+        return !!(s && s.game && s.game.started);
+      }, { timeout: 8000 });
     } catch {}
+
+    // Belt + suspenders: hide lobby overlay if it’s still visible for any reason
+    await page.evaluate(() => {
+      const l = document.getElementById('lobby');
+      if (l) l.style.display = 'none';
+    });
 
     // Put them in a known line-up: shooter looks +Z, bot stands in front
     const shooter = { id: shooterId, x: 0, y: 1.8, z: 0, yaw: 0, pitch: 0, hp: 100 };

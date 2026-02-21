@@ -241,6 +241,8 @@
 
     function applyState(s) {
       lastServerState = s;
+      // Expose for automated capture tooling
+      try { window.__lastState = s; } catch {}
       // game flags
       state.started = !!s.game?.started;
       const _prevStarted = !!applyState._started;
