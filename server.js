@@ -1148,6 +1148,9 @@ if (msg.t === 'input') {
             let anyHit = null;
             let anyHp = null;
 
+            // Arcade bonus: point-blank shotgun kill
+            let pointBlankKill = false;
+
             const traces = [];
             for (let i = 0; i < pellets; i++) {
               const yaw = p.yaw + (Math.random() - 0.5) * spread;
@@ -1158,7 +1161,15 @@ if (msg.t === 'input') {
                 const pelletDmg = damageFalloff(wDef.pelletDmg || 10, d, { near: 3, far: (wDef.range || 22), minMult: 0.45 });
                 const dmg = doDamage({ shooter: p, target: hit.target, amount: pelletDmg });
                 if (dmg.hitId) { anyHit = anyHit || dmg.hitId; anyHp = anyHp ?? dmg.hitHp; }
+                if (!pointBlankKill && dmg.killed && d <= 3.2) pointBlankKill = true;
               }
+            }
+
+            if (pointBlankKill) {
+              try {
+                p.score += 1;
+                broadcast({ t:'toast', kind:'pointblank', id: p.id, bonus: 1 });
+              } catch {}
             }
 
             hitId = anyHit;
