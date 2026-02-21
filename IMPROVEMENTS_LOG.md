@@ -38,3 +38,4 @@
 - 2026-02-20 17:10 PST — Winner banner now shows 🏆 and plays a quick victory stinger (double kill tick)
 - 2026-02-20 17:20 PST — Buffed fart gun visual feedback: bigger/longer fart puffs (more chaos readability)
 - 2026-02-20 17:30 PST — Faster AFK cleanup: idle players removed after 60s (keeps matches lively)
+- 2026-02-20 17:40 PST — Rocket direct hits now award +1 bonus point with 🚀 DIRECT HIT toast

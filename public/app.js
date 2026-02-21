@@ -310,6 +310,20 @@
               }
             } catch {}
           }
+          if (msg.t === 'toast' && msg.kind === 'directhit') {
+            try {
+              const el = document.getElementById('streakToast');
+              if (el) {
+                el.textContent = `🚀 DIRECT HIT +${msg.bonus || 1}`;
+                el.classList.add('show');
+                clearTimeout(window.__kb_directHitT);
+                window.__kb_directHitT = setTimeout(() => { try { el.classList.remove('show'); } catch {} }, 950);
+              }
+              if (String(msg.id) === String(myId)) {
+                try { SFX.boom(); } catch {}
+              }
+            } catch {}
+          }
           if (msg.t === 'slash') onSlashMsg(msg);
           if (msg.t === 'pickup') {
             showKill(`${msg.id} picked up ${msg.what}`);

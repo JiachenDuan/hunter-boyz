@@ -1158,6 +1158,14 @@ if (msg.t === 'input') {
               const dmg = doDamage({ shooter: p, target: hit.target, amount: 999 });
               hitId = dmg.hitId;
               hitHp = dmg.hitHp;
+
+              // Rocket direct-hit bonus (sick arcade moment)
+              try {
+                if (dmg.killed) {
+                  p.score += 1;
+                  broadcast({ t:'toast', kind:'directhit', id: p.id, bonus: 1 });
+                }
+              } catch {}
             }
 
             // Splash
