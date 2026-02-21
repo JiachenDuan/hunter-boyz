@@ -49,3 +49,4 @@
 - 2026-02-20 19:21 PST — CS-ish rifle accuracy: added movement-based spread penalty (running shots less accurate)
 - 2026-02-20 19:31 PST — CS-DM pacing: disabled sprint input (consistent movement speed, more CS-like)
 - 2026-02-20 19:41 PST — CS-ish rifle tap-fire reward: added per-shot bloom (recoil spread) that decays quickly
+- 2026-02-20 19:52 PST — Tap-fire reward: brief 'focus' on shoot press tightens rifle spread (more CS tap feel)

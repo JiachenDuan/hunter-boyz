@@ -3727,6 +3727,11 @@ function spawnDent(pos, normal, size, kind) {
         state.shoot = v;
         if (!v) shootToggled = false;
       }
+
+      // CS-ish micro: brief "focus" window on initial press (used by server spread logic).
+      try {
+        if (v) window.__kb_focusUntil = performance.now() + 160;
+      } catch {}
     });
 
     // If user turns OFF autofire while shooting is toggled ON, stop immediately.
@@ -4421,6 +4426,7 @@ function spawnDent(pos, normal, size, kind) {
             move: state.move,
             look: state.look,
             shoot: !!state.shoot,
+            focus: !!(window.__kb_focusUntil && performance.now() < window.__kb_focusUntil),
             jump: !!state.jump,
             sprint: false,
             weapon,

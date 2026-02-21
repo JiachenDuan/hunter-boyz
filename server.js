@@ -925,6 +925,9 @@ if (msg.t === 'input') {
       // Dead players can't move/shoot.
       if (p.hp <= 0) return;
 
+      // Per-input micro-state
+      p.focusUntil = (msg.focus ? (nowMs() + 180) : (p.focusUntil || 0));
+
       const dt = clamp(Number(msg.dt || 0.05), 0, 0.2);
       const mv = msg.move || { x: 0, z: 0 };
       const wantSprint = !!msg.sprint;
@@ -1193,7 +1196,11 @@ if (msg.t === 'input') {
             // Increase bloom per shot, capped.
             try { p.rifleBloom = clamp((p.rifleBloom || 0) + 0.30, 0, 1.25); } catch {}
 
-            const spread = (moveFrac * 0.10) + ((p.rifleBloom || 0) * 0.06); // radians
+            // Tap-fire reward: brief focus window tightens the next shot.
+            const tNow = nowMs();
+            const focusMult = (p.focusUntil && tNow < p.focusUntil) ? 0.55 : 1.0;
+
+            const spread = ((moveFrac * 0.10) + ((p.rifleBloom || 0) * 0.06)) * focusMult; // radians
             const yawShot = p.yaw + (Math.random() - 0.5) * spread;
 
             const hit = rayHit(p, 30, yawShot);
