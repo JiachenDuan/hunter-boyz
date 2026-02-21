@@ -386,7 +386,7 @@
               const dx = (meP.x - it.x);
               const dz = (meP.z - it.z);
               const d = Math.hypot(dx, dz);
-              if (d <= 6.0) { show = true; targetId = it.id; break; } // wider radius for reliability
+              if (d <= 3.0) { show = true; targetId = it.id; break; } // match server pickup radius
             }
           }
           if (btnPickup) {

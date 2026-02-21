@@ -240,19 +240,30 @@
 
         // Get pickId from element, or fallback: scan lastServerState for nearest available pickup
         let pickId = el.dataset.pickId || '';
-        if (!pickId && lastServerState && myId) {
+        let dist = null;
+        if (lastServerState && myId) {
           const me = lastServerState.players.find(p => p.id === myId);
+          const list = (lastServerState.pickups || []);
           if (me) {
-            for (const it of (lastServerState.pickups || [])) {
-              if (it.type !== 'minigun') continue;
-              if (it.kind === 'pad' && (it.availInMs||0) > 0) continue;
-              if (it.kind === 'drop' && (it.expiresInMs||0) <= 0) continue;
-              const d = Math.hypot(me.x - it.x, me.z - it.z);
-              if (d <= 4.0) { pickId = it.id; break; }
+            const findIt = (id) => list.find(it => String(it.id) === String(id));
+            const it0 = pickId ? findIt(pickId) : null;
+            if (it0) {
+              dist = Math.hypot(me.x - it0.x, me.z - it0.z);
+            }
+            if (!pickId) {
+              for (const it of list) {
+                if (it.type !== 'minigun') continue;
+                if (it.kind === 'pad' && (it.availInMs||0) > 0) continue;
+                if (it.kind === 'drop' && (it.expiresInMs||0) <= 0) continue;
+                const d = Math.hypot(me.x - it.x, me.z - it.z);
+                if (d <= 3.0) { pickId = it.id; dist = d; break; }
+              }
             }
           }
         }
         if (!pickId) { showKill('Move closer to pick up!'); return; }
+        // Server requires close range (pad ~2.5, drop ~2.2). Give a tiny buffer.
+        if (typeof dist === 'number' && dist > 2.7) { showKill('Move closer to pick up!'); return; }
 
         // Visual tap feedback
         el.style.background = 'rgba(255,220,120,0.5)';
