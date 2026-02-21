@@ -60,3 +60,4 @@
 - 2026-02-20 21:24 PST — Headshot feedback: sniper headshots now play a crunchier sound + show 💥 HEADSHOT! toast instantly
 - 2026-02-20 21:31 PST — Kill feed clarity: scoreboard now shows rank numbers (1.,2.,3.) for quick DM reading
 - 2026-02-20 21:41 PST — Movement feel: slightly increased jump velocity (7.5→7.8) for more CS-like hops
+- 2026-02-20 21:52 PST — CS-ish aim: slightly tightened hitscan player hitbox radius (0.90→0.82)

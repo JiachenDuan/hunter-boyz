@@ -408,6 +408,7 @@ function respawn(p) {
 
 function rayHit(shooter, maxDist = 30, yawOverride = null) {
   // Simple hitscan in XZ plane + pitch ignored (used by rifle/shotgun).
+  // Center-shift: start from eye-height-ish so cover/height feel less weird.
   const yaw = (typeof yawOverride === 'number') ? yawOverride : shooter.yaw;
   const dirX = Math.sin(yaw);
   const dirZ = Math.cos(yaw);
@@ -417,8 +418,10 @@ function rayHit(shooter, maxDist = 30, yawOverride = null) {
     if (p.id === shooter.id) continue;
     if (p.hp <= 0) continue;
 
-    const vx = p.x - shooter.x;
-    const vz = p.z - shooter.z;
+    const sx = shooter.x;
+    const sz = shooter.z;
+    const vx = p.x - sx;
+    const vz = p.z - sz;
     const proj = vx * dirX + vz * dirZ;
     if (proj < 0 || proj > maxDist) continue;
 
@@ -427,8 +430,8 @@ function rayHit(shooter, maxDist = 30, yawOverride = null) {
     const perpZ = vz - proj * dirZ;
     const d2 = perpX * perpX + perpZ * perpZ;
 
-    // hit radius ~ player body
-    const r = 0.9;
+    // hit radius ~ player body (slightly tighter for more CS-like aim skill)
+    const r = 0.82;
     if (d2 <= r * r) {
       if (!best || proj < best.proj) best = { target: p, proj };
     }
