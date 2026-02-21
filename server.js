@@ -655,6 +655,10 @@ function serializeTeleports() {
     // Place the UP pad right at the tower base so any side of the column works.
     { id: 'tower_up', label: 'Tower ↑', x: -18.0, y: 1.8, z: 18.0, kind: 'up' },
     { id: 'tower_down', label: 'Tower ↓', x: -18.0, y: 24.0, z: 18.0, kind: 'down' },
+
+    // UI-only signposts (for discoverability)
+    { id: 'tower_sign_up', label: 'TELEPORT ↑', x: -18.0, y: 1.8, z: 18.0, kind: 'sign' },
+    { id: 'tower_sign_down', label: 'TELEPORT ↓', x: -18.0, y: 24.0, z: 18.0, kind: 'sign' },
   ];
 }
 

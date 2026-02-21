@@ -497,6 +497,70 @@
           }
         } catch {}
 
+        // Render teleport signposts (mansion tower)
+        try {
+          const tps = (s.teleports || []).filter(t => t.kind === 'sign');
+          if (!window.__teleportSignMeshes) window.__teleportSignMeshes = {};
+          const signs = window.__teleportSignMeshes;
+          for (const k of Object.keys(signs)) signs[k]._stale = true;
+          for (const tp of tps) {
+            if (!signs[tp.id]) {
+              const plane = BABYLON.MeshBuilder.CreatePlane('tpSign_' + tp.id, { width: 4.2, height: 1.25 }, scene);
+              plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_Y;
+              const dt = new BABYLON.DynamicTexture('tpSignTex_' + tp.id, { width: 512, height: 160 }, scene, false);
+              dt.hasAlpha = true;
+              const mat = new BABYLON.StandardMaterial('tpSignMat_' + tp.id, scene);
+              mat.diffuseTexture = dt;
+              mat.emissiveTexture = dt;
+              mat.opacityTexture = dt;
+              mat.disableLighting = true;
+              mat.backFaceCulling = false;
+              plane.material = mat;
+              signs[tp.id] = { plane, dt, mat };
+            }
+            const s0 = signs[tp.id];
+            s0._stale = false;
+            // Position (raise a bit above the pad)
+            s0.plane.position.set(tp.x, (tp.y || 1.8) + 2.8, tp.z);
+
+            // Draw
+            const ctx = s0.dt.getContext();
+            ctx.clearRect(0, 0, 512, 160);
+            ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            ctx.strokeStyle = 'rgba(120,200,255,0.70)';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            // roundRect shim
+            const rr = (x,y,w,h,r) => {
+              ctx.moveTo(x+r,y);
+              ctx.arcTo(x+w,y,x+w,y+h,r);
+              ctx.arcTo(x+w,y+h,x,y+h,r);
+              ctx.arcTo(x,y+h,x,y,r);
+              ctx.arcTo(x,y,x+w,y,r);
+            };
+            rr(12, 12, 488, 136, 28);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(230,245,255,0.95)';
+            ctx.font = '900 64px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(String(tp.label || 'TELEPORT'), 256, 82);
+            s0.dt.update();
+
+            const pulse = 0.72 + 0.28 * Math.sin(Date.now() / 300);
+            try { s0.mat.alpha = pulse; } catch {}
+          }
+          for (const k of Object.keys(signs)) {
+            if (signs[k]._stale) {
+              try { signs[k].plane.dispose(); } catch {}
+              delete signs[k];
+            }
+          }
+        } catch {}
+
         // show spawn protection by tinting HP bar
         const inv = (meP.invulnInMs || 0);
         if (inv > 0) {
