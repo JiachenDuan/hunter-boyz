@@ -69,6 +69,14 @@ async function main(){
       try { await fetch('/debug/start', { method: 'POST' }); } catch {}
     });
 
+    // Wait until the lobby UI actually hides (state.started applied)
+    try {
+      await page.waitForFunction(() => {
+        const l = document.getElementById('lobby');
+        return !!l && (l.style.display === 'none');
+      }, { timeout: 5000 });
+    } catch {}
+
     // Put them in a known line-up: shooter looks +Z, bot stands in front
     const shooter = { id: shooterId, x: 0, y: 1.8, z: 0, yaw: 0, pitch: 0, hp: 100 };
     const victim = { id: botId, x: 0, y: 1.8, z: 6, yaw: Math.PI, pitch: 0, hp: 100 };
