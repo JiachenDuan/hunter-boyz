@@ -3221,6 +3221,21 @@ function spawnDent(pos, normal, size, kind) {
 
     function renderShot(s) {
       const color = s.hit ? new BABYLON.Color3(1.0, 0.35, 0.35) : new BABYLON.Color3(1.0, 0.9, 0.45);
+
+      // Hit-confirm tick when YOU hit someone (non-lethal). Adds arcade feel.
+      try {
+        if (s.hit && String(s.from) === String(myId)) {
+          SFX.hit();
+          // tiny extra toast (kept short so it doesn't spam)
+          const t = document.getElementById('hitToast');
+          if (t) {
+            t.textContent = 'HIT!';
+            t.style.opacity = '1';
+            clearTimeout(renderShot._ht);
+            renderShot._ht = setTimeout(() => { try { t.style.opacity = '0'; } catch {} }, 180);
+          }
+        }
+      } catch {}
       // Start tracer from gun muzzle (approx) instead of player center.
       // For first-person (you), use camera forward; for others, use yaw.
       const gunStart = (() => {
