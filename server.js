@@ -925,8 +925,17 @@ if (msg.t === 'input') {
       // Per-player settings
       if (typeof msg.autoReload === 'boolean') p.autoReload = msg.autoReload;
 
-      // Dead players can't move/shoot.
-      if (p.hp <= 0) return;
+      // Deathmatch QoL: allow a "quick respawn" tap near the end of the respawn timer.
+      if (p.hp <= 0) {
+        try {
+          const t = nowMs();
+          if (msg.respawnNow && p.respawnAt && t >= (p.respawnAt - 550)) {
+            respawn(p);
+            broadcast({ t: 'state', state: serializeState() });
+          }
+        } catch {}
+        return;
+      }
 
       // Per-input micro-state
       p.focusUntil = (msg.focus ? (nowMs() + 180) : (p.focusUntil || 0));

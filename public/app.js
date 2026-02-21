@@ -689,10 +689,17 @@
 
       if (meP && meP.hp <= 0) {
         respawn.style.display = 'flex';
-        const secs = Math.ceil((meP.respawnInMs || 0) / 1000);
-        respawn.firstElementChild.textContent = `Respawning… ${secs}s`;
+        const ms = (meP.respawnInMs || 0);
+        const secs = Math.ceil(ms / 1000);
+        respawn.firstElementChild.textContent = (ms <= 550)
+          ? `Tap to respawn!`
+          : `Respawning… ${secs}s (tap near 0)`;
+
+        // Remember if we should quick-respawn.
+        window.__kb_canRespawnTap = (ms <= 550);
       } else {
         respawn.style.display = 'none';
+        window.__kb_canRespawnTap = false;
       }
 
       // score
@@ -4446,6 +4453,7 @@ function spawnDent(pos, normal, size, kind) {
             sprint: false,
             weapon,
             scope: !!state.scope,
+            respawnNow: !!window.__kb_canRespawnTap,
             autoReload,
           }));
         }

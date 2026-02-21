@@ -62,3 +62,4 @@
 - 2026-02-20 21:41 PST — Movement feel: slightly increased jump velocity (7.5→7.8) for more CS-like hops
 - 2026-02-20 21:52 PST — CS-ish aim: slightly tightened hitscan player hitbox radius (0.90→0.82)
 - 2026-02-20 22:01 PST — DM pacing: respawn time reduced from 2.0s to 1.5s
+- 2026-02-20 22:12 PST — DM QoL: added tap-to-respawn near end of respawn timer (<=0.55s)
