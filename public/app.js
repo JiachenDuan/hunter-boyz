@@ -4422,7 +4422,7 @@ function spawnDent(pos, normal, size, kind) {
             look: state.look,
             shoot: !!state.shoot,
             jump: !!state.jump,
-            sprint: !!state.sprint,
+            sprint: false,
             weapon,
             autoReload,
           }));

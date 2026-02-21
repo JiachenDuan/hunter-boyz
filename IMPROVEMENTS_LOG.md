@@ -47,3 +47,4 @@
 - 2026-02-20 18:43 PST — CS-ish movement: added velocity-based ground accel/friction + air accel (less 'ice skating')
 - 2026-02-20 18:51 PST — Light bunny-hop-ish: small speed carry/boost on jump when already moving
 - 2026-02-20 19:21 PST — CS-ish rifle accuracy: added movement-based spread penalty (running shots less accurate)
+- 2026-02-20 19:31 PST — CS-DM pacing: disabled sprint input (consistent movement speed, more CS-like)
