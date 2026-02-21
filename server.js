@@ -1341,7 +1341,13 @@ if (msg.t === 'input') {
             });
           } else if (weapon === 'rocket') {
             // Rocket launcher: direct hit = instant kill; otherwise splash damage.
-            const hit = rayHit3D(p, 80);
+            // Slight movement inaccuracy (CS-ish: stop to shoot).
+            const spd = Math.hypot(p.vx || 0, p.vz || 0);
+            const moveFrac = clamp((spd - 0.6) / 8.0, 0, 1);
+            const sway = moveFrac * 0.030;
+            const yawShot = p.yaw + (Math.random() - 0.5) * sway;
+            const pitchShot = clamp((p.pitch || 0) + (Math.random() - 0.5) * sway * 0.7, -1.2, 1.2);
+            const hit = rayHit3D(p, 80, yawShot, pitchShot);
             const ex = hit.endX, ey = hit.endY, ez = hit.endZ;
             const R = 6;
 

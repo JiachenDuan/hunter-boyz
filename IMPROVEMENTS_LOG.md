@@ -55,3 +55,4 @@
 - 2026-02-20 20:24 PST — Gunplay: added small rifle vertical recoil (server pitch kick per shot)
 - 2026-02-20 20:32 PST — CS-ish sniper: moving while scoped adds slight sway/inaccuracy (less laser while running)
 - 2026-02-20 20:41 PST — Grenade throw feels snappier: increased initial grenade throw speed (16→18)
+- 2026-02-20 20:51 PST — CS-ish rocket: added movement inaccuracy (stop to rocket more reliably)
