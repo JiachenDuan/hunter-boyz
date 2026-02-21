@@ -164,13 +164,7 @@ const MAPS = {
     // Goal: cleaner readability, less clutter, but still has: perimeter → courtyard → door choke → interior.
     // Jump props are low boxes (h~1.15) you can mantle/jump onto.
     obstacles: [
-      // Perimeter + main gate gap (north)
-      { x: -14.5, y: 0, z: -23, w: 19, h: 4.6, d: 2 },
-      { x: 14.5, y: 0, z: -23, w: 19, h: 4.6, d: 2 },
-      { x: -23, y: 0, z: 0, w: 2, h: 4.6, d: 46 },
-      { x: 23, y: 0, z: 0, w: 2, h: 4.6, d: 46 },
-      { x: 0, y: 0, z: 23, w: 46, h: 4.6, d: 2 },
-
+      // Perimeter walls removed (outer ring) — rely on bounds clamp instead.
       // Drained pool (very simple: two low rims)
       { x: -11, y: 0, z: -14, w: 1.0, h: 1.15, d: 9.0 },
       { x: -5, y: 0, z: -14, w: 1.0, h: 1.15, d: 9.0 },
