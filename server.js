@@ -1084,11 +1084,12 @@ if (msg.t === 'input') {
       // Returns the effective ground Y (eye-height) for the player's XZ position,
       // considering all obstacles as standable surfaces.
       function effectiveGroundY(x, z) {
-        let floor = playerEyeHeight; // base floor: feet at y=0, eyes at 1.8
+        const eyeH = 1.8;
+        let floor = eyeH; // base floor: feet at y=0, eyes at 1.8
         for (const o of world.obstacles) {
           const top = o.y + o.h; // top surface of this obstacle
-          const eyeAtTop = top + playerEyeHeight;
-          if (eyeAtTop <= playerEyeHeight + 0.01) continue; // skip ground-level boxes
+          const eyeAtTop = top + eyeH;
+          if (eyeAtTop <= eyeH + 0.01) continue; // skip ground-level boxes
           if (x >= o.x - o.w/2 && x <= o.x + o.w/2 &&
               z >= o.z - o.d/2 && z <= o.z + o.d/2) {
             if (eyeAtTop > floor) floor = eyeAtTop;
