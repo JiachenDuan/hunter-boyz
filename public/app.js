@@ -2972,8 +2972,12 @@ function spawnExplosion(msg) {
           streaks.push(line);
         }
 
-        // Sound
-        try { SFX.boom(); } catch {}
+        // Sound (distance-cull so far explosions don't overwhelm)
+        try {
+          const meP = (lastServerState?.players || []).find(p=>String(p.id)===String(myId));
+          const d = meP ? Math.hypot((meP.x - x), (meP.z - z)) : 0;
+          if (!meP || d < 18) SFX.boom();
+        } catch { try { SFX.boom(); } catch {} }
 
         const start = performance.now();
         const dur = 420;
