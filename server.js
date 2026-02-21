@@ -907,10 +907,7 @@ wss.on('connection', (ws) => {
         if (d > 3.0) return;
       }
 
-      // Cooldown to prevent spam
-      if (!p._tpOkAt) p._tpOkAt = 0;
-      if (t < p._tpOkAt) return;
-      p._tpOkAt = t + 1200;
+      // Always available (party/DM vibe)
 
       if (which === 'tower_up') {
         p.x = -18.0; p.y = 24.0; p.z = 18.0;
