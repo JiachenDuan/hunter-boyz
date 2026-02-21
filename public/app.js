@@ -352,6 +352,20 @@
               try { SFX.reload?.(); } catch {}
             } catch {}
           }
+          if (msg.t === 'toast' && msg.kind === 'headshot') {
+            try {
+              const el = document.getElementById('streakToast');
+              if (el) {
+                el.textContent = `🎯 HEADSHOT +${msg.bonus || 1}`;
+                el.classList.add('show');
+                clearTimeout(window.__kb_headshotT);
+                window.__kb_headshotT = setTimeout(() => { try { el.classList.remove('show'); } catch {} }, 950);
+              }
+              if (String(msg.id) === String(myId)) {
+                try { SFX.kill(); } catch {}
+              }
+            } catch {}
+          }
           if (msg.t === 'slash') onSlashMsg(msg);
           if (msg.t === 'pickup') {
             showKill(`${msg.id} picked up ${msg.what}`);

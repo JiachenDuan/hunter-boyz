@@ -1210,6 +1210,14 @@ if (msg.t === 'input') {
             hitId = dmg.hitId;
             hitHp = dmg.hitHp;
 
+            // Headshot bonus (satisfying high-skill moment)
+            try {
+              if (isHead && dmg.killed) {
+                p.score += 1;
+                broadcast({ t:'toast', kind:'headshot', id: p.id, bonus: 1 });
+              }
+            } catch {}
+
             broadcast({
               t: 'shot',
               weapon,
