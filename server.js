@@ -647,7 +647,7 @@ function spawnGrenade({ kind, ownerId, x, y, z, yaw, pitch, now }) {
   const dirY = Math.sin(pitch);
   const dirZ = Math.cos(yaw) * Math.cos(pitch);
 
-  const speed = 16;
+  const speed = 18;
   const vx = dirX * speed;
   const vy = (dirY * speed) + 3.5;
   const vz = dirZ * speed;

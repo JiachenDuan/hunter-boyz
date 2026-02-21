@@ -54,3 +54,4 @@
 - 2026-02-20 20:11 PST — Movement tuning: capped mid-air strafe speed (keeps air control CS-like, prevents runaway bhop)
 - 2026-02-20 20:24 PST — Gunplay: added small rifle vertical recoil (server pitch kick per shot)
 - 2026-02-20 20:32 PST — CS-ish sniper: moving while scoped adds slight sway/inaccuracy (less laser while running)
+- 2026-02-20 20:41 PST — Grenade throw feels snappier: increased initial grenade throw speed (16→18)
