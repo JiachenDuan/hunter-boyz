@@ -19,13 +19,7 @@
       ],
       mansion: [
         // Mansion v2 (ultra-lite): keep visuals aligned with server.js
-        // Perimeter + gate
-        { x: -14.5, y: 0, z: -23, w: 19, h: 4.6, d: 2 },
-        { x: 14.5, y: 0, z: -23, w: 19, h: 4.6, d: 2 },
-        { x: -23, y: 0, z: 0, w: 2, h: 4.6, d: 46 },
-        { x: 23, y: 0, z: 0, w: 2, h: 4.6, d: 46 },
-        { x: 0, y: 0, z: 23, w: 46, h: 4.6, d: 2 },
-
+        // Perimeter walls removed (outer ring)
         // Pool (two low rims)
         { x: -11, y: 0, z: -14, w: 1.0, h: 1.15, d: 9.0 },
         { x: -5, y: 0, z: -14, w: 1.0, h: 1.15, d: 9.0 },
