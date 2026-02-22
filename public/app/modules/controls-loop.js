@@ -629,12 +629,32 @@
     }
     if (scoreModal) scoreModal.addEventListener('click', (e)=>{ if (e.target===scoreModal) doScoreClose(e); });
 
-    function doEnableSound(e) {
-      if (e) { e.preventDefault(); e.stopPropagation(); }
+    function setSoundUI(on) {
+      try {
+        if (!soundBtn) return;
+        soundBtn.classList.toggle('soundOn', !!on);
+        soundBtn.textContent = on ? 'Sound: ON' : 'Sound: OFF';
+      } catch {}
+    }
+
+    function enableSoundNow() {
       try { SFX.enable(); } catch {}
       try { SFX.hit(); } catch {}
-      log('Sound enabled.');
+      setSoundUI(true);
+      try { log('Sound enabled.'); } catch {}
     }
+
+    function doEnableSound(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      enableSoundNow();
+    }
+
+    // Audio ON by default: auto-enable on the first user gesture.
+    // (Still requires a gesture on iOS, so we do it as soon as the user touches/clicks anything.)
+    setSoundUI(true);
+    window.addEventListener('pointerdown', () => { try { enableSoundNow(); } catch {} }, { passive: true, once: true });
+    window.addEventListener('touchstart', () => { try { enableSoundNow(); } catch {} }, { passive: true, once: true });
+
     soundBtn.addEventListener('click', doEnableSound);
     soundBtn.addEventListener('pointerdown', doEnableSound, { passive: false });
     soundBtn.addEventListener('touchend', doEnableSound, { passive: false });
