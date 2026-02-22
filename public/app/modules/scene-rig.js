@@ -1105,6 +1105,57 @@
           g.metadata._minigunBarrels = barrels;
         }
 
+        // TANK — first-person cockpit: thick barrel + thermal sleeve + hatch rim.
+        if (kind === 'tank') {
+          const tkDarkMat = new BABYLON.StandardMaterial(`tk_dark_${kind}`, scene);
+          tkDarkMat.diffuseColor = new BABYLON.Color3(0.10, 0.11, 0.12);
+          tkDarkMat.emissiveColor = new BABYLON.Color3(0.006, 0.006, 0.007);
+          tkDarkMat.specularColor = new BABYLON.Color3(0.20, 0.20, 0.22);
+          tkDarkMat.specularPower = 64;
+
+          const tkGreenMat = new BABYLON.StandardMaterial(`tk_green_${kind}`, scene);
+          tkGreenMat.diffuseColor = new BABYLON.Color3(0.22, 0.28, 0.15);
+          tkGreenMat.emissiveColor = new BABYLON.Color3(0.010, 0.014, 0.006);
+          tkGreenMat.specularColor = new BABYLON.Color3(0.04, 0.04, 0.04);
+          tkGreenMat.specularPower = 20;
+
+          // Thick smooth-bore barrel body
+          const barrelMain = BABYLON.MeshBuilder.CreateCylinder(`tk_barrel_${kind}`, { diameter: 0.20, height: 0.72, tessellation: 14 }, scene);
+          barrelMain.material = tkDarkMat;
+          barrelMain.parent = g;
+          barrelMain.rotation.x = Math.PI / 2;
+          barrelMain.position.set(0, -0.04, 0.40);
+
+          // Bore evacuator bump (mid-barrel ring)
+          const evacuator = BABYLON.MeshBuilder.CreateCylinder(`tk_evac_${kind}`, { diameter: 0.27, height: 0.11, tessellation: 14 }, scene);
+          evacuator.material = tkGreenMat;
+          evacuator.parent = g;
+          evacuator.rotation.x = Math.PI / 2;
+          evacuator.position.set(0, -0.04, 0.18);
+
+          // Thermal sleeve (canvas-green over barrel)
+          const sleeve = BABYLON.MeshBuilder.CreateCylinder(`tk_sleeve_${kind}`, { diameter: 0.23, height: 0.34, tessellation: 14 }, scene);
+          sleeve.material = tkGreenMat;
+          sleeve.parent = g;
+          sleeve.rotation.x = Math.PI / 2;
+          sleeve.position.set(0, -0.04, 0.54);
+
+          // Muzzle face
+          const muzzle = BABYLON.MeshBuilder.CreateCylinder(`tk_muzzle_${kind}`, { diameter: 0.22, height: 0.055, tessellation: 14 }, scene);
+          muzzle.material = tkDarkMat;
+          muzzle.parent = g;
+          muzzle.rotation.x = Math.PI / 2;
+          muzzle.position.set(0, -0.04, 0.78);
+
+          // Hatch edge below view (hull rim you see looking through hatch)
+          const hatchRim = BABYLON.MeshBuilder.CreateBox(`tk_hatch_${kind}`, { width: 0.55, height: 0.06, depth: 0.14 }, scene);
+          hatchRim.material = tkGreenMat;
+          hatchRim.parent = g;
+          hatchRim.position.set(0, -0.22, 0.14);
+
+          return g;
+        }
+
         return g;
       }
 
@@ -1118,10 +1169,11 @@
         knife: makeGunVariant('knife'),
         grenade_frag: makeGunVariant('grenade_frag'),
         grenade_impact: makeGunVariant('grenade_impact'),
+        tank: makeGunVariant('tank'),
       };
 
       function setGun(kind) {
-        const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket' || kind === 'minigun' || kind === 'knife' || kind === 'grenade_frag' || kind === 'grenade_impact') ? kind : 'rifle';
+        const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket' || kind === 'minigun' || kind === 'knife' || kind === 'grenade_frag' || kind === 'grenade_impact' || kind === 'tank') ? kind : 'rifle';
         for (const [name, node] of Object.entries(guns)) {
           const show = (name === k);
           // IMPORTANT: do NOT disable gun root nodes. Disabling a parent can make descendants

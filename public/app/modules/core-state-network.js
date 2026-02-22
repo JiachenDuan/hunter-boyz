@@ -385,6 +385,12 @@
           if (btnDrop) btnDrop.style.display = (meP && meP.powerWeapon === 'minigun') ? 'block' : 'none';
         } catch {}
 
+        // EXIT TANK button: show when riding a tank
+        try {
+          const btnExit = document.getElementById('btnExitTank');
+          if (btnExit) btnExit.style.display = (meP && meP.vehicle === 'tank') ? 'block' : 'none';
+        } catch {}
+
         // Pickup prompt (with sticky holdover so pickId doesn't flicker between ticks)
         try {
           const btnPickup = document.getElementById('btnPickup');
@@ -447,7 +453,9 @@
 
         // Keep gun model in sync with current effective weapon (power weapon overrides selection).
         try {
-          const eff = (meP.powerWeapon === 'minigun') ? 'minigun' : (document.getElementById('weapon')?.value || 'rifle');
+          const eff = (meP.vehicle === 'tank')
+            ? 'tank'
+            : ((meP.powerWeapon === 'minigun') ? 'minigun' : (document.getElementById('weapon')?.value || 'rifle'));
           if (fpRig?.setGun) fpRig.setGun(eff);
         } catch {}
 
@@ -691,6 +699,52 @@
           }
           tppMinigun.setEnabled(false);
 
+          // 3D tank model (shown when player is riding a tank; humanoid hidden)
+          const tankBodyMat = new BABYLON.StandardMaterial(`tkbm_${p.id}`, scene);
+          tankBodyMat.diffuseColor = new BABYLON.Color3(0.24, 0.31, 0.17);
+          tankBodyMat.emissiveColor = new BABYLON.Color3(0.015, 0.020, 0.008);
+          tankBodyMat.specularColor = new BABYLON.Color3(0, 0, 0);
+
+          const tankTrackMat = new BABYLON.StandardMaterial(`tktm_${p.id}`, scene);
+          tankTrackMat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.09);
+          tankTrackMat.emissiveColor = new BABYLON.Color3(0.004, 0.004, 0.004);
+          tankTrackMat.specularColor = new BABYLON.Color3(0, 0, 0);
+
+          const tppTank = new BABYLON.TransformNode(`p_${p.id}_tank`, scene);
+          tppTank.parent = root;
+
+          // Hull (root.y = eye-0.8 ≈ 1.0; hull center world y=0.36 → root-rel = -0.64)
+          const tkHull = BABYLON.MeshBuilder.CreateBox(`p_${p.id}_tk_hull`, { width: 1.2, height: 0.72, depth: 1.8 }, scene);
+          tkHull.parent = tppTank;
+          tkHull.position.y = -0.64;
+          tkHull.material = tankBodyMat;
+
+          // Tracks (left + right)
+          const tkTrackL = BABYLON.MeshBuilder.CreateBox(`p_${p.id}_tk_tL`, { width: 0.22, height: 0.54, depth: 1.86 }, scene);
+          tkTrackL.parent = tppTank;
+          tkTrackL.position.set(-0.71, -0.73, 0);
+          tkTrackL.material = tankTrackMat;
+
+          const tkTrackR = BABYLON.MeshBuilder.CreateBox(`p_${p.id}_tk_tR`, { width: 0.22, height: 0.54, depth: 1.86 }, scene);
+          tkTrackR.parent = tppTank;
+          tkTrackR.position.set(0.71, -0.73, 0);
+          tkTrackR.material = tankTrackMat;
+
+          // Turret (hull top world y=0.72; turret center at 0.90 → root-rel = -0.10)
+          const tkTurret = BABYLON.MeshBuilder.CreateBox(`p_${p.id}_tk_turret`, { width: 0.72, height: 0.36, depth: 0.78 }, scene);
+          tkTurret.parent = tppTank;
+          tkTurret.position.y = -0.10;
+          tkTurret.material = tankBodyMat;
+
+          // Barrel (extends forward from turret)
+          const tkBarrel = BABYLON.MeshBuilder.CreateCylinder(`p_${p.id}_tk_barrel`, { diameter: 0.09, height: 1.0, tessellation: 10 }, scene);
+          tkBarrel.parent = tppTank;
+          tkBarrel.rotation.x = Math.PI / 2;
+          tkBarrel.position.set(0, -0.10, 1.40);
+          tkBarrel.material = tankTrackMat;
+
+          tppTank.setEnabled(false);
+
           // 3D nameplate above character (in-world, not UI overlay)
           let namePlate = null;
           try {
@@ -770,6 +824,8 @@
             fartFx,
             tppWeaponVisible: 'gun',
             weapons: { gun, minigun: tppMinigun, minigunRotor: tppMgRotor },
+            tppTank,
+            humanoidParts: [body, head, lArm, rArm, gun],
           };
           players.set(p.id, root);
           mesh = root;
@@ -810,15 +866,32 @@
             }
           } catch {}
 
-          // Keep third-person weapon mesh in sync with power weapon state.
+          // Keep third-person weapon + vehicle mesh in sync.
           try {
             const w = mesh.metadata.weapons;
+            const inTank = (p.vehicle === 'tank');
             const hasMinigun = (p.powerWeapon === 'minigun');
             const nextVisible = hasMinigun ? 'minigun' : 'gun';
-            if (mesh.metadata.tppWeaponVisible !== nextVisible) {
-              if (w?.gun) w.gun.setEnabled(!hasMinigun);
-              if (w?.minigun) w.minigun.setEnabled(hasMinigun);
-              mesh.metadata.tppWeaponVisible = nextVisible;
+
+            // Tank on/off toggle: swap humanoid ↔ tank mesh
+            const prevInTank = mesh.metadata._inTank || false;
+            if (prevInTank !== inTank) {
+              mesh.metadata._inTank = inTank;
+              if (mesh.metadata.tppTank) mesh.metadata.tppTank.setEnabled(inTank);
+              const hp = mesh.metadata.humanoidParts;
+              if (hp) hp.forEach(m => { try { m.setEnabled(!inTank); } catch {} });
+            }
+
+            // Weapon visibility (only when not in tank)
+            if (!inTank) {
+              if (mesh.metadata.tppWeaponVisible !== nextVisible) {
+                if (w?.gun) w.gun.setEnabled(!hasMinigun);
+                if (w?.minigun) w.minigun.setEnabled(hasMinigun);
+                mesh.metadata.tppWeaponVisible = nextVisible;
+              }
+            } else {
+              if (w?.gun) w.gun.setEnabled(false);
+              if (w?.minigun) w.minigun.setEnabled(false);
             }
           } catch {}
         }
@@ -839,7 +912,7 @@
           camera.rotation.y = p.yaw;
           camera.rotation.x = p.pitch;
           try {
-            const eff = (p.powerWeapon === 'minigun') ? 'minigun' : (document.getElementById('weapon')?.value || 'rifle');
+            const eff = (p.vehicle === 'tank') ? 'tank' : ((p.powerWeapon === 'minigun') ? 'minigun' : (document.getElementById('weapon')?.value || 'rifle'));
             fpRig?.setGun?.(eff);
           } catch {}
         }
