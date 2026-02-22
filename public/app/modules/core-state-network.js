@@ -266,7 +266,7 @@
       if (state.started) {
         const se = (typeof s.game?.roundEndsAt === 'number') ? s.game.roundEndsAt : 0;
         if (se) roundEndsAtMs = se;
-        else if (!roundEndsAtMs) roundEndsAtMs = Date.now() + 120000;
+        else if (!roundEndsAtMs) roundEndsAtMs = Date.now() + 180000;
       } else {
         roundEndsAtMs = 0;
       }

@@ -212,7 +212,7 @@ const MAPS = {
 
 const BUILD = String(Date.now());
 const WIN_SCORE = 8;
-const ROUND_MS = 90_000;
+const ROUND_MS = 180_000;
 const AFK_MS = 60_000;
 
 const GAME = {
