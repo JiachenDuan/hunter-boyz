@@ -555,6 +555,23 @@
           tip.rotation.x = Math.PI / 2;
           tip.position.set(0.05, 0.01, 0.72);
 
+          // Fire aura (classic Hunger Boyz): lightweight glow spheres (no textures/particles).
+          const flameMat = new BABYLON.StandardMaterial(`k_flameMat_${kind}`, scene);
+          flameMat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+          flameMat.emissiveColor = new BABYLON.Color3(1.0, 0.45, 0.10);
+          flameMat.alpha = 0.70;
+          flameMat.disableLighting = true;
+
+          const flames = [];
+          [0.30, 0.46, 0.62].forEach((z, i) => {
+            const f = BABYLON.MeshBuilder.CreateSphere(`k_fl_${kind}_${i}`, { diameter: 0.085, segments: 6 }, scene);
+            f.material = flameMat;
+            f.parent = g;
+            f.position.set(0.05, 0.02, z);
+            f.isPickable = false;
+            flames.push(f);
+          });
+
           // Base pose: right-side CS feel
           g.rotation.x = -0.10;
           g.rotation.z = -0.22;
@@ -565,6 +582,8 @@
           // stab animation hook
           g.metadata = g.metadata || {};
           g.metadata._stab = 0;
+          g.metadata._knifeFlames = flames;
+          g.metadata._knifeFlameMat = flameMat;
 
           return g;
         }
@@ -1138,6 +1157,37 @@
       muzzleFlash.isVisible = false;
 
       fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, muzzleFlash, setGun, guns, _flashBaseSize: 0.18 };
+
+      // First-person weapon cosmetics animation loop (very lightweight).
+      // Knife flame aura flicker.
+      try {
+        if (!ensureFirstPersonRig._beforeRenderHooked) {
+          ensureFirstPersonRig._beforeRenderHooked = true;
+          scene.onBeforeRenderObservable.add(() => {
+            try {
+              const k = fpRig?.guns?.knife;
+              if (!k) return;
+              // Flame meshes exist even when hidden; only animate when knife is visible.
+              const knifeVisible = k.getDescendants(false).some(d => d?.isVisible === true);
+              if (!knifeVisible) return;
+              const mm = k.metadata?._knifeFlameMat;
+              const fs = k.metadata?._knifeFlames;
+              if (!mm || !fs || !fs.length) return;
+
+              const t = performance.now();
+              const wob = 0.75 + 0.25 * Math.sin(t / 85);
+              const wob2 = 0.75 + 0.25 * Math.sin(t / 63);
+              mm.alpha = 0.55 + 0.25 * wob;
+              for (let i = 0; i < fs.length; i++) {
+                const f = fs[i];
+                const s = 0.85 + 0.35 * (i % 2 ? wob : wob2);
+                try { f.scaling.setAll(s); } catch {}
+              }
+            } catch {}
+          });
+        }
+      } catch {}
+
       // Keep gun in sync with weapon selection.
       try { fpRig.setGun(document.getElementById('weapon')?.value); } catch {}
       return fpRig;
