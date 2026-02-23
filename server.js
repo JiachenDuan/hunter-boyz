@@ -306,6 +306,8 @@ function makePlayer(name) {
     disconnectedAt: 0,
     fartUntil: 0,
     fartTickAt: 0,
+    hookUntil: 0,
+    hookFrom: null,
 
     // Power weapon (pickup-only)
     powerWeapon: null,
@@ -356,6 +358,9 @@ function serializeState() {
       respawnInMs: p.hp > 0 ? 0 : Math.max(0, p.respawnAt - nowMs()),
       connected: playerConn.has(p.id),
       fartInMs: Math.max(0, (p.fartUntil || 0) - nowMs()),
+      hookInMs: Math.max(0, (p.hookUntil || 0) - nowMs()),
+      hookFrom: (p.hookUntil && p.hookUntil > nowMs()) ? (p.hookFrom || null) : null,
+      weapon: p.weapon || 'rifle',
       color: p.color,
     })),
   };
@@ -402,6 +407,8 @@ function respawn(p) {
   p.rifleBloom = 0;
   p.fartUntil = 0;
   p.fartTickAt = 0;
+  p.hookUntil = 0;
+  p.hookFrom = null;
   p.disconnectedAt = 0;
   // Release any pickup pad this player was holding so pad becomes available again
   const t = nowMs();
@@ -1165,6 +1172,9 @@ if (msg.t === 'input') {
         }
       }
 
+      // Track current weapon for state broadcast (shows third-person model to others)
+      if (msg.weapon) p.weapon = getWeapon(msg.weapon).id;
+
       // shoot
       if (msg.shoot) {
         const t = nowMs();
@@ -1498,6 +1508,25 @@ if (msg.t === 'input') {
               hit: hitId,
               hitHp,
             });
+          } else if (weapon === 'fishing_pole') {
+            // Fishing pole: hook target, pull them toward shooter for 1.8s. No damage.
+            const fDef = getWeapon('fishing_pole');
+            const hit = rayHit(p, fDef.range || 18);
+            if (hit.target) {
+              const tNow = nowMs();
+              hit.target.hookUntil = tNow + (fDef.hookDurationMs || 1800);
+              hit.target.hookFrom = p.id;
+              broadcast({ t: 'hook', from: p.id, to: hit.target.id });
+            }
+            broadcast({
+              t: 'shot', weapon, from: p.id,
+              sx: p.x, sy: p.y, sz: p.z,
+              yaw: p.yaw, pitch: p.pitch,
+              ex: hit.endX, ey: p.y, ez: hit.endZ,
+              hit: hit.target ? hit.target.id : null,
+              hitHp: hit.target ? hit.target.hp : null,
+            });
+
           } else if (weapon === 'fart') {
             // Fart gun: applies a 5s fart cloud debuff; -5 HP per second.
             const hit = rayHit(p, 22);
@@ -1677,6 +1706,26 @@ setInterval(() => {
     if (p.fartUntil && t >= p.fartUntil) {
       p.fartUntil = 0;
       p.fartTickAt = 0;
+    }
+
+    // Fishing hook: pull hooked player toward hooker each tick
+    if (p.hookUntil && t < p.hookUntil && p.hookFrom) {
+      const hooker = players.get(p.hookFrom);
+      if (hooker && hooker.hp > 0 && p.hp > 0) {
+        const dx = hooker.x - p.x;
+        const dz = hooker.z - p.z;
+        const dist = Math.hypot(dx, dz) || 1;
+        if (dist > 1.0) {
+          const pull = 5.5; // units/sec
+          const dt = 0.05;  // tick interval
+          p.x += (dx / dist) * pull * dt;
+          p.z += (dz / dist) * pull * dt;
+        }
+      }
+    }
+    if (p.hookUntil && t >= p.hookUntil) {
+      p.hookUntil = 0;
+      p.hookFrom = null;
     }
   }
 

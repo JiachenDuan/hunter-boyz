@@ -844,6 +844,7 @@
             wSel === 'fart' ||
             wSel === 'rocket' ||
             wSel === 'knife' ||
+            wSel === 'fishing_pole' ||
             wSel === 'grenade_frag' ||
             wSel === 'grenade_impact' ||
             wSel === 'minigun'

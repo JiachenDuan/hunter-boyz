@@ -674,6 +674,30 @@
           gun.position.set(0.32, 1.05, 0.38);
           gun.material = gunMat;
 
+          // Third-person fishing pole model (shown when weapon === 'fishing_pole')
+          const tppFishingPole = new BABYLON.TransformNode(`p_${p.id}_fp`, scene);
+          tppFishingPole.parent = root;
+          tppFishingPole.position.set(0.32, 1.02, 0.30);
+
+          const rodMat = new BABYLON.StandardMaterial(`fprod_${p.id}`, scene);
+          rodMat.diffuseColor = new BABYLON.Color3(0.16, 0.16, 0.18);
+          rodMat.specularColor = new BABYLON.Color3(0.20, 0.20, 0.22);
+          rodMat.specularPower = 40;
+
+          const fpRod = BABYLON.MeshBuilder.CreateCylinder(`p_${p.id}_fp_rod`, { height: 0.55, diameterTop: 0.010, diameterBottom: 0.018, tessellation: 8 }, scene);
+          fpRod.parent = tppFishingPole;
+          fpRod.rotation.x = Math.PI / 2;
+          fpRod.position.z = 0.20;
+          fpRod.material = rodMat;
+
+          const fpGrip = BABYLON.MeshBuilder.CreateCylinder(`p_${p.id}_fp_grip`, { height: 0.14, diameter: 0.024, tessellation: 8 }, scene);
+          fpGrip.parent = tppFishingPole;
+          fpGrip.rotation.x = Math.PI / 2;
+          fpGrip.position.z = -0.04;
+          fpGrip.material = gunMat;
+
+          tppFishingPole.setEnabled(false);
+
           // Third-person minigun model shown when player holds minigun pickup.
           const tppMinigun = new BABYLON.TransformNode(`p_${p.id}_minigun`, scene);
           tppMinigun.parent = root;
@@ -824,7 +848,7 @@
             namePlate,
             fartFx,
             tppWeaponVisible: 'gun',
-            weapons: { gun, minigun: tppMinigun, minigunRotor: tppMgRotor },
+            weapons: { gun, minigun: tppMinigun, minigunRotor: tppMgRotor, fishingPole: tppFishingPole },
             tppTank,
             humanoidParts: [body, head, lArm, rArm, gun],
           };
@@ -884,15 +908,19 @@
             }
 
             // Weapon visibility (only when not in tank)
+            const hasFishingPole = (!hasMinigun && p.weapon === 'fishing_pole');
+            const nextVisibleFull = hasMinigun ? 'minigun' : (hasFishingPole ? 'fishing_pole' : 'gun');
             if (!inTank) {
-              if (mesh.metadata.tppWeaponVisible !== nextVisible) {
-                if (w?.gun) w.gun.setEnabled(!hasMinigun);
-                if (w?.minigun) w.minigun.setEnabled(hasMinigun);
-                mesh.metadata.tppWeaponVisible = nextVisible;
+              if (mesh.metadata.tppWeaponVisible !== nextVisibleFull) {
+                if (w?.gun) w.gun.setEnabled(nextVisibleFull === 'gun');
+                if (w?.minigun) w.minigun.setEnabled(nextVisibleFull === 'minigun');
+                if (w?.fishingPole) w.fishingPole.setEnabled(nextVisibleFull === 'fishing_pole');
+                mesh.metadata.tppWeaponVisible = nextVisibleFull;
               }
             } else {
               if (w?.gun) w.gun.setEnabled(false);
               if (w?.minigun) w.minigun.setEnabled(false);
+              if (w?.fishingPole) w.fishingPole.setEnabled(false);
             }
           } catch {}
         }

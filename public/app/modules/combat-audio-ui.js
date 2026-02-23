@@ -538,6 +538,37 @@
             n.stop(t0+0.16);
           });
         })(),
+        cast: () => (function(){
+          // Fishing pole cast: rising whistling swish + light "plop" at end
+          play((c) => {
+            const t0 = c.currentTime + 0.001;
+            // Swish: filtered noise swept high
+            const n = c.createBufferSource();
+            n.buffer = noiseBuffer(c, 0.22);
+            const bp = c.createBiquadFilter();
+            bp.type = 'bandpass';
+            bp.frequency.setValueAtTime(800, t0);
+            bp.frequency.linearRampToValueAtTime(3200, t0 + 0.18);
+            bp.Q.setValueAtTime(2.5, t0);
+            const ng = c.createGain();
+            ng.gain.setValueAtTime(0.0001, t0);
+            ng.gain.exponentialRampToValueAtTime(0.18, t0 + 0.04);
+            ng.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22);
+            n.connect(bp).connect(ng).connect(c.destination);
+            n.start(t0); n.stop(t0 + 0.22);
+            // Plop: short sine blip
+            const o = c.createOscillator();
+            const og = c.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(520, t0 + 0.20);
+            o.frequency.exponentialRampToValueAtTime(280, t0 + 0.30);
+            og.gain.setValueAtTime(0.0001, t0 + 0.20);
+            og.gain.exponentialRampToValueAtTime(0.10, t0 + 0.22);
+            og.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.32);
+            o.connect(og).connect(c.destination);
+            o.start(t0 + 0.20); o.stop(t0 + 0.32);
+          });
+        })(),
         boom: () => (function(){
           play((c)=>{
             const t0=c.currentTime+0.001;

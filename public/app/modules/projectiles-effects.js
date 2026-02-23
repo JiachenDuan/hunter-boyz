@@ -496,6 +496,7 @@ function spawnDent(pos, normal, size, kind) {
         }
         if (wpn === 'rocket') { try { SFX.whoosh(); } catch {} }
         else if (wpn === 'knife') { /* no gun sound */ }
+        else if (wpn === 'fishing_pole') { try { SFX.cast(); } catch {} }
         else SFX.shoot(wpn);
         if (s.hit) {
           showHitmarker();
