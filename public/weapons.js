@@ -76,6 +76,14 @@
       bounce: 0.35,
     },
 
+    tank: {
+      id:'tank', label:'Tank Cannon', type:'splash',
+      fireCdMs: 2200, range: 60,
+      splashR: 7,
+      dmgMax: 150,
+      dmgMin: 25,
+    },
+
     minigun: {
       id:'minigun', label:'Minigun', type:'minigun',
       fireCdMs: 20,        // 50 rounds/sec at full spin (3000 RPM equiv)

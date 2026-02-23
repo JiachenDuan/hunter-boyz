@@ -588,6 +588,57 @@
           return g;
         }
 
+        if (kind === 'fishing_pole') {
+          // Long tapered rod + grip handle + small hook — same position as other guns.
+          const rodMat = new BABYLON.StandardMaterial(`fpRodMat_${kind}`, scene);
+          rodMat.diffuseColor = new BABYLON.Color3(0.16, 0.16, 0.18);
+          rodMat.specularColor = new BABYLON.Color3(0.25, 0.25, 0.28);
+          rodMat.specularPower = 48;
+
+          const lineMat = new BABYLON.StandardMaterial(`fpLineMat_${kind}`, scene);
+          lineMat.emissiveColor = new BABYLON.Color3(0.85, 0.92, 1.0);
+          lineMat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+          lineMat.alpha = 0.55;
+
+          // Rod (long tapered cylinder pointing forward)
+          const rod = BABYLON.MeshBuilder.CreateCylinder(`fp_rod_${kind}`, { height: 1.05, diameterTop: 0.008, diameterBottom: 0.018, tessellation: 10 }, scene);
+          rod.material = rodMat;
+          rod.parent = g;
+          rod.rotation.x = Math.PI / 2;
+          rod.position.set(0.02, 0.00, 0.38);
+
+          // Grip handle (thicker section at back)
+          const grip = BABYLON.MeshBuilder.CreateCylinder(`fp_grip_${kind}`, { height: 0.22, diameter: 0.028, tessellation: 10 }, scene);
+          grip.material = gripMat;
+          grip.parent = g;
+          grip.rotation.x = Math.PI / 2;
+          grip.position.set(0.02, 0.00, -0.08);
+
+          // Reel (small cylinder on side)
+          const reel = BABYLON.MeshBuilder.CreateCylinder(`fp_reel_${kind}`, { diameter: 0.04, height: 0.03, tessellation: 12 }, scene);
+          reel.material = accentMat;
+          reel.parent = g;
+          reel.rotation.z = Math.PI / 2;
+          reel.position.set(0.05, -0.02, -0.02);
+
+          // Hook (small torus at tip)
+          const hook = BABYLON.MeshBuilder.CreateTorus(`fp_hook_${kind}`, { diameter: 0.06, thickness: 0.008, tessellation: 14 }, scene);
+          hook.material = accentMat;
+          hook.parent = g;
+          hook.rotation.x = Math.PI / 2;
+          hook.rotation.z = 0.65;
+          hook.position.set(0.02, 0.00, 0.94);
+
+          // Line segment near tip (cosmetic)
+          const line = BABYLON.MeshBuilder.CreateCylinder(`fp_line_${kind}`, { height: 0.28, diameter: 0.003, tessellation: 6 }, scene);
+          line.material = lineMat;
+          line.parent = g;
+          line.rotation.x = Math.PI / 2;
+          line.position.set(0.02, 0.00, 0.80);
+
+          return g;
+        }
+
         if (kind === 'grenade_frag' || kind === 'grenade_impact') {
           // Cartoon grenade: make it BIG + close so it never "disappears" on iPhone.
           const isImpact = (kind === 'grenade_impact');
@@ -1105,53 +1156,77 @@
           g.metadata._minigunBarrels = barrels;
         }
 
-        // TANK — first-person cockpit: thick barrel + thermal sleeve + hatch rim.
+        // TANK — first-person cockpit: barrel + turret sides + hatch ring (head-out-of-hatch view).
         if (kind === 'tank') {
           const tkDarkMat = new BABYLON.StandardMaterial(`tk_dark_${kind}`, scene);
-          tkDarkMat.diffuseColor = new BABYLON.Color3(0.10, 0.11, 0.12);
-          tkDarkMat.emissiveColor = new BABYLON.Color3(0.006, 0.006, 0.007);
+          tkDarkMat.diffuseColor = new BABYLON.Color3(0.08, 0.09, 0.10);
+          tkDarkMat.emissiveColor = new BABYLON.Color3(0.004, 0.004, 0.005);
           tkDarkMat.specularColor = new BABYLON.Color3(0.20, 0.20, 0.22);
           tkDarkMat.specularPower = 64;
 
           const tkGreenMat = new BABYLON.StandardMaterial(`tk_green_${kind}`, scene);
-          tkGreenMat.diffuseColor = new BABYLON.Color3(0.22, 0.28, 0.15);
-          tkGreenMat.emissiveColor = new BABYLON.Color3(0.010, 0.014, 0.006);
-          tkGreenMat.specularColor = new BABYLON.Color3(0.04, 0.04, 0.04);
-          tkGreenMat.specularPower = 20;
+          tkGreenMat.diffuseColor = new BABYLON.Color3(0.20, 0.26, 0.12);
+          tkGreenMat.emissiveColor = new BABYLON.Color3(0.008, 0.012, 0.004);
+          tkGreenMat.specularColor = new BABYLON.Color3(0.03, 0.04, 0.02);
+          tkGreenMat.specularPower = 18;
 
-          // Thick smooth-bore barrel body
-          const barrelMain = BABYLON.MeshBuilder.CreateCylinder(`tk_barrel_${kind}`, { diameter: 0.20, height: 0.72, tessellation: 14 }, scene);
+          // Barrel body (thick smooth-bore)
+          const barrelMain = BABYLON.MeshBuilder.CreateCylinder(`tk_barrel_${kind}`, { diameter: 0.19, height: 0.75, tessellation: 14 }, scene);
           barrelMain.material = tkDarkMat;
           barrelMain.parent = g;
           barrelMain.rotation.x = Math.PI / 2;
-          barrelMain.position.set(0, -0.04, 0.40);
+          barrelMain.position.set(0, -0.02, 0.42);
 
-          // Bore evacuator bump (mid-barrel ring)
+          // Bore evacuator ring (mid-barrel)
           const evacuator = BABYLON.MeshBuilder.CreateCylinder(`tk_evac_${kind}`, { diameter: 0.27, height: 0.11, tessellation: 14 }, scene);
           evacuator.material = tkGreenMat;
           evacuator.parent = g;
           evacuator.rotation.x = Math.PI / 2;
-          evacuator.position.set(0, -0.04, 0.18);
+          evacuator.position.set(0, -0.02, 0.20);
 
-          // Thermal sleeve (canvas-green over barrel)
+          // Thermal sleeve
           const sleeve = BABYLON.MeshBuilder.CreateCylinder(`tk_sleeve_${kind}`, { diameter: 0.23, height: 0.34, tessellation: 14 }, scene);
           sleeve.material = tkGreenMat;
           sleeve.parent = g;
           sleeve.rotation.x = Math.PI / 2;
-          sleeve.position.set(0, -0.04, 0.54);
+          sleeve.position.set(0, -0.02, 0.56);
 
-          // Muzzle face
-          const muzzle = BABYLON.MeshBuilder.CreateCylinder(`tk_muzzle_${kind}`, { diameter: 0.22, height: 0.055, tessellation: 14 }, scene);
+          // Muzzle brake face
+          const muzzle = BABYLON.MeshBuilder.CreateCylinder(`tk_muzzle_${kind}`, { diameter: 0.24, height: 0.06, tessellation: 14 }, scene);
           muzzle.material = tkDarkMat;
           muzzle.parent = g;
           muzzle.rotation.x = Math.PI / 2;
-          muzzle.position.set(0, -0.04, 0.78);
+          muzzle.position.set(0, -0.02, 0.80);
 
-          // Hatch edge below view (hull rim you see looking through hatch)
-          const hatchRim = BABYLON.MeshBuilder.CreateBox(`tk_hatch_${kind}`, { width: 0.55, height: 0.06, depth: 0.14 }, scene);
-          hatchRim.material = tkGreenMat;
-          hatchRim.parent = g;
-          hatchRim.position.set(0, -0.22, 0.14);
+          // Hatch ring (the circular opening player's head pokes through)
+          const hatchRing = BABYLON.MeshBuilder.CreateTorus(`tk_hatchring_${kind}`, { diameter: 0.54, thickness: 0.09, tessellation: 18 }, scene);
+          hatchRing.material = tkDarkMat;
+          hatchRing.parent = g;
+          hatchRing.position.set(0, -0.26, 0.18);
+
+          // Left turret side wall (visible at left screen edge)
+          const lWall = BABYLON.MeshBuilder.CreateBox(`tk_lwall_${kind}`, { width: 0.09, height: 0.38, depth: 0.62 }, scene);
+          lWall.material = tkGreenMat;
+          lWall.parent = g;
+          lWall.position.set(-0.38, -0.10, 0.30);
+
+          // Right turret side wall
+          const rWall = BABYLON.MeshBuilder.CreateBox(`tk_rwall_${kind}`, { width: 0.09, height: 0.38, depth: 0.62 }, scene);
+          rWall.material = tkGreenMat;
+          rWall.parent = g;
+          rWall.position.set(0.38, -0.10, 0.30);
+
+          // Gun mantlet block at barrel base (where barrel meets turret)
+          const mantlet = BABYLON.MeshBuilder.CreateBox(`tk_mantlet_${kind}`, { width: 0.30, height: 0.22, depth: 0.16 }, scene);
+          mantlet.material = tkDarkMat;
+          mantlet.parent = g;
+          mantlet.position.set(0, -0.04, 0.10);
+
+          // Bottom hull plate (visible at lower screen edge)
+          const bottomPlate = BABYLON.MeshBuilder.CreateBox(`tk_bottom_${kind}`, { width: 0.62, height: 0.08, depth: 0.30 }, scene);
+          bottomPlate.material = tkGreenMat;
+          bottomPlate.parent = g;
+          bottomPlate.position.set(0, -0.32, 0.28);
 
           return g;
         }

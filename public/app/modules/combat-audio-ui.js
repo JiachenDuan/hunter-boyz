@@ -569,6 +569,68 @@
             o.start(t0 + 0.20); o.stop(t0 + 0.32);
           });
         })(),
+        cannon: () => (function(){
+          // Tank cannon shot: sharp CRACK + deep rolling BOOM + low rumble
+          play((c) => {
+            const t0 = c.currentTime + 0.001;
+            // Deep bass boom
+            const o = c.createOscillator();
+            const gn = c.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(90, t0);
+            o.frequency.exponentialRampToValueAtTime(22, t0 + 0.55);
+            gn.gain.setValueAtTime(0.0001, t0);
+            gn.gain.exponentialRampToValueAtTime(0.52, t0 + 0.006);
+            gn.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.70);
+            o.connect(gn).connect(c.destination);
+            o.start(t0); o.stop(t0 + 0.75);
+            // Sharp crack (mid-high noise burst)
+            const n1 = c.createBufferSource();
+            n1.buffer = noiseBuffer(c, 0.15);
+            const hp1 = c.createBiquadFilter();
+            hp1.type = 'bandpass';
+            hp1.frequency.setValueAtTime(900, t0);
+            hp1.Q.setValueAtTime(0.8, t0);
+            const ng1 = c.createGain();
+            ng1.gain.setValueAtTime(0.0001, t0);
+            ng1.gain.exponentialRampToValueAtTime(0.45, t0 + 0.004);
+            ng1.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+            n1.connect(hp1).connect(ng1).connect(c.destination);
+            n1.start(t0); n1.stop(t0 + 0.20);
+            // Low rolling rumble
+            const n2 = c.createBufferSource();
+            n2.buffer = noiseBuffer(c, 0.65);
+            const lp2 = c.createBiquadFilter();
+            lp2.type = 'lowpass';
+            lp2.frequency.setValueAtTime(110, t0);
+            const ng2 = c.createGain();
+            ng2.gain.setValueAtTime(0.0001, t0 + 0.04);
+            ng2.gain.exponentialRampToValueAtTime(0.30, t0 + 0.12);
+            ng2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.75);
+            n2.connect(lp2).connect(ng2).connect(c.destination);
+            n2.start(t0); n2.stop(t0 + 0.80);
+          });
+        })(),
+        tankEngineStart: () => {
+          // Starts looping engine hum, returns a stop() function.
+          let src = null, gainNode = null;
+          try {
+            const c = getCtx();
+            if (!c) return () => {};
+            const buf = noiseBuffer(c, 0.5);
+            src = c.createBufferSource();
+            src.buffer = buf;
+            src.loop = true;
+            const lp = c.createBiquadFilter();
+            lp.type = 'lowpass';
+            lp.frequency.setValueAtTime(75, c.currentTime);
+            gainNode = c.createGain();
+            gainNode.gain.setValueAtTime(0.10, c.currentTime);
+            src.connect(lp).connect(gainNode).connect(c.destination);
+            src.start();
+          } catch {}
+          return () => { try { src && src.stop(); } catch {} try { gainNode && gainNode.disconnect(); } catch {} };
+        },
         boom: () => (function(){
           play((c)=>{
             const t0=c.currentTime+0.001;

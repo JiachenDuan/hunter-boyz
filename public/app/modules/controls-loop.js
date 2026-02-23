@@ -783,6 +783,20 @@
         }
       } catch {}
 
+      // Tank engine sound: start looping hum when in tank, stop when leaving
+      try {
+        const meState = lastServerState?.players?.find(p => p.id === myId);
+        const inTank = meState?.vehicle === 'tank';
+        if (inTank && !window.__tankEngineRunning) {
+          window.__tankEngineRunning = true;
+          window.__tankEngineStop = SFX?.tankEngineStart?.();
+        } else if (!inTank && window.__tankEngineRunning) {
+          window.__tankEngineRunning = false;
+          try { window.__tankEngineStop?.(); } catch {}
+          window.__tankEngineStop = null;
+        }
+      } catch {}
+
       // Smooth remote players
       for (const [id, mesh] of players.entries()) {
         if (id === myId) continue;
@@ -857,7 +871,8 @@
           }
 
           const wSel = document.getElementById('weapon')?.value;
-          const weapon = (
+          const meVehicle = lastServerState?.players?.find(p => p.id === myId)?.vehicle;
+          const weapon = (meVehicle === 'tank') ? 'tank' : (
             wSel === 'shotgun' ||
             wSel === 'sniper' ||
             wSel === 'fart' ||

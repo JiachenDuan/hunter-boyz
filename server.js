@@ -258,19 +258,10 @@ function applyMapConfig(mapId) {
   const map = MAPS[mapId] || MAPS.arena;
   GAME.mapId = map.id;
 
-  for (const p of pickupPads) {
-    p.heldBy = null;
-    p.respawnAt = 0;
-  }
-  const pads = map.pickupPads || [];
-  for (let i = 0; i < pickupPads.length; i++) {
-    const src = pads[i] || pads[0];
-    if (!src) continue;
-    pickupPads[i].id = src.id || pickupPads[i].id;
-    pickupPads[i].type = src.type || 'minigun';
-    pickupPads[i].x = src.x;
-    pickupPads[i].y = src.y;
-    pickupPads[i].z = src.z;
+  // Rebuild pickupPads from map config (clear+repopulate handles different pad counts per map)
+  pickupPads.length = 0;
+  for (const src of (map.pickupPads || [])) {
+    pickupPads.push({ id: src.id, type: src.type || 'minigun', x: src.x, y: src.y, z: src.z, respawnAt: 0, heldBy: null });
   }
   minigunDrop = null;
 }
@@ -1202,6 +1193,8 @@ if (msg.t === 'input') {
         let weapon = getWeapon((msg.weapon || 'rifle')).id;
         // Pickup-only power weapon override
         if (p.powerWeapon === 'minigun') weapon = 'minigun';
+        // Vehicle override: tank always fires tank cannon
+        if (p.vehicle === 'tank') weapon = 'tank';
 
         // Minigun spin-up/down must update every input tick regardless of fire cooldown.
         // If we put spin inside the fireCdMs gate, lastShotAt gets set on first entry,
@@ -1547,6 +1540,26 @@ if (msg.t === 'input') {
               hit: hit.target ? hit.target.id : null,
               hitHp: hit.target ? hit.target.hp : null,
             });
+
+          } else if (weapon === 'tank') {
+            // Tank cannon: heavy splash damage. Player must be in tank.
+            if (p.vehicle !== 'tank') return;
+            const tkDef = getWeapon('tank');
+            const hit = rayHit(p, tkDef.range || 60);
+            const ex = hit.endX, ey = p.y + 0.4, ez = hit.endZ;
+            const R = tkDef.splashR || 7;
+            let hitId = null, hitHp = null;
+            for (const other of players.values()) {
+              if (other.id === p.id || other.hp <= 0) continue;
+              const dist = Math.hypot(other.x - ex, other.y - ey, other.z - ez);
+              if (dist <= R) {
+                const dmg = Math.round((tkDef.dmgMax || 150) * (1 - dist / R) + (tkDef.dmgMin || 25));
+                other.hp = Math.max(0, other.hp - dmg);
+                if (!hitId) { hitId = other.id; hitHp = other.hp; }
+              }
+            }
+            broadcast({ t: 'explode', x: ex, y: ey, z: ez, r: R, kind: 'tank' });
+            broadcast({ t: 'shot', weapon: 'tank', from: p.id, sx: p.x, sy: p.y, sz: p.z, yaw: p.yaw, pitch: p.pitch, ex, ey, ez, hit: hitId, hitHp });
 
           } else if (weapon === 'fart') {
             // Fart gun: applies a 5s fart cloud debuff; -5 HP per second.

@@ -34,11 +34,13 @@ function spawnExplosion(msg) {
       try {
         const x = +msg.x, y = +msg.y, z = +msg.z;
         const r = +msg.r || 6;
+        const isTank = msg.kind === 'tank';
+        const scale = isTank ? 2.8 : 1.0;
 
         // Visual: expanding fireball + flash + smoke
-        const sphere = BABYLON.MeshBuilder.CreateSphere(`ex_${Date.now()}`, { diameter: 0.6, segments: 10 }, scene);
+        const sphere = BABYLON.MeshBuilder.CreateSphere(`ex_${Date.now()}`, { diameter: 0.6 * scale, segments: 10 }, scene);
 
-        const flash = BABYLON.MeshBuilder.CreateSphere(`exFlash_${Date.now()}`, { diameter: 0.35, segments: 8 }, scene);
+        const flash = BABYLON.MeshBuilder.CreateSphere(`exFlash_${Date.now()}`, { diameter: 0.35 * scale, segments: 8 }, scene);
         flash.position.set(x, y, z);
         flash.isPickable = false;
         const fmat = new BABYLON.StandardMaterial(`exFlashM_${Date.now()}`, scene);
@@ -49,7 +51,7 @@ function spawnExplosion(msg) {
         flash.material = fmat;
 
 
-        const ring = BABYLON.MeshBuilder.CreateTorus(`exr_${Date.now()}`, { diameter: 0.8, thickness: 0.05, tessellation: 28 }, scene);
+        const ring = BABYLON.MeshBuilder.CreateTorus(`exr_${Date.now()}`, { diameter: 0.8 * scale, thickness: 0.05 * scale, tessellation: 28 }, scene);
         ring.position.set(x, y + 0.05, z);
         ring.rotation.x = Math.PI / 2;
         ring.isPickable = false;
@@ -66,10 +68,11 @@ function spawnExplosion(msg) {
         const streaks = [];
 
         const smokePuffs = [];
-        for (let i = 0; i < 7; i++) {
-          const puff = BABYLON.MeshBuilder.CreateSphere(`exs_${Date.now()}_${i}`, { diameter: 0.45, segments: 8 }, scene);
+        const numPuffs = isTank ? 14 : 7;
+        for (let i = 0; i < numPuffs; i++) {
+          const puff = BABYLON.MeshBuilder.CreateSphere(`exs_${Date.now()}_${i}`, { diameter: 0.45 * scale, segments: 8 }, scene);
           puff.isPickable = false;
-          puff.position.set(x + (Math.random()-0.5)*0.8, y + (Math.random()-0.5)*0.4, z + (Math.random()-0.5)*0.8);
+          puff.position.set(x + (Math.random()-0.5)*0.8*scale, y + (Math.random()-0.5)*0.4*scale, z + (Math.random()-0.5)*0.8*scale);
           const sm = new BABYLON.StandardMaterial(`exsm_${Date.now()}_${i}`, scene);
           sm.diffuseColor = new BABYLON.Color3(0.20, 0.20, 0.22);
           sm.emissiveColor = new BABYLON.Color3(0.03, 0.03, 0.03);
@@ -97,7 +100,7 @@ function spawnExplosion(msg) {
         }
 
         // Sound
-        try { SFX.boom(); } catch {}
+        try { isTank ? SFX.cannon() : SFX.boom(); } catch {}
 
         const start = performance.now();
         const dur = 420;
@@ -486,6 +489,14 @@ function spawnDent(pos, normal, size, kind) {
               k.metadata._stab = 1.0;
             }
           } catch {}
+        } else if (wpn === 'tank') {
+          // Tank cannon: big muzzle fireball + heavy recoil
+          if (fpRig?.muzzleFlash && fpRig._flashBaseSize) {
+            fpRig.muzzleFlash.scaling.setAll(4.5);
+            fpRig.muzzleFlash.isVisible = true;
+            applyRecoil('rocket');
+            setTimeout(() => { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; }, 180);
+          }
         } else if (fpRig?.muzzleFlash && fpRig._flashBaseSize) {
           fpRig.muzzleFlash.scaling.setAll(rc.flashScale);
           fpRig.muzzleFlash.isVisible = true;
@@ -497,6 +508,7 @@ function spawnDent(pos, normal, size, kind) {
         if (wpn === 'rocket') { try { SFX.whoosh(); } catch {} }
         else if (wpn === 'knife') { /* no gun sound */ }
         else if (wpn === 'fishing_pole') { try { SFX.cast(); } catch {} }
+        else if (wpn === 'tank') { try { SFX.cannon(); } catch {} }
         else SFX.shoot(wpn);
         if (s.hit) {
           showHitmarker();
