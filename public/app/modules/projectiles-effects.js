@@ -458,12 +458,12 @@ function spawnDent(pos, normal, size, kind) {
             for (const tr of list) {
               const raw = new BABYLON.Vector3(tr.ex, (s.ey || (s.sy || 1.8) - 0.2), tr.ez);
               const hit = pickImpact(gunStart, raw);
-              if (wpn !== 'rocket' && !String(wpn).startsWith('grenade_') && wpn !== 'knife') spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
+              if (wpn !== 'rocket' && wpn !== 'tank' && !String(wpn).startsWith('grenade_') && wpn !== 'knife') spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
             }
           } else {
             const raw = new BABYLON.Vector3(s.ex, (s.ey || (s.sy || 1.8) - 0.2), s.ez);
             const hit = pickImpact(gunStart, raw);
-            if (wpn !== 'rocket' && !String(wpn).startsWith('grenade_') && wpn !== 'knife') spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
+            if (wpn !== 'rocket' && wpn !== 'tank' && !String(wpn).startsWith('grenade_') && wpn !== 'knife') spawnSparks(hit.p, wpn === 'shotgun' ? 0.8 : 1.0);
           }
         } catch {}
       }

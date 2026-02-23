@@ -1652,11 +1652,12 @@ setInterval(() => {
     minigunDrop = null;
   }
 
-  // Sanity-check pickup pads: release hold if player no longer exists or lost the weapon
+  // Sanity-check pickup pads: release hold if player no longer exists or lost the item
   for (const pad of pickupPads) {
     if (!pad.heldBy) continue;
     const holder = players.get(pad.heldBy);
-    if (!holder || holder.powerWeapon !== 'minigun') {
+    const stillHoldsIt = pad.type === 'tank' ? (holder?.vehicle === 'tank') : (holder?.powerWeapon === 'minigun');
+    if (!holder || !stillHoldsIt) {
       pad.heldBy = null;
       pad.respawnAt = t + 15_000; // 15s before pad respawns
     }
