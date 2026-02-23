@@ -34,6 +34,15 @@
       mag: 12, reloadMs: 900,
     },
 
+    fishing_pole: {
+      id:'fishing_pole', label:'Fishing Pole', type:'hook',
+      fireCdMs: 600,
+      range: 18,
+      hookDmg: 0,
+      pullForce: 12,
+      hookDurationMs: 1800,
+    },
+
     knife: {
       id:'knife', label:'Knife', type:'melee',
       fireCdMs: 250,
