@@ -1167,13 +1167,14 @@
         fart: makeGunVariant('fart'),
         minigun: makeGunVariant('minigun'),
         knife: makeGunVariant('knife'),
+        fishing_pole: makeGunVariant('fishing_pole'),
         grenade_frag: makeGunVariant('grenade_frag'),
         grenade_impact: makeGunVariant('grenade_impact'),
         tank: makeGunVariant('tank'),
       };
 
       function setGun(kind) {
-        const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket' || kind === 'minigun' || kind === 'knife' || kind === 'grenade_frag' || kind === 'grenade_impact' || kind === 'tank') ? kind : 'rifle';
+        const k = (kind === 'shotgun' || kind === 'sniper' || kind === 'fart' || kind === 'rocket' || kind === 'minigun' || kind === 'knife' || kind === 'fishing_pole' || kind === 'grenade_frag' || kind === 'grenade_impact' || kind === 'tank') ? kind : 'rifle';
         for (const [name, node] of Object.entries(guns)) {
           const show = (name === k);
           // IMPORTANT: do NOT disable gun root nodes. Disabling a parent can make descendants
