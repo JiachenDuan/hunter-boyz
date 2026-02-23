@@ -297,6 +297,9 @@ function makePlayer(name) {
     disconnectedAt: 0,
     fartUntil: 0,
     fartTickAt: 0,
+    burnUntil: 0,
+    burnTickAt: 0,
+    burnFrom: null,
     hookUntil: 0,
     hookFrom: null,
     vehicle: null,
@@ -351,6 +354,7 @@ function serializeState() {
       respawnInMs: p.hp > 0 ? 0 : Math.max(0, p.respawnAt - nowMs()),
       connected: playerConn.has(p.id),
       fartInMs: Math.max(0, (p.fartUntil || 0) - nowMs()),
+      burnInMs: Math.max(0, (p.burnUntil || 0) - nowMs()),
       hookInMs: Math.max(0, (p.hookUntil || 0) - nowMs()),
       hookFrom: (p.hookUntil && p.hookUntil > nowMs()) ? (p.hookFrom || null) : null,
       weapon: p.weapon || 'rifle',
@@ -400,6 +404,9 @@ function respawn(p) {
   p.rifleBloom = 0;
   p.fartUntil = 0;
   p.fartTickAt = 0;
+  p.burnUntil = 0;
+  p.burnTickAt = 0;
+  p.burnFrom = null;
   p.hookUntil = 0;
   p.hookFrom = null;
   p.vehicle = null;
@@ -1269,6 +1276,14 @@ if (msg.t === 'input') {
               const dmg = doDamage({ shooter: p, target: best, amount: amt });
               hitId = dmg.hitId;
               hitHp = dmg.hitHp;
+              // Apply burn DOT: -10 HP/sec for 5s
+              if (best.hp > 0) {
+                const tNow = nowMs();
+                best.burnUntil = tNow + 5000;
+                best.burnTickAt = tNow + 1000;
+                best.burnFrom = p.id;
+                broadcast({ t: 'burn', from: p.id, to: best.id, until: best.burnUntil });
+              }
               broadcast({ t:'slash', from:p.id, to: best.id, backstab: isBackstab });
             }
             broadcast({ t: 'shot', weapon, from: p.id, sx: p.x, sy: p.y, sz: p.z, yaw: p.yaw, pitch: p.pitch, ex: fx.x, ey: fx.y, ez: fx.z, hit: hitId, hitHp });
@@ -1741,6 +1756,27 @@ setInterval(() => {
     if (p.fartUntil && t >= p.fartUntil) {
       p.fartUntil = 0;
       p.fartTickAt = 0;
+    }
+
+    // Knife burn DOT: -10 HP each second for up to 5s
+    if (p.hp > 0 && p.burnUntil && t < p.burnUntil) {
+      if (!p.burnTickAt) p.burnTickAt = t + 1000;
+      if (t >= p.burnTickAt) {
+        p.burnTickAt = t + 1000;
+        p.hp = Math.max(0, p.hp - 10);
+        broadcast({ t: 'burnDot', to: p.id, dmg: 10 });
+        if (p.hp <= 0) {
+          const killer = p.burnFrom ? players.get(p.burnFrom) : null;
+          if (killer) killer.kills = (killer.kills || 0) + 1;
+          p.respawnAt = nowMs() + 3000;
+          broadcast({ t: 'killed', by: p.burnFrom || 'fire', victim: p.id });
+        }
+      }
+    }
+    if (p.burnUntil && t >= p.burnUntil) {
+      p.burnUntil = 0;
+      p.burnTickAt = 0;
+      p.burnFrom = null;
     }
 
     // Fishing hook: pull hooked player toward hooker each tick

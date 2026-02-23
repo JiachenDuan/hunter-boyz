@@ -148,6 +148,7 @@
           if (msg.t === 'kill') showKill(`${msg.killerName || msg.killer} eliminated ${msg.victimName || msg.victim}`);
           if (msg.t === 'winner') showWinner(msg);
           if (msg.t === 'fartPuff') spawnFartPuff(msg.to);
+          if (msg.t === 'burn' || msg.t === 'burnDot') { /* burn state handled via player state sync */ }
           if (msg.t === 'fartDot') spawnFartDot(msg.to, msg.dmg || 5);
           if (msg.t === 'explosion') {
             // If we have a matching grenade mesh nearby, delete it immediately so the timing feels right.
@@ -321,10 +322,15 @@
         const hp = Math.max(0, Math.min(100, meP.hp));
         document.getElementById('hpText').textContent = `HP ${hp}`;
 
-        // Fart debuff indicator
+        // Debuff indicators
         try {
           const fi = (meP.fartInMs || 0);
-          if (fi > 0) {
+          const bi = (meP.burnInMs || 0);
+          if (bi > 0) {
+            const secs = Math.ceil(bi / 1000);
+            document.getElementById('hitDetail').textContent = `🔥 On fire! ${secs}s (-10 HP/s)`;
+            document.getElementById('hitDetail').style.opacity = '1';
+          } else if (fi > 0) {
             const secs = Math.ceil(fi / 1000);
             document.getElementById('hitDetail').textContent = `💨 Fart cloud ${secs}s (-5 HP/s)`;
             document.getElementById('hitDetail').style.opacity = '1';
@@ -841,12 +847,59 @@
             fartFx = { poop, mat: cm, parts: [s1,s2,s3] };
           } catch {}
 
+          // Burn flame FX (hidden by default) — wraps around player body when burning
+          let burnFx = null;
+          try {
+            const burnRoot = new BABYLON.TransformNode(`burn_${p.id}`, scene);
+            burnRoot.parent = root;
+            burnRoot.position.y = 0.6; // center of body
+
+            const bm = new BABYLON.StandardMaterial(`burnMat_${p.id}`, scene);
+            bm.diffuseColor = new BABYLON.Color3(0, 0, 0);
+            bm.emissiveColor = new BABYLON.Color3(1.0, 0.42, 0.08);
+            bm.alpha = 0.0;
+            bm.disableLighting = true;
+
+            const bm2 = new BABYLON.StandardMaterial(`burnMat2_${p.id}`, scene);
+            bm2.diffuseColor = new BABYLON.Color3(0, 0, 0);
+            bm2.emissiveColor = new BABYLON.Color3(1.0, 0.75, 0.04);
+            bm2.alpha = 0.0;
+            bm2.disableLighting = true;
+
+            const burnFlames = [];
+            // Ring of flames at body level + higher tongues
+            const bfData = [
+              { x:  0.28, y: 0.00, z: 0, d: 0.22, mat: bm },
+              { x: -0.28, y: 0.00, z: 0, d: 0.22, mat: bm },
+              { x:  0,    y: 0.00, z:  0.22, d: 0.20, mat: bm },
+              { x:  0,    y: 0.00, z: -0.22, d: 0.20, mat: bm },
+              { x:  0.20, y: 0.40, z:  0.10, d: 0.18, mat: bm },
+              { x: -0.20, y: 0.40, z: -0.10, d: 0.18, mat: bm },
+              { x:  0,    y: 0.65, z:  0,    d: 0.22, mat: bm },
+              // Soft outer glow
+              { x:  0.36, y: 0.10, z:  0.10, d: 0.32, mat: bm2 },
+              { x: -0.30, y: 0.20, z: -0.10, d: 0.30, mat: bm2 },
+              { x:  0,    y: 0.50, z:  0.28, d: 0.28, mat: bm2 },
+            ];
+            bfData.forEach(({ x, y, z, d, mat }, i) => {
+              const bf = BABYLON.MeshBuilder.CreateSphere(`bf_${p.id}_${i}`, { diameter: d, segments: 6 }, scene);
+              bf.material = mat;
+              bf.parent = burnRoot;
+              bf.position.set(x, y, z);
+              bf.isPickable = false;
+              burnFlames.push(bf);
+            });
+
+            burnFx = { burnRoot, mat: bm, mat2: bm2, flames: burnFlames };
+          } catch {}
+
           root.metadata = {
             target: new BABYLON.Vector3(p.x, (p.y || 1.8) - 0.8, p.z),
             targetYaw: p.yaw,
             targetMgSpin: 0,
             namePlate,
             fartFx,
+            burnFx,
             tppWeaponVisible: 'gun',
             weapons: { gun, minigun: tppMinigun, minigunRotor: tppMgRotor, fishingPole: tppFishingPole },
             tppTank,
@@ -887,6 +940,40 @@
                 if (fx.poop) fx.poop.rotation.y = Date.now() / 800;
               } else {
                 fx.mat.alpha = 0.0;
+              }
+            }
+          } catch {}
+
+          // Burn flames around body when knife burn debuff is active
+          try {
+            const bfx = mesh.metadata.burnFx;
+            const burning = (p.burnInMs || 0) > 0;
+            if (bfx?.mat) {
+              if (burning) {
+                const nt = Date.now();
+                const f1 = Math.sin(nt / 55);
+                const f2 = Math.sin(nt / 38 + 1.4);
+                const f3 = Math.sin(nt / 90 + 2.8);
+                bfx.mat.alpha = 0.60 + 0.22 * f1;
+                bfx.mat.emissiveColor.set(1.0, 0.32 + 0.15 * f2, 0.05);
+                if (bfx.mat2) {
+                  bfx.mat2.alpha = 0.28 + 0.18 * f3;
+                  bfx.mat2.emissiveColor.set(1.0, 0.70 + 0.15 * f1, 0.02);
+                }
+                for (let i = 0; i < (bfx.flames?.length || 0); i++) {
+                  const phase = i * 0.7;
+                  const sc = 0.85 + 0.30 * Math.sin(nt / 50 + phase);
+                  const sy = 1.0 + 0.45 * Math.sin(nt / 40 + phase + 1.2);
+                  try {
+                    bfx.flames[i].scaling.x = sc;
+                    bfx.flames[i].scaling.y = sy;
+                    bfx.flames[i].scaling.z = sc;
+                  } catch {}
+                }
+                if (bfx.burnRoot) bfx.burnRoot.rotation.y += 0.025;
+              } else {
+                bfx.mat.alpha = 0.0;
+                if (bfx.mat2) bfx.mat2.alpha = 0.0;
               }
             }
           } catch {}

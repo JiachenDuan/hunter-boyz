@@ -555,19 +555,39 @@
           tip.rotation.x = Math.PI / 2;
           tip.position.set(0.05, 0.01, 0.72);
 
-          // Fire aura (classic Hunger Boyz): lightweight glow spheres (no textures/particles).
+          // Fire aura: layered glow spheres along blade for realistic wrap-around flame.
           const flameMat = new BABYLON.StandardMaterial(`k_flameMat_${kind}`, scene);
           flameMat.diffuseColor = new BABYLON.Color3(0, 0, 0);
-          flameMat.emissiveColor = new BABYLON.Color3(1.0, 0.45, 0.10);
-          flameMat.alpha = 0.70;
+          flameMat.emissiveColor = new BABYLON.Color3(1.0, 0.38, 0.06);
+          flameMat.alpha = 0.78;
           flameMat.disableLighting = true;
 
+          const flameMat2 = new BABYLON.StandardMaterial(`k_flameMat2_${kind}`, scene);
+          flameMat2.diffuseColor = new BABYLON.Color3(0, 0, 0);
+          flameMat2.emissiveColor = new BABYLON.Color3(1.0, 0.72, 0.02);
+          flameMat2.alpha = 0.55;
+          flameMat2.disableLighting = true;
+
           const flames = [];
-          [0.30, 0.46, 0.62].forEach((z, i) => {
-            const f = BABYLON.MeshBuilder.CreateSphere(`k_fl_${kind}_${i}`, { diameter: 0.085, segments: 6 }, scene);
-            f.material = flameMat;
+          // Core bright flame tongues along blade
+          const flameData = [
+            { z: 0.28, d: 0.10, mat: flameMat },
+            { z: 0.36, d: 0.12, mat: flameMat },
+            { z: 0.44, d: 0.13, mat: flameMat },
+            { z: 0.52, d: 0.12, mat: flameMat },
+            { z: 0.60, d: 0.11, mat: flameMat },
+            { z: 0.68, d: 0.09, mat: flameMat },
+            { z: 0.74, d: 0.06, mat: flameMat },
+            // Outer glow halo (bigger, softer)
+            { z: 0.35, d: 0.20, mat: flameMat2 },
+            { z: 0.48, d: 0.22, mat: flameMat2 },
+            { z: 0.62, d: 0.18, mat: flameMat2 },
+          ];
+          flameData.forEach(({ z, d, mat }, i) => {
+            const f = BABYLON.MeshBuilder.CreateSphere(`k_fl_${kind}_${i}`, { diameter: d, segments: 6 }, scene);
+            f.material = mat;
             f.parent = g;
-            f.position.set(0.05, 0.02, z);
+            f.position.set(0.05, 0.01, z);
             f.isPickable = false;
             flames.push(f);
           });
@@ -584,6 +604,7 @@
           g.metadata._stab = 0;
           g.metadata._knifeFlames = flames;
           g.metadata._knifeFlameMat = flameMat;
+          g.metadata._knifeFlameMat2 = flameMat2;
 
           return g;
         }
@@ -1299,17 +1320,34 @@
               const knifeVisible = k.getDescendants(false).some(d => d?.isVisible === true);
               if (!knifeVisible) return;
               const mm = k.metadata?._knifeFlameMat;
+              const mm2 = k.metadata?._knifeFlameMat2;
               const fs = k.metadata?._knifeFlames;
               if (!mm || !fs || !fs.length) return;
 
               const t = performance.now();
-              const wob = 0.75 + 0.25 * Math.sin(t / 85);
-              const wob2 = 0.75 + 0.25 * Math.sin(t / 63);
-              mm.alpha = 0.55 + 0.25 * wob;
+              // Multi-frequency flicker for organic fire look
+              const f1 = Math.sin(t / 55);
+              const f2 = Math.sin(t / 38 + 1.2);
+              const f3 = Math.sin(t / 90 + 2.5);
+              mm.alpha = 0.65 + 0.22 * f1;
+              mm.emissiveColor.set(1.0, 0.30 + 0.15 * f2, 0.04 + 0.06 * f3);
+              if (mm2) {
+                mm2.alpha = 0.35 + 0.20 * f3;
+                mm2.emissiveColor.set(1.0, 0.65 + 0.12 * f1, 0.01);
+              }
               for (let i = 0; i < fs.length; i++) {
                 const f = fs[i];
-                const s = 0.85 + 0.35 * (i % 2 ? wob : wob2);
-                try { f.scaling.setAll(s); } catch {}
+                // Each flame gets a slightly different phase
+                const phase = i * 0.62;
+                const sBase = 0.80 + 0.30 * Math.sin(t / 60 + phase);
+                const sY = 1.0 + 0.40 * Math.sin(t / 42 + phase + 1.0); // vertical stretch
+                try {
+                  f.scaling.x = sBase;
+                  f.scaling.y = sY;
+                  f.scaling.z = sBase;
+                  // Small position wobble
+                  f.position.y = 0.01 + 0.018 * Math.sin(t / 48 + phase);
+                } catch {}
               }
             } catch {}
           });
