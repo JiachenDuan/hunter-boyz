@@ -321,6 +321,25 @@
       el.addEventListener('pointerdown', act, { passive:false });
     })();
 
+    // EXIT TANK button
+    (() => {
+      const el = document.getElementById('btnExitTank');
+      if (!el) return;
+      const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+      let lastExit = 0;
+      const act = (e) => {
+        prevent(e);
+        const now = Date.now();
+        if (now - lastExit < 500) return;
+        el.style.background = 'rgba(160,120,30,0.45)';
+        setTimeout(() => { el.style.background = 'rgba(160,120,30,0.22)'; }, 150);
+        if (!socket || socket.readyState !== 1) { showKill('Server disconnected!'); return; }
+        lastExit = now;
+        try { socket.send(JSON.stringify({ t:'dropTank' })); } catch {}
+      };
+      el.addEventListener('pointerdown', act, { passive:false });
+    })();
+
     holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
     // sprint removed
 

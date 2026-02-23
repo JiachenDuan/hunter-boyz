@@ -308,6 +308,7 @@ function makePlayer(name) {
     fartTickAt: 0,
     hookUntil: 0,
     hookFrom: null,
+    vehicle: null,
 
     // Power weapon (pickup-only)
     powerWeapon: null,
@@ -349,6 +350,7 @@ function serializeState() {
       deaths: p.deaths,
       ammo: p.ammo,
       powerWeapon: p.powerWeapon || null,
+      vehicle: p.vehicle || null,
       powerAmmo: p.powerAmmo || 0,
       mgSpin: p.mgSpin || 0,
       mgHeat: p.mgHeat || 0,
@@ -409,6 +411,7 @@ function respawn(p) {
   p.fartTickAt = 0;
   p.hookUntil = 0;
   p.hookFrom = null;
+  p.vehicle = null;
   p.disconnectedAt = 0;
   // Release any pickup pad this player was holding so pad becomes available again
   const t = nowMs();
@@ -974,9 +977,27 @@ wss.on('connection', (ws) => {
       if (pad.heldBy) return;
 
       pad.heldBy = p.id;
-      grantMinigun();
+      if (pad.type === 'tank') {
+        p.vehicle = 'tank';
+      } else {
+        grantMinigun();
+      }
       broadcast({ t:'pickup', id: p.id, what: pad.type });
       broadcast({ t:'state', state: serializeState() });
+      return;
+    }
+
+    if (msg.t === 'dropTank') {
+      if (p.vehicle !== 'tank') return;
+      p.vehicle = null;
+      const t = nowMs();
+      for (const pad of pickupPads) {
+        if (pad.heldBy === p.id) {
+          pad.heldBy = null;
+          pad.respawnAt = t + 30_000;
+        }
+      }
+      broadcast({ t: 'state', state: serializeState() });
       return;
     }
 
