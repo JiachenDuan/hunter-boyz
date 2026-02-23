@@ -397,10 +397,10 @@
           const pickups = (s.pickups || []);
           let show = false;
           let targetId = null;
-          // Don't show PICK UP if player already holds the minigun
-          if (btnPickup && meP && pickups.length && state.started && !meP.powerWeapon) {
+          // Don't show PICK UP if player already holds a power weapon or vehicle
+          if (btnPickup && meP && pickups.length && state.started && !meP.powerWeapon && !meP.vehicle) {
             for (const it of pickups) {
-              if (it.type !== 'minigun') continue;
+              if (it.type !== 'minigun' && it.type !== 'tank') continue;
               if (it.kind === 'pad' && (it.availInMs||0) > 0) continue;
               if (it.kind === 'drop' && (it.expiresInMs||0) <= 0) continue;
               const dx = (meP.x - it.x);
@@ -412,7 +412,8 @@
           if (btnPickup) {
             if (show) {
               btnPickup.style.display = 'block';
-              btnPickup.textContent = 'PICK UP MINIGUN';
+              const pickedIt = pickups.find(x => x.id === targetId);
+              btnPickup.textContent = (pickedIt?.type === 'tank') ? 'PICK UP TANK' : 'PICK UP MINIGUN';
               btnPickup.dataset.pickId = targetId;
               btnPickup.dataset.pickIdTs = String(Date.now());
             } else {
@@ -486,7 +487,7 @@
               ctx2.font = 'bold 28px sans-serif';
               ctx2.fillStyle = '#ffd700';
               ctx2.textAlign = 'center';
-              ctx2.fillText('⚡ MINIGUN', 128, 42);
+              ctx2.fillText(pk.type === 'tank' ? '🛡️ TANK' : '⚡ MINIGUN', 128, 42);
               labelTex.update();
               const labelMat = new BABYLON.StandardMaterial('pickLblMat_' + pk.id, scene);
               labelMat.diffuseTexture = labelTex;

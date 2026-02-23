@@ -134,6 +134,7 @@ const MAPS = {
     pickupPads: [
       { id: 'pad_mg_1', type: 'minigun', x: 0, y: 1.8, z: 0 },
       { id: 'pad_mg_2', type: 'minigun', x: -12, y: 1.8, z: 10 },
+      { id: 'pad_tank_1', type: 'tank', x: 12, y: 1.8, z: -10 },
     ],
   },
   mansion: {
@@ -206,6 +207,7 @@ const MAPS = {
     pickupPads: [
       { id: 'pad_mg_1', type: 'minigun', x: -9, y: 1.8, z: 12 },
       { id: 'pad_mg_2', type: 'minigun', x: 9, y: 1.8, z: 12 },
+      { id: 'pad_tank_1', type: 'tank', x: 0, y: 1.8, z: -5 },
     ],
   },
 };
