@@ -743,6 +743,14 @@ wss.on('connection', (ws) => {
     let msg;
     try { msg = JSON.parse(buf.toString('utf8')); } catch { return; }
 
+    // App-level ping/pong for client RTT display + keepalive. (Distinct from ws.ping frames.)
+    if (msg.t === 'ping') {
+      try {
+        ws.send(JSON.stringify({ t: 'pong', at: (msg.at || 0) }));
+      } catch {}
+      return;
+    }
+
     if (msg.t === 'join') {
       const clientId = (msg.clientId && String(msg.clientId).slice(0, 64)) || null;
 

@@ -95,7 +95,12 @@
 
       if (state === 'online') {
         el.style.background = 'rgba(80,255,140,0.95)';
-        if (txt) txt.textContent = 'ONLINE';
+        try {
+          const rtt = (typeof window.__lastRttMs === 'number') ? window.__lastRttMs : null;
+          if (txt) txt.textContent = (rtt != null) ? `ONLINE ${Math.round(rtt)}ms` : 'ONLINE';
+        } catch {
+          if (txt) txt.textContent = 'ONLINE';
+        }
       }
       else if (state === 'connecting') {
         el.style.background = 'rgba(255,220,100,0.95)';
@@ -155,6 +160,16 @@
           setConnState('online');
           socket.send(JSON.stringify({ t:'join', name, clientId }));
           log('Connected.');
+
+          // RTT ping (UI-only). Kept separate from ws.ping frames.
+          try {
+            if (window.__rttPingTimer) clearInterval(window.__rttPingTimer);
+            window.__rttPingTimer = setInterval(() => {
+              try {
+                if (socket && socket.readyState === 1) socket.send(JSON.stringify({ t:'ping', at: Date.now() }));
+              } catch {}
+            }, 2000);
+          } catch {}
         });
 
         socket.addEventListener('message', (ev) => {
@@ -171,6 +186,17 @@
             trySendStart();
           }
           if (msg.t === 'state') applyState(msg.state);
+          if (msg.t === 'pong') {
+            try {
+              const at = Number(msg.at || 0);
+              if (at > 0) {
+                const rtt = Math.max(0, Date.now() - at);
+                window.__lastRttMs = rtt;
+                const txt = document.getElementById('connText');
+                if (txt && (txt.textContent || '').startsWith('ONLINE')) txt.textContent = `ONLINE ${Math.round(rtt)}ms`;
+              }
+            } catch {}
+          }
           if (msg.t === 'shot') renderShot(msg);
           if (msg.t === 'kill') {
             showKill(`${msg.killerName || msg.killer} eliminated ${msg.victimName || msg.victim}`);
@@ -396,6 +422,7 @@
         });
 
         socket.addEventListener('close', () => {
+          try { if (window.__rttPingTimer) { clearInterval(window.__rttPingTimer); window.__rttPingTimer = null; } } catch {}
           state.joined = false;
           joinInFlight = false;
           setConnState('offline');

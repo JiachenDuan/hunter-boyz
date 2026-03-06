@@ -834,7 +834,7 @@
         if (!window._hbPingAt) window._hbPingAt = 0;
         if (now - window._hbPingAt > 5000) {
           window._hbPingAt = now;
-          try { socket.send(JSON.stringify({ t:'ping' })); } catch {}
+          try { socket.send(JSON.stringify({ t:'ping', at: Date.now() })); } catch {}
         }
 
         // disable gameplay input until started

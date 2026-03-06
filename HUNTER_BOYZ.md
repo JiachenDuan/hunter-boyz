@@ -94,6 +94,7 @@ This file exists so future changes don’t regress prior fixes or violate design
 ## 8) Known UX rules
 - Don’t make the user change iOS Accessibility settings.
 - WebAudio unlock must be synchronous in gesture handler (avoid async in that path).
+- Connection HUD can include lightweight live RTT (ONLINE 42ms) via app-level ping/pong.
 
 ## 10) Mansion tower teleport
 
