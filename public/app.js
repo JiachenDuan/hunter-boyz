@@ -4263,8 +4263,13 @@ function spawnDent(pos, normal, size, kind) {
     }
     if (scoreModal) scoreModal.addEventListener('click', (e)=>{ if (e.target===scoreModal) doScoreClose(e); });
 
+    // Sound enable (iOS can fire pointerdown + click; debounce to avoid double-trigger).
+    let lastSoundEnableAt = 0;
     function doEnableSound(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
+      const now = Date.now();
+      if (now - lastSoundEnableAt < 600) return;
+      lastSoundEnableAt = now;
       try { SFX.enable(); } catch {}
       try { SFX.hit(); } catch {}
       log('Sound enabled.');
@@ -4273,7 +4278,7 @@ function spawnDent(pos, normal, size, kind) {
         soundBtn.classList.add('soundOn');
       } catch {}
     }
-    soundBtn.addEventListener('click', doEnableSound);
+    // Prefer pointerdown only to avoid click/touch duplicates on mobile Safari.
     soundBtn.addEventListener('pointerdown', doEnableSound, { passive: false });
     soundBtn.addEventListener('touchend', doEnableSound, { passive: false });
 

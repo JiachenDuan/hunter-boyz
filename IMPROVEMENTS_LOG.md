@@ -77,3 +77,4 @@
 - 2026-03-06 18:00 PST — iOS UX: disabled autocomplete/autocorrect/autocapitalize on Name input (less keyboard friction)
 - 2026-03-06 18:20 PST — iOS UI: HUD + scoreboard now respect safe-area inset top (less notch overlap)
 - 2026-03-06 18:40 PST — Bugfix: local damage vignette + floating damage numbers now trigger correctly (msg.to compared to myId)
+- 2026-03-06 21:50 PST — iOS bugfix: debounce Sound enable button (avoid double-trigger from pointer+click)
