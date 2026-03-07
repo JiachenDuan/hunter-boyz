@@ -90,12 +90,40 @@
       setTimeout(updateRoundTimer, timerTickIntervalMs(left));
     }
     setTimeout(updateRoundTimer, 80);
+
     function setConnState(state /* 'online'|'offline'|'connecting' */) {
       const el = document.getElementById('connDot');
       if (!el) return;
-      if (state === 'online') el.style.background = 'rgba(80,255,140,0.95)';
-      else if (state === 'connecting') el.style.background = 'rgba(255,220,100,0.95)';
-      else el.style.background = 'rgba(255,80,80,0.95)';
+      const txt = document.getElementById('connText');
+      const wrap = el.parentElement;
+
+      try {
+        if (wrap) {
+          wrap.classList.toggle('isConnecting', state === 'connecting');
+          wrap.classList.toggle('isOffline', state === 'offline');
+          wrap.classList.toggle('isOnline', state === 'online');
+        }
+      } catch {}
+
+      if (state === 'online') {
+        el.style.background = 'rgba(80,255,140,0.95)';
+        try {
+          const rtt = (typeof window.__lastRttMs === 'number') ? window.__lastRttMs : null;
+          if (txt) txt.textContent = (rtt != null) ? `ONLINE ${Math.round(rtt)}ms` : 'ONLINE';
+        } catch {
+          if (txt) txt.textContent = 'ONLINE';
+        }
+      }
+      else if (state === 'connecting') {
+        el.style.background = 'rgba(255,220,100,0.95)';
+        if (txt) txt.textContent = 'CONNECTING';
+      }
+      else {
+        el.style.background = 'rgba(255,80,80,0.95)';
+        if (txt) txt.textContent = 'OFFLINE';
+      }
+
+      try { el.title = (txt?.textContent || state); } catch {}
     }
 
     function connectAndJoin() {
@@ -123,6 +151,10 @@
         reconnectAttempts = Math.min(reconnectAttempts + 1, 8);
         const delay = Math.min(500 * Math.pow(1.6, reconnectAttempts), 6000);
         setConnState('connecting');
+        try {
+          const txt = document.getElementById('connText');
+          if (txt) txt.textContent = `RECONNECT ${reconnectAttempts}`;
+        } catch {}
         log(`Reconnecting… (${Math.round(delay)}ms)`);
         reconnectTimer = setTimeout(() => {
           reconnectTimer = null;
@@ -142,10 +174,26 @@
           setConnState('online');
           socket.send(JSON.stringify({ t:'join', name, clientId }));
           log('Connected.');
+
+          // RTT ping (UI-only). Kept separate from ws.ping frames.
+          try {
+            if (window.__rttPingTimer) clearInterval(window.__rttPingTimer);
+            window.__rttPingTimer = setInterval(() => {
+              try {
+                if (socket && socket.readyState === 1) socket.send(JSON.stringify({ t:'ping', at: Date.now() }));
+              } catch {}
+            }, 2000);
+          } catch {}
         });
 
         socket.addEventListener('message', (ev) => {
-          const msg = JSON.parse(ev.data);
+          let msg = null;
+          try {
+            msg = JSON.parse(ev.data);
+          } catch (e) {
+            try { console.warn('[ws] bad message payload', e); } catch {}
+            return;
+          }
           if (msg.t === 'welcome') {
             myId = msg.id;
             // Expose for automation/debug tooling (e.g., puppeteer capture scripts)
@@ -158,6 +206,17 @@
             trySendStart();
           }
           if (msg.t === 'state') applyState(msg.state);
+          if (msg.t === 'pong') {
+            try {
+              const at = Number(msg.at || 0);
+              if (at > 0) {
+                const rtt = Math.max(0, Date.now() - at);
+                window.__lastRttMs = rtt;
+                const txt = document.getElementById('connText');
+                if (txt && (txt.textContent || '').startsWith('ONLINE')) txt.textContent = `ONLINE ${Math.round(rtt)}ms`;
+              }
+            } catch {}
+          }
           if (msg.t === 'shot') renderShot(msg);
           if (msg.t === 'kill') showKill(`${msg.killerName || msg.killer} eliminated ${msg.victimName || msg.victim}`);
           if (msg.t === 'winner') showWinner(msg);
