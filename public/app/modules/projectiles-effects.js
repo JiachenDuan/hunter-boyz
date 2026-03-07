@@ -174,7 +174,23 @@ function spawnExplosion(msg) {
         body.textContent = '';
 
         const meId = String(state.me || '');
-        const rows = (s.players || []).slice().sort((a, b) => (b.score || 0) - (a.score || 0));
+        // Stable-ish ordering: score desc, then deaths asc, then name asc.
+        // Helps prevent "jumping" rows when players are tied on score.
+        const rows = (s.players || []).slice().sort((a, b) => {
+          const sa = Number(a?.score || 0);
+          const sb = Number(b?.score || 0);
+          if (sb !== sa) return sb - sa;
+
+          const da = Number(a?.deaths || 0);
+          const db = Number(b?.deaths || 0);
+          if (da !== db) return da - db;
+
+          const na = String(a?.name || '').toLowerCase();
+          const nb = String(b?.name || '').toLowerCase();
+          if (na < nb) return -1;
+          if (na > nb) return 1;
+          return 0;
+        });
         if (!rows.length) {
           const empty = document.createElement('div');
           empty.className = 'scoreboardEmpty';

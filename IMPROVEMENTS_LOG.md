@@ -1,3 +1,4 @@
+- 2026-03-07 08:00 PST — UI clarity: scoreboard now sorts ties deterministically (Score desc → Deaths asc → Name) to reduce row “jumping” when players are tied.
 - 2026-03-07 07:50 PST — UI polish: Copy link button now shows quick “Copying…/Copied!” label feedback and disables while in-flight (clearer on iPhone).
 - 2026-03-07 07:40 PST — UI polish: scoreboard close button + rows now have desktop hover states (clearer affordance).
 - 2026-03-07 07:30 PST — UI clarity: scoreboard now shows a compact “YOU” pill badge on your own row (easier to spot than “(you)”).
