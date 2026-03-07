@@ -1,3 +1,4 @@
+- 2026-03-07 03:10 PST — UI polish: scoreboard rows now truncate long player names with ellipsis (prevents K/D column wrap)
 - 2026-03-07 02:50 PST — Security polish: hardened safeCssColor sanitizer (rgb/rgba now strictly validates 0–255 channels + 0–1 alpha; normalizes output)
 - 2026-03-07 03:00 PST — UI polish: scoreboard K/D numbers now use tabular-nums + fixed width so columns line up (easier to scan)
 - 2026-03-07 02:40 PST — UI polish + a11y: scoreboard close button is now an ✕ icon (bigger tap target) and modals declare role="dialog"/aria attributes for screen readers
