@@ -1,3 +1,4 @@
+- 2026-03-07 12:00 PST — UI clarity: name input now says "Name (required)" and allows iOS nickname autocomplete for faster joining.
 - 2026-03-07 11:50 PST — Desktop UI polish: touch controls (sticks + buttons) now show a pointer cursor on hover, making it clearer they’re interactive.
 - 2026-03-07 11:40 PST — UI polish: Sound button now defaults to “Sound: OFF” in the HTML template (prevents brief “Sound: ON” flash before JS initializes).
 - 2026-03-07 11:30 PST — Bugfix: fatal crash guard can now actually trigger a reconnect (wired to connectAndJoin’s openSocket).
