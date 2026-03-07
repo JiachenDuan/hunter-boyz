@@ -780,6 +780,20 @@
 
       const link = location.href;
 
+      // Quick in-button feedback helps on iPhone (copy success has no visible UI otherwise).
+      const originalLabel = (copyLinkBtn?.textContent || 'Copy link');
+      let restoreTimer = null;
+      function setBtnLabel(label, ms) {
+        try { if (copyLinkBtn) copyLinkBtn.textContent = label; } catch {}
+        if (restoreTimer) { try { clearTimeout(restoreTimer); } catch {} }
+        if (ms) {
+          restoreTimer = setTimeout(() => {
+            try { if (copyLinkBtn) copyLinkBtn.textContent = originalLabel; } catch {}
+            restoreTimer = null;
+          }, ms);
+        }
+      }
+
       // iOS Safari (and non-HTTPS origins) can reject navigator.clipboard.
       // Provide a low-tech fallback so "Copy Link" works during LAN play.
       async function tryClipboardAPI() {
@@ -805,18 +819,43 @@
         return ok;
       }
 
-      try {
-        const ok = await tryClipboardAPI().catch(() => false);
-        if (ok) {
-          log('Link copied. Paste into the other phone.');
-          return;
+      const restoreDisabled = (() => {
+        try {
+          if (!copyLinkBtn) return () => {};
+          const wasDisabled = !!copyLinkBtn.disabled;
+          copyLinkBtn.disabled = true;
+          return () => { try { copyLinkBtn.disabled = wasDisabled; } catch {} };
+        } catch {
+          return () => {};
         }
-      } catch {}
+      })();
 
-      if (tryExecCommandCopy()) {
+      setBtnLabel('Copying…', 8000);
+
+      let copied = false;
+      try { copied = await tryClipboardAPI().catch(() => false); } catch { copied = false; }
+      if (!copied) {
+        try { copied = tryExecCommandCopy(); } catch { copied = false; }
+      }
+
+      if (copied) {
+        setBtnLabel('Copied!', 1100);
         log('Link copied. Paste into the other phone.');
-      } else {
+        restoreDisabled();
+        return;
+      }
+
+      // Fallback: prompt so the user can long-press → Copy.
+      // (This works even when clipboard APIs are blocked.)
+      try {
+        window.prompt('Copy this link:', link);
+        setBtnLabel('Copy manually', 1300);
+        log('Copy link: select + copy from the prompt.');
+      } catch {
+        setBtnLabel('Copy failed', 1300);
         log('Copy failed. Link: ' + link);
+      } finally {
+        restoreDisabled();
       }
     }
 

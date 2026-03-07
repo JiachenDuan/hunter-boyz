@@ -1,3 +1,4 @@
+- 2026-03-07 08:52 PST — iOS polish: Copy Link now has clear in-button feedback (Copying…/Copied!) and a manual-copy prompt fallback when clipboard APIs are blocked.
 - 2026-03-07 08:30 PST — iOS polish: scoreboard modal now uses momentum scrolling (-webkit-overflow-scrolling: touch) for smoother flick scroll.
 - 2026-03-07 08:20 PST — UI clarity: map selection dropdowns are now disabled until you join, and locked once the round starts (reduces confusion and “Map locked…” log spam).
 - 2026-03-07 08:10 PST — UI clarity: HUD weapon chip now shows active Minigun power weapon as “🔥 Minigun” with a subtle highlight, making it obvious the dropdown selection is overridden.
