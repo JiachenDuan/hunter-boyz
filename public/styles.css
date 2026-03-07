@@ -223,8 +223,13 @@
       letter-spacing: 0.6px;
       opacity: 0.75;
     }
-    /* Show connection text only when HUD is compact */
+    /* Show connection text only when HUD is compact...
+       ...but ALSO show it when we are reconnecting/offline (even if Settings are open) */
     #hud.hudCompact .connText { display:block; }
+    .connWrap.isConnecting .connText,
+    .connWrap.isOffline .connText {
+      display:block;
+    }
     #settingsBtn {
       margin-left:auto;
       border-radius:10px;

@@ -90,6 +90,8 @@
       try {
         if (wrap) {
           wrap.classList.toggle('isConnecting', state === 'connecting');
+          wrap.classList.toggle('isOffline', state === 'offline');
+          wrap.classList.toggle('isOnline', state === 'online');
         }
       } catch {}
 
