@@ -78,4 +78,5 @@
 - 2026-03-06 18:20 PST — iOS UI: HUD + scoreboard now respect safe-area inset top (less notch overlap)
 - 2026-03-06 18:40 PST — Bugfix: local damage vignette + floating damage numbers now trigger correctly (msg.to compared to myId)
 - 2026-03-06 22:11 PST — iOS bugfix: debounce Copy Link button (avoid pointerdown+touchend+click triple-fire)
+- 2026-03-06 22:20 PST — iOS bugfix: actually debounce Copy Link handler (clipboard/prompt only fires once)
 - 2026-03-06 21:50 PST — iOS bugfix: debounce Sound enable button (avoid double-trigger from pointer+click)

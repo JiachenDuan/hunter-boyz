@@ -4216,8 +4216,14 @@ function spawnDent(pos, normal, size, kind) {
       }
     }
 
+    // iOS can fire pointerdown + touchend + click; debounce to avoid multiple clipboard writes/prompts.
+    let lastCopyLinkAt = 0;
     async function doCopyLink(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
+      const now = Date.now();
+      if (now - lastCopyLinkAt < 600) return;
+      lastCopyLinkAt = now;
+
       const link = location.href;
       try {
         await navigator.clipboard.writeText(link);
