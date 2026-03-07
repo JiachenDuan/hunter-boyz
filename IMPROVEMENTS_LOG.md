@@ -64,3 +64,4 @@
 - 2026-02-20 22:01 PST — DM pacing: respawn time reduced from 2.0s to 1.5s
 - 2026-02-20 22:12 PST — DM QoL: added tap-to-respawn near end of respawn timer (<=0.55s)
 - 2026-03-06 18:00 PST — iOS UX: disabled autocomplete/autocorrect/autocapitalize on Name input (less keyboard friction)
+- 2026-03-06 18:20 PST — iOS UI: HUD + scoreboard now respect safe-area inset top (less notch overlap)
