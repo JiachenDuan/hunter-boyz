@@ -123,3 +123,5 @@
 - 2026-03-07 01:30 PST — iOS UI: force text-size-adjust 100% to prevent Safari auto-resizing text (HUD stays consistent)
 - 2026-03-07 02:10 PST — UI clarity: scoreboard modal header is sticky while scrolling (title + close always visible)
 - 2026-03-07 02:30 PST — Security polish: escape player names + sanitize color tokens in scoreboard HTML (prevents name-based HTML injection)
+
+- 2026-03-07 07:01 PST — A11y/mobile: Name input now has aria-label and iOS enterkeyhint="go" (better screen readers + keyboard UX)
