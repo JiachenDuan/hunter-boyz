@@ -4433,8 +4433,14 @@ function spawnDent(pos, normal, size, kind) {
       try { document.body.style.overflow = __prevBodyOverflow; } catch {}
     }
 
+    // Desktop QoL: hold Tab to view the scoreboard (release to close).
+    // Also restore focus to the opener button on close.
+    let __scoreOpenedViaTab = false;
+    let __scoreLastOpener = null;
+
     function doScoreboard(e){
       if (e) { e.preventDefault(); e.stopPropagation(); }
+      try { __scoreLastOpener = btnScoreboard || document.activeElement || null; } catch {}
       try { lockBodyScroll(); } catch {}
       try { scoreModal.style.display = 'flex'; } catch {}
     }
@@ -4442,7 +4448,63 @@ function spawnDent(pos, normal, size, kind) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
       try { scoreModal.style.display = 'none'; } catch {}
       try { unlockBodyScroll(); } catch {}
+      try {
+        if (__scoreLastOpener && typeof __scoreLastOpener.focus === 'function') {
+          __scoreLastOpener.focus({ preventScroll: true });
+        }
+      } catch {}
     }
+
+    function __isTypingTarget(el) {
+      try {
+        if (!el) return false;
+        const tag = (el.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+        if (el.isContentEditable) return true;
+      } catch {}
+      return false;
+    }
+
+    document.addEventListener('keydown', (e) => {
+      try {
+        if (e.key !== 'Tab' || e.repeat) return;
+        // Don't hijack Tab when the player is typing in an input.
+        if (__isTypingTarget(document.activeElement)) return;
+
+        // Only apply when a real keyboard is present (avoid odd behavior on mobile).
+        const hasHover = !!window.matchMedia && window.matchMedia('(hover: hover)').matches;
+        if (!hasHover) return;
+
+        e.preventDefault();
+        // If already open via click/touch, don't mark it as Tab-opened.
+        const isOpen = (scoreModal && scoreModal.style.display === 'flex');
+        if (!isOpen) {
+          __scoreOpenedViaTab = true;
+          doScoreboard(e);
+        }
+      } catch {}
+    });
+
+    document.addEventListener('keyup', (e) => {
+      try {
+        if (e.key !== 'Tab') return;
+        if (__scoreOpenedViaTab) {
+          __scoreOpenedViaTab = false;
+          doScoreClose(e);
+        }
+      } catch {}
+    });
+
+    // Desktop QoL: ESC closes the scoreboard modal.
+    document.addEventListener('keydown', (e) => {
+      try {
+        if (e.key === 'Escape' && scoreModal && scoreModal.style.display === 'flex') {
+          e.preventDefault();
+          __scoreOpenedViaTab = false;
+          doScoreClose(e);
+        }
+      } catch {}
+    });
     if (btnScoreboard) {
       btnScoreboard.addEventListener('click', doScoreboard);
       btnScoreboard.addEventListener('pointerdown', doScoreboard, { passive:false });
