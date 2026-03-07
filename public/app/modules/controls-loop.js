@@ -498,12 +498,21 @@
     } catch {}
 
     // UX: don't let players "join" with an empty name (common on mobile).
+    // Also tweak the button label so the disabled state is self-explanatory on touch.
     function syncJoinEnabled() {
       try {
         if (!joinBtn || !nameInput) return;
-        if (state.joined) return;
+
+        if (state.joined) {
+          joinBtn.disabled = true;
+          joinBtn.textContent = 'Joined';
+          return;
+        }
+
         const v = (nameInput.value || '').trim();
-        joinBtn.disabled = !v;
+        const ok = !!v;
+        joinBtn.disabled = !ok;
+        joinBtn.textContent = ok ? 'Join' : 'Enter name';
       } catch {}
     }
     syncJoinEnabled();
@@ -595,7 +604,11 @@
       joinInFlight = true;
 
       // Disable immediately so duplicate events can't open multiple sockets.
-      try { joinBtn.disabled = true; nameInput.disabled = true; } catch {}
+      try {
+        joinBtn.disabled = true;
+        joinBtn.textContent = 'Joining…';
+        nameInput.disabled = true;
+      } catch {}
 
       // Save name + settings before joining.
       try {
