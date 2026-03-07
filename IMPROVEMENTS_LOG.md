@@ -68,7 +68,7 @@
 - 2026-02-20 15:00 PST — Added low-HP warning beep (<=25 HP) for arcade tension
 - 2026-02-20 15:10 PST — Shortened round timer from 120s to 90s (faster pacing even without reaching win score)
 - 2026-02-20 15:20 PST — Added green kill-confirm vignette flash on your kills (extra arcade juice)
-- 2026-02-20 15:30 PST — Added rare 1HP CLUTCH survive chance (12- 2026-02-20 15:30 PST — Added rare 1HP CLUTCH survive chance (12%) on otherwise-lethal hits + toast
+- 2026-02-20 15:30 PST — Added rare 1HP CLUTCH survive chance (12%) on otherwise-lethal hits + toast
 - 2026-02-20 15:40 PST — Faster match loop: post-win reset delay reduced from 5s to 3s
 - 2026-02-20 15:51 PST — Added dry-fire click SFX when shooting with 0 ammo (no more silent confusion)
 - 2026-02-20 16:01 PST — Added center 'KILL!' flash on your kills (extra arcade feedback)
@@ -113,6 +113,6 @@
 - 2026-03-06 22:11 PST — iOS bugfix: debounce Copy Link button (avoid pointerdown+touchend+click triple-fire)
 - 2026-03-06 22:20 PST — iOS bugfix: actually debounce Copy Link handler (clipboard/prompt only fires once)
 - 2026-03-06 21:50 PST — iOS bugfix: debounce Sound enable button (avoid double-trigger from pointer+click)
-- 2026-03-07 01:30 PST — iOS UI: force text-size-adjust 100- 2026-03-07 01:30 PST — iOS UI: force text-size-adjust 100% to prevent Safari auto-resizing text (HUD stays consistent)
+- 2026-03-07 01:30 PST — iOS UI: force text-size-adjust 100% to prevent Safari auto-resizing text (HUD stays consistent)
 - 2026-03-07 02:10 PST — UI clarity: scoreboard modal header is sticky while scrolling (title + close always visible)
 - 2026-03-07 02:30 PST — Security polish: escape player names + sanitize color tokens in scoreboard HTML (prevents name-based HTML injection)
