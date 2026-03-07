@@ -10,6 +10,15 @@
     }
 
     html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#05070f; color:var(--uiText); font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial; touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+    /* Mobile viewport stability:
+       Prefer the dynamic viewport units when available (prevents the iOS URL-bar from
+       shrinking the play area / causing touch controls to drift). */
+    @supports (height: 100dvh) {
+      html, body { height: 100dvh; }
+      #renderCanvas, #ui { height: 100dvh; }
+    }
+
     #renderCanvas { width:100%; height:100%; touch-action:none; }
     /* iOS long-press / selection prevention */
     body, #ui, canvas, button, input, select, textarea {
