@@ -860,21 +860,28 @@
     }
 
     // iOS Safari can be flaky with click depending on viewport/overlays; wire multiple events.
-    joinBtn.addEventListener('click', doJoin);
-    joinBtn.addEventListener('pointerdown', doJoin, { passive: false });
-    joinBtn.addEventListener('touchend', doJoin, { passive: false });
+    // But iOS can also fire pointerdown + touchend + click for a single tap.
+    // Debounce these action buttons to avoid double-join, double-start, double-snapshot, etc.
+    function wireTap(el, fn, debounceMs = 350) {
+      if (!el) return;
+      let lastAt = 0;
+      const handler = (e) => {
+        try { e?.preventDefault?.(); } catch {}
+        try { e?.stopPropagation?.(); } catch {}
+        const now = Date.now();
+        if (now - lastAt < debounceMs) return;
+        lastAt = now;
+        try { fn(e); } catch (err) { console.warn('wireTap handler error', err); }
+      };
+      el.addEventListener('click', handler);
+      el.addEventListener('pointerdown', handler, { passive: false });
+      el.addEventListener('touchend', handler, { passive: false });
+    }
 
-    startBtn.addEventListener('click', doStart);
-    startBtn.addEventListener('pointerdown', doStart, { passive: false });
-    startBtn.addEventListener('touchend', doStart, { passive: false });
-
-    snapBtn.addEventListener('click', doSnap);
-    snapBtn.addEventListener('pointerdown', doSnap, { passive: false });
-    snapBtn.addEventListener('touchend', doSnap, { passive: false });
-
-    copyLinkBtn.addEventListener('click', doCopyLink);
-    copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
-    copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
+    wireTap(joinBtn, doJoin);
+    wireTap(startBtn, doStart);
+    wireTap(snapBtn, doSnap);
+    wireTap(copyLinkBtn, doCopyLink);
 
     // --- Scoreboard modal ---
     // Desktop QoL: focus + ESC-to-close, plus restore focus to the button that opened it.
