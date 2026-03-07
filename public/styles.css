@@ -96,7 +96,7 @@
     #log { margin-top:8px; font-size:12px; color: rgba(230,237,243,0.75); }
 
     /* Touch controls */
-    .stick { position:absolute; bottom: var(--move-bottom); width:140px; height:140px; border-radius:999px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); pointer-events:auto; touch-action:none; z-index: 10; }
+    .stick { position:absolute; bottom: var(--move-bottom); width:140px; height:140px; border-radius:999px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); pointer-events:auto; touch-action:none; z-index: 10; cursor: pointer; }
     #moveStick { left: var(--padL); }
     #lookPad { right: var(--padR); width: calc(var(--btn) * 2.1); height: calc(var(--btn) * 2.1); border-radius: 18px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); }
     .nub { position:absolute; left:50%; top:50%; width:64px; height:64px; margin-left:-32px; margin-top:-32px; border-radius:999px; background: rgba(124,92,255,0.25); border:1px solid rgba(124,92,255,0.55); }
@@ -110,7 +110,7 @@
       --bottom: calc(20px + env(safe-area-inset-bottom));
       --move-bottom: calc(var(--bottom) + 18px);
     }
-    #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; z-index: 11; transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease; }
+    #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; z-index: 11; transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease; cursor: pointer; }
     #btnShoot { right: calc(var(--padR) + var(--btn) + var(--btn-gap)); background: var(--danger); border-color: var(--dangerBorder); }
     #btnJump { right: calc(var(--padR) + (var(--btn) + var(--btn-gap)) * 2); background: var(--accent2); border-color: rgba(80,200,255,0.62); }
     #btnJump:active, #btnShoot:active {
@@ -167,6 +167,7 @@
       display:flex; align-items:center; justify-content:center;
       z-index: 12;
       transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+      cursor: pointer;
     }
     #btnWeaponPick:active { transform: scale(0.95); filter: saturate(1.1) brightness(1.15); }
     /* When the weapon modal is open, make the button look "active" */
@@ -261,7 +262,7 @@
     }
     #weaponModalInner .wm-opt.selected { border-color: rgba(124,92,255,0.85); background: rgba(124,92,255,0.18); }
 
-    #btnReload, #btnScope { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 12; transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease; }
+    #btnReload, #btnScope { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 12; transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease; cursor: pointer; }
     #btnReload:active, #btnScope:active {
       transform: scale(0.95);
       filter: saturate(1.1) brightness(1.15);
