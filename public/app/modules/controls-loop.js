@@ -438,14 +438,25 @@
     function openWeaponModal() {
       syncPickerHighlight();
       weaponModal.classList.add('open');
+      try { btnWeaponPick?.classList?.add('isActive'); } catch {}
     }
     function closeWeaponModal() {
       weaponModal.classList.remove('open');
+      try { btnWeaponPick?.classList?.remove('isActive'); } catch {}
     }
 
     btnWeaponPick?.addEventListener('pointerdown', (e) => {
       e.preventDefault(); e.stopPropagation();
-      openWeaponModal();
+      if (weaponModal?.classList?.contains('open')) closeWeaponModal();
+      else openWeaponModal();
+    });
+
+    // Desktop QoL: ESC closes the modal.
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && weaponModal?.classList?.contains('open')) {
+        e.preventDefault();
+        closeWeaponModal();
+      }
     });
 
     weaponModalClose?.addEventListener('pointerdown', (e) => {
