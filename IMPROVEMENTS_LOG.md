@@ -1,3 +1,4 @@
+- 2026-03-07 01:20 PST — UX: scoreboard modal shows “Tap outside to close” hint + closes immediately on backdrop tap (pointerdown)
 - 2026-03-07 01:10 PST — iOS UI: scoreboard modal bottom margin now includes safe-area inset (home indicator doesn’t overlap content)
 - 2026-03-07 01:00 PST — Desktop QoL: scoreboard modal now supports ESC-to-close and restores keyboard focus to the opener button
 - 2026-03-07 00:50 PST — UX: weapon picker modal now auto-focuses the selected weapon (and restores focus on close) for smoother keyboard/desktop use
