@@ -1,3 +1,4 @@
+- 2026-03-06 19:00 PST — First-time touch devices now default to showing control labels (JUMP/SHOOT/etc)
 - 2026-03-06 18:50 PST — Settings sliders now show numeric values + persist (Look/Aim/Deadzone)
 - 2026-02-20 10:21 PST — Debounced Reload button on iOS (avoid double reload on tap)
 - 2026-02-20 10:31 PST — Show current weapon chip (🔫) in compact HUD when Settings are closed
