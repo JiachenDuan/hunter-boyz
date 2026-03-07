@@ -1,3 +1,4 @@
+- 2026-03-07 04:20 PST — UI clarity: added a Score button in the top HUD row to open the scoreboard modal (always accessible on iPhone)
 - 2026-03-07 04:10 PST — UI clarity: modal hints now adapt to desktop vs touch (“Click…/Esc” vs “Tap…”)
 - 2026-03-07 04:00 PST — UI polish: scoreboard close (✕) button now has pressed feedback (snappier mobile tap feel)
 - 2026-03-07 03:51 PST — Perf: round timer UI no longer uses a 60fps requestAnimationFrame loop; now ticks 1–8×/sec depending on round state (better mobile battery)

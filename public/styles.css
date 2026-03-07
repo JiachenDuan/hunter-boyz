@@ -336,6 +336,16 @@
     .connWrap.isOffline .connText {
       display:block;
     }
+    #btnScoreboard {
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
+      color:#e6edf3;
+      padding:8px 10px;
+      font-weight:800;
+    }
+    #hud.hudCompact #btnScoreboard { padding: 6px 8px !important; }
+
     #settingsBtn {
       margin-left:auto;
       border-radius:10px;
