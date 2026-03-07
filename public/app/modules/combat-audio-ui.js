@@ -112,7 +112,17 @@
         const t = performance.now();
         const k = Math.min(1, (t - (updateScopeUI._fovStart || t)) / SCOPE_LERP_MS);
         camera.fov = (updateScopeUI._fovFrom ?? camera.fov) + (updateScopeUI._fovTarget - (updateScopeUI._fovFrom ?? camera.fov)) * k;
-        if (k < 1) requestAnimationFrame(updateScopeUI);
+
+        // Avoid stacking multiple RAF loops if updateScopeUI() is called repeatedly mid-lerp.
+        if (k < 1) {
+          if (!updateScopeUI._rafScheduled) {
+            updateScopeUI._rafScheduled = true;
+            requestAnimationFrame(() => {
+              updateScopeUI._rafScheduled = false;
+              updateScopeUI();
+            });
+          }
+        }
 
         scope.isVisible = scoped;
         scopeLines.isVisible = scoped;
