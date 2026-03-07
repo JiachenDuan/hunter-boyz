@@ -4095,6 +4095,7 @@ function spawnDent(pos, normal, size, kind) {
         sniper: 'Sniper',
         fart: 'Fart',
         rocket: 'Rocket',
+        fishing_pole: 'Fishing Pole',
         knife: 'Knife',
         grenade_frag: 'Frag',
         grenade_impact: 'Impact',
