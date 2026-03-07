@@ -106,6 +106,7 @@ This file exists so future changes don’t regress prior fixes or violate design
 - Desktop shortcut: hold **Tab** to view the scoreboard (release to close). Don’t hijack Tab while typing in inputs.
 - Optional readability toggle: **Settings → Control labels** shows text under touch buttons (persisted locally). Default: **ON for first-time touch devices**, OFF otherwise.
 - Touch buttons should have obvious pressed feedback (immediate scale/glow) so taps feel responsive on mobile.
+- Desktop accessibility: HUD touch buttons are focusable and should work via keyboard (**Enter/Space** acts like a press/hold).
 - iOS safe-area: HUD + touch controls should respect **top/bottom/left/right** safe-area insets (especially landscape on notched iPhones).
 - iOS viewport stability: prefer `100dvh` when available to avoid Safari URL-bar resizing the play area / drifting touch controls.
 

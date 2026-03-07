@@ -3934,10 +3934,34 @@ function spawnDent(pos, normal, size, kind) {
         on(!!v);
       };
       el.addEventListener('contextmenu', (e) => prevent(e));
+
+      // Pointer input (touch/mouse/pen)
       el.addEventListener('pointerdown', (e)=>{ prevent(e); el.setPointerCapture(e.pointerId); press(true); }, { passive:false });
       el.addEventListener('pointerup', (e)=>{ prevent(e); press(false); }, { passive:false });
       el.addEventListener('pointercancel', (e)=>{ prevent(e); press(false); }, { passive:false });
       el.addEventListener('pointerleave', (e)=>{ prevent(e); press(false); }, { passive:false });
+
+      // Keyboard accessibility: Enter/Space behave like a hold.
+      // (Requires role=button + tabindex in the markup to be focusable.)
+      let kbDown = false;
+      el.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        prevent(e);
+        if (kbDown) return; // ignore repeats
+        kbDown = true;
+        press(true);
+      }, { passive:false });
+      el.addEventListener('keyup', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        prevent(e);
+        kbDown = false;
+        press(false);
+      }, { passive:false });
+      el.addEventListener('blur', () => {
+        if (!kbDown) return;
+        kbDown = false;
+        press(false);
+      });
     }
     // Shoot: hold-to-fire by default; optional tap-to-toggle (autofire)
     const autoFireEl = document.getElementById('autofire');
