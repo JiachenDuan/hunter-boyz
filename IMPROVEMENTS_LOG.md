@@ -1,3 +1,4 @@
+- 2026-03-07 06:10 PST — UI clarity: modal hint text now adapts to touch vs desktop (adds Esc/Tab hints on desktop)
 - 2026-03-07 06:00 PST — Mobile polish: set <meta name="theme-color"> so the browser UI tint matches the game
 - 2026-03-07 05:50 PST — Mobile QoL: HUD buttons now use touch-action: manipulation + disable text selection/tap highlight (snappier taps, fewer accidental selections)
 - 2026-03-07 05:20 PST — UX: weapon picker modal title now includes current selection ("Pick Weapon · 🔫 Rifle"), focuses the selected weapon on open, and restores focus to the button on close

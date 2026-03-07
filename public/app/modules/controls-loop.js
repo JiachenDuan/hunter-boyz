@@ -429,7 +429,35 @@
     const weaponModalClose = document.getElementById('weaponModalClose');
     const btnWeaponPick = document.getElementById('btnWeaponPick');
     const wmTitleEl = document.getElementById('weaponModalTitle');
+    const weaponModalHint = document.getElementById('weaponModalHint');
     const wmOpts = document.querySelectorAll('#weaponModalInner .wm-opt');
+
+    function isTouchLike() {
+      try {
+        // Prefer coarse pointer detection; fall back to touch event presence.
+        if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
+        if ('ontouchstart' in window) return true;
+      } catch {}
+      return false;
+    }
+
+    function syncModalHints() {
+      try {
+        const touch = isTouchLike();
+        if (scoreModalHint) {
+          scoreModalHint.textContent = touch
+            ? 'Tap outside to close'
+            : 'Click outside or press Esc • Hold Tab to view';
+        }
+        if (weaponModalHint) {
+          weaponModalHint.textContent = touch
+            ? 'Tap a weapon • Tap outside to close'
+            : 'Click a weapon • Click outside or press Esc';
+        }
+      } catch {}
+    }
+    // Run once on load; device modality rarely changes mid-session.
+    syncModalHints();
 
     function syncPickerHighlight() {
       const cur = weaponEl?.value || 'rifle';
@@ -618,6 +646,7 @@
     const btnScoreboard = document.getElementById('btnScoreboard');
     const scoreModal = document.getElementById('scoreModal');
     const btnScoreClose = document.getElementById('btnScoreClose');
+    const scoreModalHint = document.getElementById('scoreModalHint');
     const soundBtn = document.getElementById('soundBtn');
     const resetLobbyBtn = document.getElementById('resetLobbyBtn');
     const settingsBtn = document.getElementById('settingsBtn');
