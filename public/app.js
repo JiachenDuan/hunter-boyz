@@ -4221,10 +4221,20 @@ function spawnDent(pos, normal, size, kind) {
       }
     }
 
+    // Mobile feel: give the weapon picker button the same instant "pressed" feedback
+    // as the other HUD buttons (pointerdown -> pressed class; clears on pointerup/cancel).
+    function setWeaponPickPressed(on) {
+      try { btnWeaponPick?.classList?.toggle('btnPressed', !!on); } catch {}
+    }
+
     btnWeaponPick?.addEventListener('pointerdown', (e) => {
       e.preventDefault(); e.stopPropagation();
+      setWeaponPickPressed(true);
       toggleWeaponModal();
     });
+    // Clear pressed state even if the pointerup happens off the button.
+    window.addEventListener('pointerup', () => setWeaponPickPressed(false), { passive:true });
+    window.addEventListener('pointercancel', () => setWeaponPickPressed(false), { passive:true });
 
     weaponModalClose?.addEventListener('pointerdown', (e) => {
       e.preventDefault(); e.stopPropagation();

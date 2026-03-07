@@ -174,6 +174,12 @@
       cursor: pointer;
     }
     #btnWeaponPick:active { transform: scale(0.95); filter: saturate(1.1) brightness(1.15); }
+    /* JS-driven pressed state (matches other touch buttons; clears on pointerup). */
+    #btnWeaponPick.btnPressed {
+      transform: scale(0.95);
+      filter: saturate(1.1) brightness(1.15);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.12), 0 10px 22px rgba(0,0,0,0.35);
+    }
     /* When the weapon modal is open, make the button look "active" */
     #btnWeaponPick.isActive {
       box-shadow: 0 0 0 2px rgba(255,200,60,0.20), 0 0 26px rgba(255,200,60,0.22);
