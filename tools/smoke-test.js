@@ -71,7 +71,8 @@ async function main() {
   await sleep(100);
   await page.evaluate(() => {
     const el = document.getElementById('btnScope');
-    if (el) el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+    // Scope toggle is pointerdown-only (avoids iOS double events); mirror that here.
+    if (el) el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
   });
 
   await sleep(100);
