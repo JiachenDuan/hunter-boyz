@@ -428,35 +428,55 @@
     const weaponModal = document.getElementById('weaponModal');
     const weaponModalClose = document.getElementById('weaponModalClose');
     const btnWeaponPick = document.getElementById('btnWeaponPick');
+    const wmTitleEl = document.getElementById('weaponModalTitle');
     const wmOpts = document.querySelectorAll('#weaponModalInner .wm-opt');
 
     function syncPickerHighlight() {
       const cur = weaponEl?.value || 'rifle';
       wmOpts.forEach(o => o.classList.toggle('selected', o.dataset.weapon === cur));
+
+      // UI clarity: echo the selected weapon in the modal title.
+      try {
+        const curBtn = Array.from(wmOpts).find(o => o.dataset.weapon === cur);
+        const label = (curBtn?.textContent || '').trim();
+        if (wmTitleEl) wmTitleEl.textContent = label ? `Pick Weapon · ${label}` : 'Pick Weapon';
+      } catch {}
+    }
+
+    function focusWeaponModal() {
+      try {
+        const cur = weaponEl?.value || 'rifle';
+        const curOpt = Array.from(wmOpts).find(o => o.dataset.weapon === cur);
+        const el = curOpt || wmOpts?.[0];
+        el?.focus?.({ preventScroll: true });
+      } catch {}
     }
 
     function openWeaponModal() {
       syncPickerHighlight();
-      weaponModal.classList.add('open');
+      weaponModal?.classList?.add('open');
       try { btnWeaponPick?.classList?.add('isActive'); } catch {}
+      // Keyboard QoL: put focus inside the modal on open.
+      try { requestAnimationFrame(focusWeaponModal); } catch { try { setTimeout(focusWeaponModal, 0); } catch {} }
     }
     function closeWeaponModal() {
-      weaponModal.classList.remove('open');
+      weaponModal?.classList?.remove('open');
       try { btnWeaponPick?.classList?.remove('isActive'); } catch {}
+      // Keyboard QoL: restore focus to the opener.
+      try { btnWeaponPick?.focus?.({ preventScroll: true }); } catch {}
+    }
+    function toggleWeaponModal() {
+      try {
+        if (weaponModal?.classList?.contains('open')) closeWeaponModal();
+        else openWeaponModal();
+      } catch {
+        try { openWeaponModal(); } catch {}
+      }
     }
 
     btnWeaponPick?.addEventListener('pointerdown', (e) => {
       e.preventDefault(); e.stopPropagation();
-      if (weaponModal?.classList?.contains('open')) closeWeaponModal();
-      else openWeaponModal();
-    });
-
-    // Desktop QoL: ESC closes the modal.
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && weaponModal?.classList?.contains('open')) {
-        e.preventDefault();
-        closeWeaponModal();
-      }
+      toggleWeaponModal();
     });
 
     weaponModalClose?.addEventListener('pointerdown', (e) => {
@@ -467,6 +487,16 @@
     // Tap backdrop to close
     weaponModal?.addEventListener('pointerdown', (e) => {
       if (e.target === weaponModal) { e.preventDefault(); closeWeaponModal(); }
+    });
+
+    // Desktop QoL: ESC closes the modal.
+    document.addEventListener('keydown', (e) => {
+      try {
+        if (e.key === 'Escape' && weaponModal?.classList?.contains('open')) {
+          e.preventDefault();
+          closeWeaponModal();
+        }
+      } catch {}
     });
 
     wmOpts.forEach(opt => {

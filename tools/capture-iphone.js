@@ -144,6 +144,16 @@ async function main(){
     // Let state + camera settle
     await sleep(450);
 
+    // UI capture: open the weapon picker so the screenshot also shows current weapon selection.
+    // (This makes small UX tweaks to the picker/title visible in automated captures.)
+    try {
+      await page.evaluate(() => {
+        const btn = document.getElementById('btnWeaponPick');
+        if (btn) btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      });
+      await sleep(120);
+    } catch {}
+
     const ts = Date.now();
     const file = path.join(outDir, `iphone-${ts}.png`);
     await page.screenshot({ path: file, fullPage: false });
