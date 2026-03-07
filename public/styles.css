@@ -10,7 +10,17 @@
     }
     #ui { position: fixed; inset: 0; pointer-events:none; }
     #hud { position:absolute; top: calc(10px + env(safe-area-inset-top)); left: calc(10px + env(safe-area-inset-left)); background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:auto; max-width: min(72vw, 420px); display:inline-flex; flex-direction:column; gap:8px; }
-    #hud input { border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color:#e6edf3; padding:8px 10px; width: 160px; }
+    #hud input {
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      color:#e6edf3;
+      padding:8px 10px;
+      width: 160px;
+      /* Let players edit/copy their name reliably (especially on iOS) */
+      -webkit-user-select: text;
+      user-select: text;
+    }
     #hud button { margin-left:6px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(124,92,255,0.9); color:white; padding:8px 10px; }
 
     /* Compact HUD to avoid overlapping the score box when Settings are closed */
