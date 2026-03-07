@@ -3194,9 +3194,12 @@ function spawnExplosion(msg) {
           const isMe = String(p.id) === meId;
           const name = escapeHtml(p.name);
           const color = safeCssColor(p.color);
-          return `<div style="display:flex; justify-content:space-between; padding:8px 6px; border-radius:12px; ${isMe?'background: rgba(124,92,255,0.16); border:1px solid rgba(124,92,255,0.28);':'border:1px solid rgba(255,255,255,0.10);'} margin-bottom:8px;">
-            <div><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${color};margin-right:8px;"></span><span style="font-weight:900;">${i+1}. ${name}${isMe?' (you)':''}</span></div>
-            <div style="font-weight:900; min-width:64px; text-align:right;">${p.score||0} <span style="opacity:.8;">/ ${p.deaths||0}</span></div>
+          return `<div style="display:flex; justify-content:space-between; gap:10px; padding:8px 6px; border-radius:12px; ${isMe?'background: rgba(124,92,255,0.16); border:1px solid rgba(124,92,255,0.28);':'border:1px solid rgba(255,255,255,0.10);'} margin-bottom:8px;">
+            <div style="display:flex; align-items:center; flex:1; min-width:0;">
+              <span style="display:inline-block; flex:0 0 auto; width:10px; height:10px; border-radius:999px; background:${color}; margin-right:8px;"></span>
+              <span style="font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${i+1}. ${name}${isMe?' (you)':''}</span>
+            </div>
+            <div style="font-weight:900; flex:0 0 auto; min-width:64px; text-align:right;">${p.score||0} <span style="opacity:.8;">/ ${p.deaths||0}</span></div>
           </div>`;
         }).join('');
 
