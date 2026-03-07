@@ -7,13 +7,13 @@
       <div id="connText" class="connText" role="status" aria-live="polite"></div>
     </div>
     <button id="btnScoreboard" type="button" class="btnGhost" aria-label="Open scoreboard" title="Scoreboard">Score</button>
-    <button id="settingsBtn" type="button">Settings</button>
+    <button id="settingsBtn" type="button" aria-label="Open settings" title="Settings">Settings</button>
   </div>
 
   <div id="settingsPanel">
     <div class="settingsRow settingsRowTight">
       <input id="name" placeholder="Name" aria-label="Player name" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" inputmode="text" enterkeyhint="go" />
-      <button id="joinBtn" type="button">Join</button>
+      <button id="joinBtn" type="button" aria-label="Join game" title="Join">Join</button>
     </div>
 
     <div class="settingsRow">
@@ -82,10 +82,10 @@
     </div>
 
     <div class="hudActions">
-      <button id="snapBtn" type="button" class="btnGhost">Send snapshot</button>
-      <button id="copyLinkBtn" type="button" class="btnGhost">Copy link</button>
-      <button id="soundBtn" type="button" class="soundOn">Sound: ON</button>
-      <button id="resetLobbyBtn" type="button">Reset lobby</button>
+      <button id="snapBtn" type="button" class="btnGhost" aria-label="Send snapshot" title="Send snapshot">Send snapshot</button>
+      <button id="copyLinkBtn" type="button" class="btnGhost" aria-label="Copy game link" title="Copy link">Copy link</button>
+      <button id="soundBtn" type="button" class="soundOn" aria-label="Toggle sound" title="Sound">Sound: ON</button>
+      <button id="resetLobbyBtn" type="button" aria-label="Reset lobby" title="Reset lobby">Reset lobby</button>
       <div class="hudHint">(snapshot saves on server)</div>
     </div>
   </div>
