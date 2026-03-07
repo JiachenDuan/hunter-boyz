@@ -754,14 +754,78 @@
         window.__kb_canRespawnTap = false;
       }
 
-      // score
+      // score (render via DOM nodes; avoid innerHTML so names/colors can't inject markup)
       const scoreDiv = document.getElementById('score');
-      scoreDiv.innerHTML = '<div style="font-weight:800; margin-bottom:6px;">Score</div>' +
-        s.players.sort((a,b)=> (b.score-a.score) || ((a.deaths||0)-(b.deaths||0))).map((p,i) => {
-          const me = p.id === myId ? ' (you)' : '';
-          const rank = `<span style="display:inline-block; width:18px; opacity:.6;">${i+1}.</span>`;
-          return `<div>${rank}<span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${p.name}${me}: ${p.score} <span style="opacity:.8">D ${p.deaths||0}</span> <span style="opacity:.65">HP ${p.hp}</span></div>`;
-        }).join('');
+      try {
+        const header = document.createElement('div');
+        header.style.fontWeight = '800';
+        header.style.marginBottom = '6px';
+        header.textContent = 'Score';
+
+        const rows = [];
+        const sorted = [...(s.players || [])].sort((a,b) => {
+          const ds = (b.score - a.score);
+          if (ds) return ds;
+          const dd = ((a.deaths||0) - (b.deaths||0));
+          if (dd) return dd;
+          return String(a.name||'').localeCompare(String(b.name||''));
+        });
+
+        for (let i = 0; i < sorted.length; i++) {
+          const p = sorted[i];
+          const row = document.createElement('div');
+
+          const rank = document.createElement('span');
+          rank.style.display = 'inline-block';
+          rank.style.width = '18px';
+          rank.style.opacity = '0.6';
+          rank.textContent = `${i+1}.`;
+
+          const dot = document.createElement('span');
+          dot.style.display = 'inline-block';
+          dot.style.width = '10px';
+          dot.style.height = '10px';
+          dot.style.borderRadius = '999px';
+          dot.style.marginRight = '8px';
+          dot.style.background = safeCssColor(p.color);
+
+          const name = document.createElement('span');
+          name.textContent = String(p.name || '');
+
+          const you = (p.id === myId) ? document.createElement('span') : null;
+          if (you) {
+            you.style.opacity = '0.8';
+            you.textContent = ' (you)';
+          }
+
+          const stats = document.createElement('span');
+          stats.textContent = `: ${p.score} `;
+
+          const deaths = document.createElement('span');
+          deaths.style.opacity = '0.8';
+          deaths.textContent = `D ${p.deaths||0}`;
+
+          const hp = document.createElement('span');
+          hp.style.opacity = '0.65';
+          hp.textContent = ` HP ${p.hp}`;
+
+          row.appendChild(rank);
+          row.appendChild(dot);
+          row.appendChild(name);
+          if (you) row.appendChild(you);
+          row.appendChild(stats);
+          row.appendChild(deaths);
+          row.appendChild(document.createTextNode(' '));
+          row.appendChild(hp);
+
+          rows.push(row);
+        }
+
+        scoreDiv.replaceChildren(header, ...rows);
+      } catch {
+        // If anything goes wrong, fail closed (don't render potentially unsafe HTML)
+        scoreDiv.textContent = '';
+      }
 
       const liveIds = new Set(s.players.map(p => p.id));
       for (const [id, mesh] of players.entries()) {

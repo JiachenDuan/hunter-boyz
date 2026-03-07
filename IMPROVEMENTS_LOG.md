@@ -1,3 +1,4 @@
+- 2026-03-07 09:10 PST — Security/robustness: replaced in-HUD score rendering innerHTML with DOM node construction + safeCssColor so player names/colors can’t inject markup.
 - 2026-03-07 09:00 PST — UI clarity: modal hint text on touch now mentions the ✕ close button (“Tap outside or ✕ to close”) so players notice the explicit close affordance.
 - 2026-03-07 08:52 PST — iOS polish: Copy Link now has clear in-button feedback (Copying…/Copied!) and a manual-copy prompt fallback when clipboard APIs are blocked.
 - 2026-03-07 08:30 PST — iOS polish: scoreboard modal now uses momentum scrolling (-webkit-overflow-scrolling: touch) for smoother flick scroll.
