@@ -1,3 +1,4 @@
+- 2026-03-07 04:30 PST — Security/UI: score overlay now renders via DOM (no innerHTML) so player names/colors can’t inject markup
 - 2026-03-07 04:20 PST — UI clarity: added a Score button in the top HUD row to open the scoreboard modal (always accessible on iPhone)
 - 2026-03-07 04:10 PST — UI clarity: modal hints now adapt to desktop vs touch (“Click…/Esc” vs “Tap…”)
 - 2026-03-07 04:00 PST — UI polish: scoreboard close (✕) button now has pressed feedback (snappier mobile tap feel)

@@ -626,13 +626,50 @@
         respawn.style.display = 'none';
       }
 
-      // score
+      // score (avoid innerHTML so player names/colors can't inject markup)
       const scoreDiv = document.getElementById('score');
-      scoreDiv.innerHTML = '<div style="font-weight:800; margin-bottom:6px;">Score</div>' +
-        s.players.sort((a,b)=>b.score-a.score).map(p => {
+      if (scoreDiv) {
+        // Clear
+        while (scoreDiv.firstChild) scoreDiv.removeChild(scoreDiv.firstChild);
+
+        const header = document.createElement('div');
+        header.style.fontWeight = '800';
+        header.style.marginBottom = '6px';
+        header.textContent = 'Score';
+        scoreDiv.appendChild(header);
+
+        const sorted = (s.players || []).slice().sort((a,b)=>(b.score||0)-(a.score||0));
+        for (const p of sorted) {
+          const row = document.createElement('div');
+
+          const dot = document.createElement('span');
+          dot.style.display = 'inline-block';
+          dot.style.width = '10px';
+          dot.style.height = '10px';
+          dot.style.borderRadius = '999px';
+          // Force color through our hsl()→rgb→hex path (safe for CSS)
+          try { dot.style.background = rgbToHex(cssToRgb(p.color)); } catch { dot.style.background = '#c8c8c8'; }
+          dot.style.marginRight = '8px';
+          row.appendChild(dot);
+
           const me = p.id === myId ? ' (you)' : '';
-          return `<div><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${p.name}${me}: ${p.score} <span style="opacity:.8">D ${p.deaths||0}</span> <span style="opacity:.65">HP ${p.hp}</span></div>`;
-        }).join('');
+          row.appendChild(document.createTextNode(`${p.name || 'Player'}${me}: ${p.score || 0} `));
+
+          const d = document.createElement('span');
+          d.style.opacity = '0.8';
+          d.textContent = `D ${p.deaths || 0}`;
+          row.appendChild(d);
+
+          row.appendChild(document.createTextNode(' '));
+
+          const hp = document.createElement('span');
+          hp.style.opacity = '0.65';
+          hp.textContent = `HP ${p.hp ?? '-'}`;
+          row.appendChild(hp);
+
+          scoreDiv.appendChild(row);
+        }
+      }
 
       const liveIds = new Set(s.players.map(p => p.id));
       for (const [id, mesh] of players.entries()) {
