@@ -1,3 +1,4 @@
+- 2026-03-07 05:00 PST — Perf/polish: added favicon assets (favicon.svg + favicon.ico) to prevent noisy /favicon.ico 404s and reduce pointless requests
 - 2026-03-07 04:40 PST — Desktop QoL: hold Tab to view the scoreboard (release to close), with hint text in the modal
 - 2026-03-07 04:30 PST — Security/UI: score overlay now renders via DOM (no innerHTML) so player names/colors can’t inject markup
 - 2026-03-07 04:20 PST — UI clarity: added a Score button in the top HUD row to open the scoreboard modal (always accessible on iPhone)
