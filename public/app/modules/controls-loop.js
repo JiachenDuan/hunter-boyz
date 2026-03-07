@@ -797,10 +797,50 @@
     }
 
     // Desktop QoL: ESC closes scoreboard.
+    // Also support "hold Tab to view" like classic shooters.
+    let scoreHeldByTab = false;
+
+    function isTypingInField(target) {
+      try {
+        if (!target) return false;
+        const tag = (target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+        if (target.isContentEditable) return true;
+      } catch {}
+      return false;
+    }
+
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && scoreModal?.style?.display === 'flex') {
         e.preventDefault();
         doScoreClose(e);
+        return;
+      }
+
+      // Hold Tab to open scoreboard (desktop).
+      if (e.key === 'Tab') {
+        // Only hijack Tab in-game; don't break form navigation or text entry.
+        if (!state.joined) return;
+        if (e.ctrlKey || e.altKey || e.metaKey) return;
+        if (isTypingInField(e.target)) return;
+
+        // If it's already open via button, just prevent focus-steal.
+        if (scoreModal?.style?.display === 'flex') {
+          e.preventDefault();
+          return;
+        }
+
+        e.preventDefault();
+        scoreHeldByTab = true;
+        doScoreboard(e);
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      if (e.key === 'Tab' && scoreHeldByTab) {
+        e.preventDefault();
+        scoreHeldByTab = false;
+        if (scoreModal?.style?.display === 'flex') doScoreClose(e);
       }
     });
 

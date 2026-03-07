@@ -4272,7 +4272,7 @@ function spawnDent(pos, normal, size, kind) {
 
         if (scoreModalHint) {
           scoreModalHint.textContent = desktopLike
-            ? 'Click outside or press Esc to close'
+            ? 'Hold Tab to view • Click outside or press Esc to close'
             : 'Tap outside to close';
         }
         if (weaponModalHint) {
