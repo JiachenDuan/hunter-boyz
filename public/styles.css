@@ -9,7 +9,7 @@
       --ok: rgba(80,255,140,0.95);
     }
 
-    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#05070f; color:var(--uiText); font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial; touch-action: manipulation; }
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#05070f; color:var(--uiText); font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial; touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     #renderCanvas { width:100%; height:100%; touch-action:none; }
     /* iOS long-press / selection prevention */
     body, #ui, canvas, button, input, select, textarea {

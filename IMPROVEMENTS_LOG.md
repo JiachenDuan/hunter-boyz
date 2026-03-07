@@ -97,3 +97,4 @@
 - 2026-03-06 22:11 PST — iOS bugfix: debounce Copy Link button (avoid pointerdown+touchend+click triple-fire)
 - 2026-03-06 22:20 PST — iOS bugfix: actually debounce Copy Link handler (clipboard/prompt only fires once)
 - 2026-03-06 21:50 PST — iOS bugfix: debounce Sound enable button (avoid double-trigger from pointer+click)
+- 2026-03-07 01:30 PST — iOS UI: force text-size-adjust 100- 2026-03-07 01:30 PST — iOS UI: force text-size-adjust 100% to prevent Safari auto-resizing text (HUD stays consistent)
