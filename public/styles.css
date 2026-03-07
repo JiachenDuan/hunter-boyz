@@ -9,7 +9,7 @@
       overscroll-behavior: none;
     }
     #ui { position: fixed; inset: 0; pointer-events:none; }
-    #hud { position:absolute; top: calc(10px + env(safe-area-inset-top)); left:10px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:auto; max-width: min(72vw, 420px); display:inline-flex; flex-direction:column; gap:8px; }
+    #hud { position:absolute; top: calc(10px + env(safe-area-inset-top)); left: calc(10px + env(safe-area-inset-left)); background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:auto; max-width: min(72vw, 420px); display:inline-flex; flex-direction:column; gap:8px; }
     #hud input { border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color:#e6edf3; padding:8px 10px; width: 160px; }
     #hud button { margin-left:6px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(124,92,255,0.9); color:white; padding:8px 10px; }
 
@@ -33,20 +33,22 @@
 
     /* Touch controls */
     .stick { position:absolute; bottom: var(--move-bottom); width:140px; height:140px; border-radius:999px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); pointer-events:auto; touch-action:none; z-index: 10; }
-    #moveStick { left: var(--pad); }
-    #lookPad { right: var(--pad); width: calc(var(--btn) * 2.1); height: calc(var(--btn) * 2.1); border-radius: 18px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); }
+    #moveStick { left: var(--padL); }
+    #lookPad { right: var(--padR); width: calc(var(--btn) * 2.1); height: calc(var(--btn) * 2.1); border-radius: 18px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); }
     .nub { position:absolute; left:50%; top:50%; width:64px; height:64px; margin-left:-32px; margin-top:-32px; border-radius:999px; background: rgba(124,92,255,0.25); border:1px solid rgba(124,92,255,0.55); }
     /* Use CSS variables so controls scale with screen size */
     :root {
       --pad: 18px;
+      --padL: calc(var(--pad) + env(safe-area-inset-left));
+      --padR: calc(var(--pad) + env(safe-area-inset-right));
       --btn: 86px;
       --btn-gap: 12px;
       --bottom: calc(20px + env(safe-area-inset-bottom));
       --move-bottom: calc(var(--bottom) + 18px);
     }
     #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; z-index: 11; }
-    #btnShoot { right: calc(var(--pad) + var(--btn) + var(--btn-gap)); background: rgba(255,80,80,0.25); border-color: rgba(255,80,80,0.6); }
-    #btnJump { right: calc(var(--pad) + (var(--btn) + var(--btn-gap)) * 2); background: rgba(80,200,255,0.18); border-color: rgba(80,200,255,0.55); }
+    #btnShoot { right: calc(var(--padR) + var(--btn) + var(--btn-gap)); background: rgba(255,80,80,0.25); border-color: rgba(255,80,80,0.6); }
+    #btnJump { right: calc(var(--padR) + (var(--btn) + var(--btn-gap)) * 2); background: rgba(80,200,255,0.18); border-color: rgba(80,200,255,0.55); }
 
     #btnReload, #btnScope { display:flex; align-items:center; justify-content:center; }
 
@@ -79,7 +81,7 @@
       filter: saturate(1.1) brightness(1.2);
       box-shadow: 0 0 0 2px rgba(255,255,255,0.14), 0 8px 20px rgba(0,0,0,0.35);
     }
-    #score { position:absolute; top: calc(10px + env(safe-area-inset-top)); right:10px; background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:none; font-size:12px; min-width: 140px; }
+    #score { position:absolute; top: calc(10px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:none; font-size:12px; min-width: 140px; }
 
     /* Extra buttons (sprint/reload) sit above jump/shoot */
 
@@ -87,7 +89,7 @@
     #btnWeaponPick {
       position:absolute;
       bottom: calc(var(--bottom) + var(--btn) + 12px);
-      right: var(--pad);
+      right: var(--padR);
       width: var(--btn); height: var(--btn);
       border-radius: 999px;
       pointer-events:auto; touch-action:none;
@@ -149,9 +151,9 @@
 
     #btnReload, #btnScope { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 12; }
     /* Put scope above the shoot cluster (so it doesn't overlap the look pad) */
-    #btnScope { right: calc(var(--pad) + var(--btn) + var(--btn-gap)); }
+    #btnScope { right: calc(var(--padR) + var(--btn) + var(--btn-gap)); }
     /* Reload sits to the left of scope when visible */
-    #btnReload { right: calc(var(--pad) + (var(--btn) + var(--btn-gap)) * 2); background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.35); }
+    #btnReload { right: calc(var(--padR) + (var(--btn) + var(--btn-gap)) * 2); background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.35); }
 
     /* Responsive tuning */
     @media (max-width: 420px) {
@@ -501,7 +503,7 @@
     #btnPickup, #btnDropMinigun, #btnExitTank, #btnTowerUp, #btnTowerDown {
       position:absolute;
       bottom: calc(var(--bottom) + var(--btn) + 12px);
-      left: calc(var(--pad) + var(--btn) + 10px);
+      left: calc(var(--padL) + var(--btn) + 10px);
       padding:10px 12px;
       border-radius:14px;
       font-weight:900;
@@ -525,7 +527,7 @@
       border:1px solid rgba(80,200,80,0.5);
       background: rgba(40,160,40,0.22);
       color:#b6ffb6;
-      left: calc(var(--pad) + var(--btn) + 140px);
+      left: calc(var(--padL) + var(--btn) + 140px);
     }
     #btnTowerUp, #btnTowerDown {
       border:1px solid rgba(120,200,255,0.30);
@@ -533,7 +535,7 @@
       color:#d8f1ff;
     }
     #btnTowerDown {
-      left: calc(var(--pad) + var(--btn) + 140px);
+      left: calc(var(--padL) + var(--btn) + 140px);
     }
     #mgHud {
       position:fixed;
