@@ -95,6 +95,7 @@ This file exists so future changes don’t regress prior fixes or violate design
 - Don’t make the user change iOS Accessibility settings.
 - WebAudio unlock must be synchronous in gesture handler (avoid async in that path).
 - Connection HUD can include lightweight live RTT (ONLINE 42ms) via app-level ping/pong.
+- Joining should require a non-empty Name (disable Join until a name is entered; Enter/Return should join).
 - Optional readability toggle: **Settings → Control labels** shows text under touch buttons (persisted locally). Default: **ON for first-time touch devices**, OFF otherwise.
 - iOS safe-area: HUD + touch controls should respect **top/bottom/left/right** safe-area insets (especially landscape on notched iPhones).
 
