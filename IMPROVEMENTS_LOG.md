@@ -1,3 +1,4 @@
+- 2026-03-07 12:51 PST — UI clarity: Join button now updates its tooltip/title across states (Enter a name / Join / Joining… / Joined).
 - 2026-03-07 12:40 PST — Test robustness: smoke test now toggles sniper scope via pointerdown to match the client’s iOS-safe handler (less flaky automation).
 - 2026-03-07 12:30 PST — Security/UI robustness: lobby player list no longer uses innerHTML; player colors are sanitized and names are rendered via text nodes.
 - 2026-03-07 12:20 PST — UI clarity: Join button now shows state labels ("Enter name" when disabled, "Joining…" during connect, "Joined" after welcome) and sets a helpful tooltip.

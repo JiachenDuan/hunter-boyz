@@ -587,6 +587,7 @@
         if (state.joined) {
           joinBtn.disabled = true;
           joinBtn.textContent = 'Joined';
+          try { joinBtn.title = 'Joined'; } catch {}
           return;
         }
 
@@ -594,6 +595,7 @@
         const ok = !!v;
         joinBtn.disabled = !ok;
         joinBtn.textContent = ok ? 'Join' : 'Enter name';
+        try { joinBtn.title = ok ? 'Join' : 'Enter a name to join'; } catch {}
       } catch {}
     }
     syncJoinEnabled();
@@ -689,6 +691,7 @@
       try {
         joinBtn.disabled = true;
         joinBtn.textContent = 'Joining…';
+        try { joinBtn.title = 'Joining…'; } catch {}
         nameInput.disabled = true;
       } catch {}
 
