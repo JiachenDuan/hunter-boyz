@@ -820,6 +820,23 @@
       text-overflow:ellipsis;
       white-space:nowrap;
     }
+    .scoreboardBadge {
+      flex: 0 0 auto;
+      font-size:11px;
+      font-weight:1000;
+      letter-spacing:0.6px;
+      padding:2px 7px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.20);
+      background: rgba(0,0,0,0.20);
+      color:#e6edf3;
+      opacity:0.9;
+      text-transform:uppercase;
+    }
+    .scoreboardRow.me .scoreboardBadge {
+      border-color: rgba(124,92,255,0.40);
+      background: rgba(124,92,255,0.18);
+    }
     .scoreboardRight {
       font-weight:900;
       font-variant-numeric: tabular-nums;

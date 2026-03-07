@@ -199,10 +199,18 @@ function spawnExplosion(msg) {
 
           const name = document.createElement('span');
           name.className = 'scoreboardName';
-          name.textContent = `${i + 1}. ${safeText(p.name)}${isMe ? ' (you)' : ''}`;
+          name.textContent = `${i + 1}. ${safeText(p.name)}`;
 
           left.appendChild(dot);
           left.appendChild(name);
+
+          if (isMe) {
+            const badge = document.createElement('span');
+            badge.className = 'scoreboardBadge';
+            badge.textContent = 'YOU';
+            badge.setAttribute('aria-label', 'You');
+            left.appendChild(badge);
+          }
 
           const right = document.createElement('div');
           right.className = 'scoreboardRight';
