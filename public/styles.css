@@ -34,7 +34,24 @@
       -webkit-user-select: text;
       user-select: text;
     }
-    #hud button { margin-left:6px; border-radius:10px; border:1px solid rgba(255,255,255,0.16); background: var(--accent); color:white; padding:8px 10px; }
+    #hud button {
+      margin-left: 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: var(--accent);
+      color: white;
+      padding: 8px 10px;
+      transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+    }
+    #hud button:active {
+      transform: scale(0.97);
+      filter: brightness(1.08) saturate(1.08);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.12), 0 10px 22px rgba(0,0,0,0.35);
+    }
+    #hud button:disabled {
+      opacity: 0.55;
+      filter: grayscale(0.2);
+    }
 
     /* Keyboard / accessibility: show a clear focus ring without impacting touch UX */
     button:focus { outline: none; }
