@@ -3872,6 +3872,10 @@ function spawnDent(pos, normal, size, kind) {
       };
       // Use only pointerdown (covers both mouse and touch on iOS Safari; avoid double-firing with touchstart)
       el.addEventListener('pointerdown', act, { passive:false });
+      // Keyboard accessibility (role=button + tabindex): Enter/Space triggers the same action.
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') act(e);
+      }, { passive:false });
     })();
 
     // DROP MINIGUN button
@@ -3891,6 +3895,10 @@ function spawnDent(pos, normal, size, kind) {
         try { socket.send(JSON.stringify({ t:'dropMinigun' })); } catch {}
       };
       el.addEventListener('pointerdown', act, { passive:false });
+      // Keyboard accessibility (role=button + tabindex): Enter/Space triggers the same action.
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') act(e);
+      }, { passive:false });
     })();
 
     holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
