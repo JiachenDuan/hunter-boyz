@@ -139,18 +139,90 @@ function spawnExplosion(msg) {
 
 
     function updateScoreboardModal(s) {
+      // Keep scoreboard rendering injection-safe: build DOM nodes (no innerHTML).
+      // Also keeps styling centralized in CSS for easier iteration.
       try {
         const body = document.getElementById('scoreboardBody');
         if (!body) return;
+
+        const safeText = (v) => {
+          if (v === null || v === undefined) return '';
+          return String(v);
+        };
+
+        const safeCssColor = (c) => {
+          // Allow: #rgb/#rrggbb, rgb(), rgba(). Anything else -> neutral.
+          const s = safeText(c).trim();
+          if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s)) return s;
+          const m = s.match(/^rgba?\(([^)]+)\)$/i);
+          if (m) {
+            const parts = m[1].split(',').map(x => x.trim());
+            if (parts.length === 3 || parts.length === 4) {
+              const r = Number(parts[0]), g = Number(parts[1]), b = Number(parts[2]);
+              const a = parts.length === 4 ? Number(parts[3]) : null;
+              const okCh = (n) => Number.isFinite(n) && n >= 0 && n <= 255;
+              const okA  = (n) => Number.isFinite(n) && n >= 0 && n <= 1;
+              if (okCh(r) && okCh(g) && okCh(b) && (a === null || okA(a))) {
+                return a === null ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${a})`;
+              }
+            }
+          }
+          return 'rgba(255,255,255,0.65)';
+        };
+
+        // Clear existing.
+        body.textContent = '';
+
         const meId = String(state.me || '');
-        const rows = (s.players || []).slice().sort((a,b)=> (b.score||0)-(a.score||0));
-        body.innerHTML = rows.map((p,i) => {
+        const rows = (s.players || []).slice().sort((a, b) => (b.score || 0) - (a.score || 0));
+        if (!rows.length) {
+          const empty = document.createElement('div');
+          empty.className = 'scoreboardEmpty';
+          empty.textContent = 'No players.';
+          body.appendChild(empty);
+          return;
+        }
+
+        for (let i = 0; i < rows.length; i++) {
+          const p = rows[i] || {};
           const isMe = String(p.id) === meId;
-          return `<div style="display:flex; justify-content:space-between; padding:8px 6px; border-radius:12px; ${isMe?'background: rgba(124,92,255,0.16); border:1px solid rgba(124,92,255,0.28);':'border:1px solid rgba(255,255,255,0.10);'} margin-bottom:8px;">
-            <div><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span><span style="font-weight:900;">${i+1}. ${p.name}${isMe?' (you)':''}</span></div>
-            <div style="font-weight:900; font-variant-numeric: tabular-nums; min-width:92px; text-align:right;">K ${p.score||0} <span style="opacity:.8;">D ${p.deaths||0}</span></div>
-          </div>`;
-        }).join('') || '<div style="opacity:.8;">No players.</div>';
+
+          const row = document.createElement('div');
+          row.className = 'scoreboardRow' + (isMe ? ' me' : '');
+
+          const left = document.createElement('div');
+          left.className = 'scoreboardLeft';
+
+          const dot = document.createElement('span');
+          dot.className = 'scoreboardDot';
+          dot.style.background = safeCssColor(p.color);
+
+          const name = document.createElement('span');
+          name.className = 'scoreboardName';
+          name.textContent = `${i + 1}. ${safeText(p.name)}${isMe ? ' (you)' : ''}`;
+
+          left.appendChild(dot);
+          left.appendChild(name);
+
+          const right = document.createElement('div');
+          right.className = 'scoreboardRight';
+
+          const k = document.createElement('span');
+          k.className = 'scoreboardK';
+          k.textContent = `K ${Number(p.score || 0)}`;
+
+          const d = document.createElement('span');
+          d.className = 'scoreboardD';
+          d.textContent = `D ${Number(p.deaths || 0)}`;
+
+          right.appendChild(k);
+          right.appendChild(document.createTextNode(' '));
+          right.appendChild(d);
+
+          row.appendChild(left);
+          row.appendChild(right);
+          body.appendChild(row);
+        }
       } catch {}
     }
 

@@ -764,6 +764,51 @@
     }
     #scoreboardBody { font-size:13px; line-height:1.45; }
 
+    /* Scoreboard rows are built as DOM nodes (no innerHTML) for safety. */
+    .scoreboardRow {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:8px 6px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.10);
+      margin-bottom:8px;
+    }
+    .scoreboardRow.me {
+      background: rgba(124,92,255,0.16);
+      border-color: rgba(124,92,255,0.28);
+    }
+    .scoreboardLeft {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+    .scoreboardDot {
+      display:inline-block;
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      flex: 0 0 auto;
+    }
+    .scoreboardName {
+      font-weight:900;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .scoreboardRight {
+      font-weight:900;
+      font-variant-numeric: tabular-nums;
+      min-width:92px;
+      text-align:right;
+      flex: 0 0 auto;
+    }
+    .scoreboardD { opacity:0.8; }
+    .scoreboardEmpty { opacity:0.8; padding: 6px 2px; }
+
 /* Accessibility: respect system reduced-motion preference (helps avoid motion sickness). */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
