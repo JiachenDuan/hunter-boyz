@@ -3133,11 +3133,13 @@ function spawnExplosion(msg) {
 function showKill(text) {
       // reuse hit toast area for now
       const d = document.getElementById('hitDetail');
-      d.textContent = text;
-      d.style.opacity = '1';
-      clearTimeout(showKill._t);
-      showKill._t = setTimeout(() => { d.style.opacity = '0'; }, 1200);
-      SFX.kill();
+      if (d) {
+        d.textContent = text;
+        d.style.opacity = '1';
+        clearTimeout(showKill._t);
+        showKill._t = setTimeout(() => { try { d.style.opacity = '0'; } catch {} }, 1200);
+      }
+      try { SFX.kill(); } catch {}
     }
 
     function flashKillVignette() {
@@ -3174,11 +3176,15 @@ function showKill(text) {
     function showHitToast(detail) {
       const el = document.getElementById('hitToast');
       const d = document.getElementById('hitDetail');
+      if (!el || !d) return;
       el.style.opacity = '1';
       d.textContent = detail || '';
       d.style.opacity = detail ? '1' : '0';
       clearTimeout(showHitToast._t);
-      showHitToast._t = setTimeout(() => { el.style.opacity = '0'; d.style.opacity = '0'; }, 260);
+      showHitToast._t = setTimeout(() => {
+        try { el.style.opacity = '0'; } catch {}
+        try { d.style.opacity = '0'; } catch {}
+      }, 260);
     }
 
 
