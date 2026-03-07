@@ -444,6 +444,8 @@
     function syncModalHints() {
       try {
         const touch = isTouchLike();
+
+        // Keep inline hint text consistent with device modality.
         if (scoreModalHint) {
           scoreModalHint.textContent = touch
             ? 'Tap outside to close'
@@ -454,6 +456,16 @@
             ? 'Tap a weapon • Tap outside to close'
             : 'Click a weapon • Click outside or press Esc';
         }
+
+        // Small desktop QoL: expose the Tab affordance on hover/tooltips.
+        try {
+          const sb = document.getElementById('btnScoreboard');
+          if (sb) {
+            const title = touch ? 'Scoreboard' : 'Scoreboard (hold Tab)';
+            sb.title = title;
+            sb.setAttribute('aria-label', touch ? 'Open scoreboard' : 'Open scoreboard (hold Tab)');
+          }
+        } catch {}
       } catch {}
     }
     // Run once on load; device modality rarely changes mid-session.
