@@ -4069,9 +4069,9 @@ function spawnDent(pos, normal, size, kind) {
         fire(e);
       };
 
-      // Prefer pointerup/touchend; skip click to avoid double-trigger.
-      el.addEventListener('pointerup', fireOnce, { passive:false });
-      el.addEventListener('touchend', fireOnce, { passive:false });
+      // iOS can deliver both PointerEvents and legacy TouchEvents for the same gesture.
+      // Using pointerdown only keeps this single-fire and consistent with the other HUD buttons.
+      el.addEventListener('pointerdown', fireOnce, { passive:false });
     })();
 
     // Join
