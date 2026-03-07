@@ -1,3 +1,4 @@
+- 2026-03-07 07:40 PST — UI polish: scoreboard close button + rows now have desktop hover states (clearer affordance).
 - 2026-03-07 07:30 PST — UI clarity: scoreboard now shows a compact “YOU” pill badge on your own row (easier to spot than “(you)”).
 - 2026-03-07 07:10 PST — UI polish: scoreboard modal uses dynamic viewport height (100dvh) and more screen space so long boards are less cramped (esp. landscape iPhone)
 - 2026-03-07 06:50 PST — Perf: coalesced iOS multi-pass resize timers so visualViewport scroll events don’t stack extra engine.resize() calls
