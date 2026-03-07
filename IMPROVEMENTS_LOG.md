@@ -1,3 +1,4 @@
+- 2026-03-07 11:30 PST — Bugfix: fatal crash guard can now actually trigger a reconnect (wired to connectAndJoin’s openSocket).
 - 2026-03-07 11:10 PST — UX: show a lightweight “Loading…” overlay while UI/modules fetch (prevents a blank/stuck-looking screen on slow iPhone loads).
 - 2026-03-07 10:40 PST — iOS UI polish: increased modal close (✕) buttons to a reliable 44×44 tap target (weapon picker + scoreboard).
 - 2026-03-07 10:20 PST — UI clarity: Sound button now starts as “Sound: OFF” until WebAudio is actually enabled (avoids misleading ON state on iOS); adds aria-pressed + clearer tooltip.
