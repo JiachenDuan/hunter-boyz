@@ -783,6 +783,8 @@
       font-weight:900;
       line-height: 1;
       min-width: 40px;
+      /* Ensure a reliable mobile tap target (~44px) even if fonts render smaller. */
+      min-height: 40px;
       text-align: center;
       transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease, background 120ms ease;
       cursor: pointer;

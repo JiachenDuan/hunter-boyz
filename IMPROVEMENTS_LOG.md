@@ -1,3 +1,4 @@
+- 2026-03-07 09:30 PST — iOS UI polish: scoreboard close (✕) button now enforces a larger minimum height for a more reliable tap target.
 - 2026-03-07 09:20 PST — UI polish: scoreboard player color dots now have a subtle outline/shadow so very light colors remain visible on the dark modal.
 - 2026-03-07 09:10 PST — Security/robustness: replaced in-HUD score rendering innerHTML with DOM node construction + safeCssColor so player names/colors can’t inject markup.
 - 2026-03-07 09:00 PST — UI clarity: modal hint text on touch now mentions the ✕ close button (“Tap outside or ✕ to close”) so players notice the explicit close affordance.
