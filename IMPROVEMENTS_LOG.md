@@ -1,3 +1,4 @@
+- 2026-03-07 13:30 PST — iOS bugfix: Join button no longer binds touchend (keeps click+pointerdown), reducing triple-fire join events while preserving keyboard accessibility.
 - 2026-03-07 13:10 PST — UX polish: player Name input is normalized client-side (strip control chars, collapse whitespace, max 16 chars) so join/reconnect always uses a clean, HUD-safe name.
 - 2026-03-07 13:00 PST — UI polish: connection status text now renders in a subtle pill (border + background) for better readability.
 - 2026-03-07 12:51 PST — UI clarity: Join button now updates its tooltip/title across states (Enter a name / Join / Joining… / Joined).

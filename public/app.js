@@ -4579,10 +4579,9 @@ function spawnDent(pos, normal, size, kind) {
     }
     syncJoinEnabled();
 
-    // iOS Safari can be flaky with click depending on viewport/overlays; wire multiple events.
+    // Join: keep click for keyboard accessibility, but avoid triple-firing (iOS can emit pointerdown+touchend+click).
     joinBtn.addEventListener('click', doJoin);
     joinBtn.addEventListener('pointerdown', doJoin, { passive: false });
-    joinBtn.addEventListener('touchend', doJoin, { passive: false });
 
     startBtn.addEventListener('click', doStart);
     startBtn.addEventListener('pointerdown', doStart, { passive: false });
