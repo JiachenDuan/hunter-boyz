@@ -17,6 +17,8 @@
       color:#e6edf3;
       padding:8px 10px;
       width: 160px;
+      /* iOS: avoid viewport zoom on focus (happens when font-size < 16px). */
+      font-size: 16px;
       /* Let players edit/copy their name reliably (especially on iOS) */
       -webkit-user-select: text;
       user-select: text;
