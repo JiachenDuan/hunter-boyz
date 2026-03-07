@@ -54,6 +54,8 @@
       display:flex;
       align-items:center;
       justify-content:center;
+      flex-direction: column;
+      gap: 4px;
       font-weight: 900;
       letter-spacing: 0.6px;
       line-height: 1;
@@ -69,7 +71,8 @@
       opacity: 0.95;
     }
     #btnScope .btnIcon { font-size: 30px; }
-    .btnText { display:none; }
+    .btnText { display:none; font-size: 11px; letter-spacing: 0.9px; opacity: 0.78; }
+    body.showControlLabels .btnText { display:block; }
 
     .btnPressed {
       transform: scale(0.94);

@@ -95,6 +95,7 @@ This file exists so future changes don’t regress prior fixes or violate design
 - Don’t make the user change iOS Accessibility settings.
 - WebAudio unlock must be synchronous in gesture handler (avoid async in that path).
 - Connection HUD can include lightweight live RTT (ONLINE 42ms) via app-level ping/pong.
+- Optional readability toggle: **Settings → Control labels** shows text under touch buttons (persisted locally).
 
 ## 10) Mansion tower teleport
 

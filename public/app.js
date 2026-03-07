@@ -3912,6 +3912,7 @@ function spawnDent(pos, normal, size, kind) {
     const joinBtn = document.getElementById('joinBtn');
     const nameInput = document.getElementById('name');
     const autoReloadEl = document.getElementById('autoReload');
+    const showLabelsEl = document.getElementById('showLabels');
     const reloadBtn = document.getElementById('btnReload');
     const weaponEl = document.getElementById('weapon');
     const mapEls = [document.getElementById('map'), document.getElementById('mapLobby')].filter(Boolean);
@@ -3997,6 +3998,7 @@ function spawnDent(pos, normal, size, kind) {
     // Persist username + settings locally so re-joining is fast.
     const NAME_KEY = 'hunterBoyz.name';
     const AUTO_RELOAD_KEY = 'hunterBoyz.autoReload';
+    const SHOW_LABELS_KEY = 'hunterBoyz.showControlLabels';
     const MAP_KEY = 'hunterBoyz.mapId';
     try {
       const saved = localStorage.getItem(NAME_KEY);
@@ -4004,6 +4006,10 @@ function spawnDent(pos, normal, size, kind) {
 
       const savedAR = localStorage.getItem(AUTO_RELOAD_KEY);
       if (savedAR !== null && autoReloadEl) autoReloadEl.checked = (savedAR === '1');
+
+      const savedSL = localStorage.getItem(SHOW_LABELS_KEY);
+      if (savedSL !== null && showLabelsEl) showLabelsEl.checked = (savedSL === '1');
+
       const savedMap = localStorage.getItem(MAP_KEY);
       if (savedMap) {
         mapEls.forEach((el) => { try { el.value = savedMap; } catch {} });
@@ -4043,10 +4049,23 @@ function spawnDent(pos, normal, size, kind) {
       const on = !!autoReloadEl?.checked;
       try { if (reloadBtn) reloadBtn.style.display = on ? 'none' : 'flex'; } catch {}
     }
+
+    function syncControlLabels() {
+      const on = !!showLabelsEl?.checked;
+      try { document.body.classList.toggle('showControlLabels', on); } catch {}
+    }
+
     syncReloadButtonVisibility();
+    syncControlLabels();
+
     autoReloadEl?.addEventListener('change', () => {
       try { localStorage.setItem(AUTO_RELOAD_KEY, autoReloadEl.checked ? '1' : '0'); } catch {}
       syncReloadButtonVisibility();
+    });
+
+    showLabelsEl?.addEventListener('change', () => {
+      try { localStorage.setItem(SHOW_LABELS_KEY, showLabelsEl.checked ? '1' : '0'); } catch {}
+      syncControlLabels();
     });
 
     const weaponChipEl = document.getElementById('weaponChip');
