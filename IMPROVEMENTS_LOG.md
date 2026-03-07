@@ -161,3 +161,4 @@
 
 - 2026-03-07 07:01 PST — A11y/mobile: Name input now has aria-label and iOS enterkeyhint="go" (better screen readers + keyboard UX)
 - 2026-03-07 11:00 PST — iOS bugfix: sniper scope toggle now uses pointerdown only (avoids iOS pointer+touch double events) while keeping debounce protection.
+- 2026-03-07 14:10 PST — A11y: added consistent focus-visible ring styling for inputs/selects/textarea (keyboard navigation clarity)
