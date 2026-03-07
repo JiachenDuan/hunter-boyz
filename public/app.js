@@ -4777,4 +4777,27 @@ function spawnDent(pos, normal, size, kind) {
       document.addEventListener('gestureend', (e) => { e.preventDefault(); }, { passive: false });
     })();
 
-    window.addEventListener('resize', () => engine.resize());
+    // iOS orientation changes can report stale viewport sizes briefly; resize a few times.
+    (() => {
+      let t = null;
+      const doResize = () => {
+        try { engine.resize(); } catch {}
+      };
+      const schedule = () => {
+        try { if (t) clearTimeout(t); } catch {}
+        t = setTimeout(() => {
+          doResize();
+          // extra passes for iOS Safari URL bar / rotation settling
+          setTimeout(doResize, 120);
+          setTimeout(doResize, 320);
+        }, 50);
+      };
+      window.addEventListener('resize', schedule);
+      window.addEventListener('orientationchange', schedule);
+      try {
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', schedule);
+          window.visualViewport.addEventListener('scroll', schedule);
+        }
+      } catch {}
+    })();
