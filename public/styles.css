@@ -726,7 +726,9 @@
     }
     #scoreModalInner {
       width:min(520px, 96vw);
-      max-height:60vh;
+      /* Use most of the screen so long scoreboards are easier to read.
+         (Old 60vh felt cramped, especially in landscape.) */
+      max-height: calc(100vh - 140px);
       overflow:auto;
       background: rgba(0,0,0,0.78);
       border:1px solid rgba(255,255,255,0.16);
@@ -735,6 +737,11 @@
       box-shadow: 0 18px 60px rgba(0,0,0,0.55);
       /* Respect iPhone home-indicator safe area so the close button/last rows don't sit on it. */
       margin:0 0 calc(14px + env(safe-area-inset-bottom)) 0;
+    }
+    @supports (height: 100dvh) {
+      /* iOS Safari URL-bar resizing can make 100vh taller than the visible area.
+         Use dynamic viewport height so the scoreboard never clips off-screen. */
+      #scoreModalInner { max-height: calc(100dvh - 140px); }
     }
     .scoreModalHeader {
       display:flex;

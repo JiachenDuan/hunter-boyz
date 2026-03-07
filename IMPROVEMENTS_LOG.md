@@ -1,3 +1,4 @@
+- 2026-03-07 07:10 PST — UI polish: scoreboard modal uses dynamic viewport height (100dvh) and more screen space so long boards are less cramped (esp. landscape iPhone)
 - 2026-03-07 06:50 PST — Perf: coalesced iOS multi-pass resize timers so visualViewport scroll events don’t stack extra engine.resize() calls
 - 2026-03-07 06:40 PST — UI clarity: Score button tooltip/aria-label now mention the desktop shortcut (“hold Tab”)
 - 2026-03-07 06:30 PST — A11y: HUD connection text + log now use role=status + aria-live; decorative HUD dots/chips are aria-hidden
