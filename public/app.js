@@ -3154,7 +3154,27 @@ function spawnExplosion(msg) {
       const s = String(c ?? '').trim();
       // Only allow basic color tokens we actually generate (hex / rgb[a]).
       if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(s)) return s;
-      if (/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(\s*,\s*(0|1|0?\.\d+))?\s*\)$/i.test(s)) return s;
+
+      // Stricter rgb/rgba parsing: enforce 0-255 channels and 0-1 alpha.
+      const m = s.match(/^rgba?\((.*)\)$/i);
+      if (m) {
+        const parts = m[1].split(',').map(x => x.trim());
+        if (parts.length === 3 || parts.length === 4) {
+          const r = Number(parts[0]);
+          const g = Number(parts[1]);
+          const b = Number(parts[2]);
+          if ([r,g,b].every(n => Number.isFinite(n) && n >= 0 && n <= 255)) {
+            if (parts.length === 3) return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+            const a = Number(parts[3]);
+            if (Number.isFinite(a) && a >= 0 && a <= 1) {
+              // Normalize spaces & rounding so we never pass through unexpected tokens.
+              const aa = Math.round(a * 1000) / 1000;
+              return `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${aa})`;
+            }
+          }
+        }
+      }
+
       return '#ffffff';
     }
 
