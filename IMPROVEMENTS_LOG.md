@@ -1,3 +1,4 @@
+- 2026-03-07 00:40 PST — UI polish: weapon picker stacks to a single column on very small screens (less cramped)
 - 2026-03-07 00:30 PST — UI polish: weapon picker modal now scrolls if it would overflow the viewport (better on small/landscape iPhones)
 - 2026-03-07 00:20 PST — UI polish: HUD buttons now have clearer pressed + disabled feedback (better mobile tap feel)
 - 2026-03-07 00:10 PST — UI polish: weapon picker options now have clearer pressed feedback (brightness + shadow)

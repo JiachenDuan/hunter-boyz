@@ -253,6 +253,8 @@
     }
     @media (max-width: 360px) {
       :root { --pad: 10px; --btn: 64px; --btn-gap: 8px; --bottom: calc(12px + env(safe-area-inset-bottom)); --move-bottom: calc(var(--bottom) + 14px); }
+      /* Weapon picker: stack options vertically on very small screens (less cramped). */
+      #weaponModalInner .wm-grid { grid-template-columns: 1fr; }
     }
 
     .hudTopRow { display:flex; align-items:center; gap:10px; }
