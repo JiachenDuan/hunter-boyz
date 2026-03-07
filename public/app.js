@@ -4009,7 +4009,15 @@ function spawnDent(pos, normal, size, kind) {
       if (savedAR !== null && autoReloadEl) autoReloadEl.checked = (savedAR === '1');
 
       const savedSL = localStorage.getItem(SHOW_LABELS_KEY);
-      if (savedSL !== null && showLabelsEl) showLabelsEl.checked = (savedSL === '1');
+      if (showLabelsEl) {
+        if (savedSL !== null) {
+          showLabelsEl.checked = (savedSL === '1');
+        } else {
+          // New players on touch devices benefit from visible control labels.
+          const isTouch = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+          showLabelsEl.checked = !!isTouch;
+        }
+      }
 
       const savedMap = localStorage.getItem(MAP_KEY);
       if (savedMap) {
