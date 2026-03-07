@@ -142,7 +142,12 @@
     }
 
     function connectAndJoin() {
-      const name = normalizePlayerName(document.getElementById('name').value || 'Hunter') || 'Hunter';
+      const nameEl = document.getElementById('name');
+      const name = normalizePlayerName(nameEl?.value || 'Hunter') || 'Hunter';
+      // UI clarity: ensure the visible input matches the normalized value we actually send.
+      // (Prevents confusion when whitespace/control chars are stripped or names are truncated.)
+      try { if (nameEl) nameEl.value = name; } catch {}
+
       const proto = location.protocol === 'https:' ? 'wss' : 'ws';
 
       // Persistent client id so reconnects replace the old session (prevents "two of myself" bugs).
