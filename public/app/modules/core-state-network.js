@@ -296,6 +296,22 @@
         try { window.__hbApplyMapVisual?.(nextMapId); } catch {}
         try { clearDents(); } catch {}
       }
+
+      // UI clarity: map selection is only meaningful in the lobby.
+      // Disable the selects until you join, and lock them once the round starts.
+      try {
+        const mapEls = [document.getElementById('map'), document.getElementById('mapLobby')].filter(Boolean);
+        const locked = (!state.joined) || state.started;
+        mapEls.forEach((el) => {
+          try { el.disabled = locked; } catch {}
+          try {
+            const t = !state.joined ? 'Join to pick map' : (state.started ? 'Map locked during round' : 'Pick map');
+            el.title = t;
+            el.setAttribute('aria-label', t);
+          } catch {}
+        });
+      } catch {}
+
       // Build id removed (no longer displayed).
 
       // lobby UI
