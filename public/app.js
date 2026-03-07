@@ -4121,6 +4121,12 @@ function spawnDent(pos, normal, size, kind) {
       if (weaponEl.value !== 'sniper') state.scope = false;
       updateScopeUI();
       syncWeaponChip();
+
+      // If the weapon picker is open and the weapon changes via other UI (dropdown,
+      // hotkeys, etc.), keep the highlight in sync.
+      try {
+        if (weaponModal?.classList?.contains('open')) syncPickerHighlight();
+      } catch {}
     });
     syncWeaponChip();
     const startBtn = document.getElementById('startBtn');
