@@ -3952,11 +3952,22 @@ function spawnDent(pos, normal, size, kind) {
     const weaponModal = document.getElementById('weaponModal');
     const weaponModalClose = document.getElementById('weaponModalClose');
     const btnWeaponPick = document.getElementById('btnWeaponPick');
+    const wmTitleEl = document.getElementById('weaponModalTitle');
     const wmOpts = document.querySelectorAll('#weaponModalInner .wm-opt');
 
     function syncPickerHighlight() {
       const cur = weaponEl?.value || 'rifle';
       wmOpts.forEach(o => o.classList.toggle('selected', o.dataset.weapon === cur));
+
+      // UI clarity: echo the currently-selected weapon in the modal title.
+      // (Helps players confirm what they'll spawn with at a glance.)
+      try {
+        const curBtn = Array.from(wmOpts).find(o => o.dataset.weapon === cur);
+        if (wmTitleEl) {
+          const label = (curBtn?.textContent || '').trim();
+          wmTitleEl.textContent = label ? `Pick Weapon · ${label}` : 'Pick Weapon';
+        }
+      } catch {}
     }
 
     function openWeaponModal() {

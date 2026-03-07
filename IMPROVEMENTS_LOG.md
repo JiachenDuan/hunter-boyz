@@ -1,3 +1,4 @@
+- 2026-03-06 23:20 PST — UI clarity: weapon picker modal title now shows the currently-selected weapon (e.g. “Pick Weapon · 🔫 Rifle”)
 - 2026-03-06 23:10 PST — Bugfix: guard WebSocket message JSON.parse so a malformed payload can’t crash the client
 - 2026-03-06 23:00 PST — Perf: round timer UI update loop no longer runs at 60fps (dynamic 2–8Hz tick; better mobile battery)
 - 2026-03-06 22:50 PST — Accessibility: weapon picker modal options + close are now real buttons (better a11y + keyboard semantics)
