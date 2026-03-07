@@ -100,6 +100,7 @@ This file exists so future changes don’t regress prior fixes or violate design
 - "Copy Link" must work during LAN play even on non-HTTPS origins (fallback to `document.execCommand('copy')` when Clipboard API is blocked).
 - Weapon picker modal should be easy to dismiss: tap the 🔫 button again to close; **ESC** closes on desktop.
 - Optional readability toggle: **Settings → Control labels** shows text under touch buttons (persisted locally). Default: **ON for first-time touch devices**, OFF otherwise.
+- Touch buttons should have obvious pressed feedback (immediate scale/glow) so taps feel responsive on mobile.
 - iOS safe-area: HUD + touch controls should respect **top/bottom/left/right** safe-area insets (especially landscape on notched iPhones).
 
 ## 10) Mansion tower teleport

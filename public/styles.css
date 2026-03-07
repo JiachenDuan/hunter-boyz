@@ -58,9 +58,14 @@
       --bottom: calc(20px + env(safe-area-inset-bottom));
       --move-bottom: calc(var(--bottom) + 18px);
     }
-    #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; z-index: 11; }
+    #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; z-index: 11; transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease; }
     #btnShoot { right: calc(var(--padR) + var(--btn) + var(--btn-gap)); background: rgba(255,80,80,0.25); border-color: rgba(255,80,80,0.6); }
     #btnJump { right: calc(var(--padR) + (var(--btn) + var(--btn-gap)) * 2); background: rgba(80,200,255,0.18); border-color: rgba(80,200,255,0.55); }
+    #btnJump:active, #btnShoot:active {
+      transform: scale(0.95);
+      filter: saturate(1.1) brightness(1.15);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.12), 0 10px 22px rgba(0,0,0,0.35);
+    }
 
     #btnReload, #btnScope { display:flex; align-items:center; justify-content:center; }
 
@@ -166,7 +171,12 @@
     #weaponModalInner .wm-opt:active { transform: scale(0.96); }
     #weaponModalInner .wm-opt.selected { border-color: rgba(124,92,255,0.85); background: rgba(124,92,255,0.18); }
 
-    #btnReload, #btnScope { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 12; }
+    #btnReload, #btnScope { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 12; transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease; }
+    #btnReload:active, #btnScope:active {
+      transform: scale(0.95);
+      filter: saturate(1.1) brightness(1.15);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.10), 0 10px 22px rgba(0,0,0,0.32);
+    }
     /* Put scope above the shoot cluster (so it doesn't overlap the look pad) */
     #btnScope { right: calc(var(--padR) + var(--btn) + var(--btn-gap)); }
     /* Reload sits to the left of scope when visible */
