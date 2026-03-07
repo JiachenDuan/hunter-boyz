@@ -3120,7 +3120,7 @@ function spawnExplosion(msg) {
       try {
         const body = document.getElementById('scoreboardBody');
         if (!body) return;
-        const meId = String(state.me || '');
+        const meId = String(myId || '');
         const rows = (s.players || []).slice().sort((a,b)=> (b.score||0)-(a.score||0));
         body.innerHTML = rows.map((p,i) => {
           const isMe = String(p.id) === meId;
