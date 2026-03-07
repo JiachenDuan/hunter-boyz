@@ -578,6 +578,19 @@
       }
     } catch {}
 
+    function normalizePlayerName(raw) {
+      try {
+        let s = String(raw || '');
+        // Strip control chars/newlines.
+        s = s.replace(/[\u0000-\u001f\u007f]/g, '');
+        s = s.replace(/\s+/g, ' ').trim();
+        if (s.length > 16) s = s.slice(0, 16).trimEnd();
+        return s;
+      } catch {
+        return '';
+      }
+    }
+
     // UX: don't let players "join" with an empty name (common on mobile).
     // Also tweak the button label so the disabled state is self-explanatory on touch.
     function syncJoinEnabled() {
@@ -591,7 +604,7 @@
           return;
         }
 
-        const v = (nameInput.value || '').trim();
+        const v = normalizePlayerName(nameInput.value || '');
         const ok = !!v;
         joinBtn.disabled = !ok;
         joinBtn.textContent = ok ? 'Join' : 'Enter name';
@@ -677,13 +690,15 @@
 
       if (state.joined || joinInFlight) return;
 
-      const v = (nameInput?.value || '').trim();
+      const v = normalizePlayerName(nameInput?.value || '');
       if (!v) {
         try { log('Enter a name to join.'); } catch {}
         try { nameInput?.focus(); } catch {}
         try { syncJoinEnabled(); } catch {}
         return;
       }
+      // Normalize the input so reconnect/join uses exactly what the player sees.
+      try { if (nameInput) nameInput.value = v; } catch {}
 
       joinInFlight = true;
 

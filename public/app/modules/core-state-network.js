@@ -126,8 +126,23 @@
       try { el.title = (txt?.textContent || state); } catch {}
     }
 
+    function normalizePlayerName(raw) {
+      try {
+        let s = String(raw || '');
+        // Strip control chars/newlines to avoid weird logs/UX issues.
+        s = s.replace(/[\u0000-\u001f\u007f]/g, '');
+        // Collapse whitespace and trim.
+        s = s.replace(/\s+/g, ' ').trim();
+        // Keep names reasonably short so HUD/scoreboard don't overflow.
+        if (s.length > 16) s = s.slice(0, 16).trimEnd();
+        return s;
+      } catch {
+        return '';
+      }
+    }
+
     function connectAndJoin() {
-      const name = (document.getElementById('name').value || 'Hunter').trim();
+      const name = normalizePlayerName(document.getElementById('name').value || 'Hunter') || 'Hunter';
       const proto = location.protocol === 'https:' ? 'wss' : 'ws';
 
       // Persistent client id so reconnects replace the old session (prevents "two of myself" bugs).
