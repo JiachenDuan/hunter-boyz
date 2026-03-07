@@ -4255,10 +4255,34 @@ function spawnDent(pos, normal, size, kind) {
     const btnScoreboard = document.getElementById('btnScoreboard');
     const scoreModal = document.getElementById('scoreModal');
     const btnScoreClose = document.getElementById('btnScoreClose');
+    const weaponModalHint = document.getElementById('weaponModalHint');
+    const scoreModalHint = document.getElementById('scoreModalHint');
     const soundBtn = document.getElementById('soundBtn');
     const resetLobbyBtn = document.getElementById('resetLobbyBtn');
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsPanel = document.getElementById('settingsPanel');
+
+    // Modal hints: adapt copy for touch vs desktop (so "Tap" doesn't look weird on desktop).
+    function syncModalHints() {
+      try {
+        const isCoarse = !!window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        const hasHover = !!window.matchMedia && window.matchMedia('(hover: hover)').matches;
+        const touchLike = isCoarse || ('ontouchstart' in window);
+        const desktopLike = hasHover && !isCoarse;
+
+        if (scoreModalHint) {
+          scoreModalHint.textContent = desktopLike
+            ? 'Click outside or press Esc to close'
+            : 'Tap outside to close';
+        }
+        if (weaponModalHint) {
+          weaponModalHint.textContent = desktopLike
+            ? 'Click a weapon • Click outside or press Esc to close'
+            : 'Tap a weapon • Tap outside to close';
+        }
+      } catch {}
+    }
+    syncModalHints();
 
     let joinInFlight = false;
     let lastJoinAt = 0;
