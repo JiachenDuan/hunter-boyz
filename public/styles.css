@@ -357,6 +357,7 @@
       border: 1px solid rgba(255,255,255,0.12);
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
       line-height: 1.2;
+      font-variant-numeric: tabular-nums;
     }
     /* Show connection text only when HUD is compact...
        ...but ALSO show it when we are reconnecting/offline (even if Settings are open) */
