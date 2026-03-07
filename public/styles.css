@@ -186,6 +186,12 @@
       font-family: inherit;
       -webkit-appearance: none;
       appearance: none;
+      transition: transform 120ms ease, filter 120ms ease, background 120ms ease;
+    }
+    #weaponModalInner .wm-close:active {
+      transform: scale(0.94);
+      filter: brightness(1.15);
+      background: rgba(255,255,255,0.12);
     }
     #weaponModalInner .wm-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     #weaponModalInner .wm-opt {

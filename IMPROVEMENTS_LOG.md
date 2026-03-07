@@ -1,3 +1,4 @@
+- 2026-03-07 00:00 PST — UI polish: weapon picker modal close (×) button now has pressed feedback on touch
 - 2026-03-06 23:50 PST — Bugfix: set type="button" on HUD/lobby/modal buttons to prevent accidental form-submit behavior
 - 2026-03-06 23:30 PST — Accessibility: respect prefers-reduced-motion (disable most UI transitions/animations when enabled)
 - 2026-03-06 23:20 PST — UI clarity: weapon picker modal title now shows the currently-selected weapon (e.g. “Pick Weapon · 🔫 Rifle”)
