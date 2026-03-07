@@ -358,6 +358,11 @@
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
       line-height: 1.2;
       font-variant-numeric: tabular-nums;
+
+      /* Prevent subtle HUD width jitter as ping flips between 1–3 digits. */
+      min-width: 78px;
+      text-align: center;
+      box-sizing: border-box;
     }
     /* Show connection text only when HUD is compact...
        ...but ALSO show it when we are reconnecting/offline (even if Settings are open) */
