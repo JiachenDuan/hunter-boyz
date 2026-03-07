@@ -194,6 +194,11 @@
       transition: transform 140ms ease, opacity 140ms ease;
       will-change: transform, opacity;
     }
+    @supports (height: 100dvh) {
+      /* iOS Safari URL-bar resizing can make 100vh taller than the visible area.
+         Use dynamic viewport height so the weapon modal never clips off-screen. */
+      #weaponModalInner { max-height: calc(100dvh - 120px); }
+    }
     #weaponModal.open #weaponModalInner {
       transform: translateY(0) scale(1);
       opacity: 1;
