@@ -3970,14 +3970,28 @@ function spawnDent(pos, normal, size, kind) {
       } catch {}
     }
 
+    function focusWeaponModal() {
+      try {
+        const cur = weaponEl?.value || 'rifle';
+        const curOpt = Array.from(wmOpts).find(o => o.dataset.weapon === cur);
+        const el = curOpt || wmOpts?.[0];
+        // Avoid scroll jumps when focusing (esp. on mobile).
+        el?.focus?.({ preventScroll: true });
+      } catch {}
+    }
+
     function openWeaponModal() {
       syncPickerHighlight();
       weaponModal.classList.add('open');
       try { btnWeaponPick?.classList?.add('isActive'); } catch {}
+      // Keyboard QoL: put focus inside the modal on open.
+      try { requestAnimationFrame(focusWeaponModal); } catch { try { setTimeout(focusWeaponModal, 0); } catch {} }
     }
     function closeWeaponModal() {
       weaponModal.classList.remove('open');
       try { btnWeaponPick?.classList?.remove('isActive'); } catch {}
+      // Keyboard QoL: restore focus to the weapon picker button.
+      try { btnWeaponPick?.focus?.({ preventScroll: true }); } catch {}
     }
     function toggleWeaponModal() {
       try {
