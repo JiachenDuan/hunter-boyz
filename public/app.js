@@ -4315,8 +4315,28 @@ function spawnDent(pos, normal, size, kind) {
     copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
     copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
 
-    function doScoreboard(e){ if (e) { e.preventDefault(); e.stopPropagation(); } try { scoreModal.style.display = 'flex'; } catch {} }
-    function doScoreClose(e){ if (e) { e.preventDefault(); e.stopPropagation(); } try { scoreModal.style.display = 'none'; } catch {} }
+    // Scoreboard modal: prevent iOS background scroll while open.
+    let __prevBodyOverflow = '';
+    function lockBodyScroll() {
+      try {
+        __prevBodyOverflow = document.body.style.overflow || '';
+        document.body.style.overflow = 'hidden';
+      } catch {}
+    }
+    function unlockBodyScroll() {
+      try { document.body.style.overflow = __prevBodyOverflow; } catch {}
+    }
+
+    function doScoreboard(e){
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      try { lockBodyScroll(); } catch {}
+      try { scoreModal.style.display = 'flex'; } catch {}
+    }
+    function doScoreClose(e){
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      try { scoreModal.style.display = 'none'; } catch {}
+      try { unlockBodyScroll(); } catch {}
+    }
     if (btnScoreboard) {
       btnScoreboard.addEventListener('click', doScoreboard);
       btnScoreboard.addEventListener('pointerdown', doScoreboard, { passive:false });
