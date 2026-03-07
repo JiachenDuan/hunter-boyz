@@ -1305,7 +1305,15 @@
       muzzleFlash.rotation.y = Math.PI; // face camera
       muzzleFlash.isVisible = false;
 
-      fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, muzzleFlash, setGun, guns, _flashBaseSize: 0.18 };
+      // Dynamic muzzle flash light (big feel upgrade; short burst on every shot).
+      const muzzleLight = new BABYLON.PointLight('muzzleLight', new BABYLON.Vector3(0.02, 0.00, 0.58), scene);
+      muzzleLight.parent = gunRoot;
+      muzzleLight.diffuse = new BABYLON.Color3(1.0, 0.85, 0.35);
+      muzzleLight.specular = new BABYLON.Color3(1.0, 0.9, 0.6);
+      muzzleLight.intensity = 0.0;
+      muzzleLight.range = 6.5;
+
+      fpRig = { root, lFore, leftHand, rFore, rightHand, gunRoot, muzzleFlash, muzzleLight, setGun, guns, _flashBaseSize: 0.18 };
 
       // First-person weapon cosmetics animation loop (very lightweight).
       // Knife flame aura flicker.

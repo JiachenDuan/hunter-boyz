@@ -186,23 +186,48 @@
     }
 
     const RECOIL = {
-      rifle:   { gunKick: 0.04, pitchKick: 0.018, shakeAmt: 0.003, flashScale: 1.0 },
-      shotgun: { gunKick: 0.08, pitchKick: 0.035, shakeAmt: 0.008, flashScale: 1.6 },
-      sniper:  { gunKick: 0.10, pitchKick: 0.045, shakeAmt: 0.005, flashScale: 1.3 },
-      fart:    { gunKick: 0.02, pitchKick: 0.005, shakeAmt: 0.001, flashScale: 0.6 },
-      minigun: { gunKick: 0.025, pitchKick: 0.008, shakeAmt: 0.005, flashScale: 1.8 },
+      // Kick values are in radians (camera) and meters-ish (gunRoot z).
+      // Patterns are biased so weapons feel distinct:
+      // - Rifle: climbs up + slight right pull (AK-ish)
+      // - Sniper: heavy straight-back kick
+      // - Shotgun: big slam + wide shake
+      rifle:   { gunKick: 0.055, pitchKick: 0.020, yawKick: 0.0045, shakeAmt: 0.004, flashScale: 1.05 },
+      shotgun: { gunKick: 0.110, pitchKick: 0.040, yawKick: 0.0100, shakeAmt: 0.012, flashScale: 1.90 },
+      sniper:  { gunKick: 0.125, pitchKick: 0.055, yawKick: 0.0025, shakeAmt: 0.006, flashScale: 1.55 },
+      fart:    { gunKick: 0.025, pitchKick: 0.006, yawKick: 0.0040, shakeAmt: 0.002, flashScale: 0.75 },
+      minigun: { gunKick: 0.030, pitchKick: 0.010, yawKick: 0.0060, shakeAmt: 0.007, flashScale: 2.10 },
+      rocket:  { gunKick: 0.090, pitchKick: 0.030, yawKick: 0.0100, shakeAmt: 0.014, flashScale: 2.20 },
+      tank:    { gunKick: 0.140, pitchKick: 0.040, yawKick: 0.0120, shakeAmt: 0.020, flashScale: 4.50 },
     };
 
-    let _shakePitch = 0;
-    let _shakeYaw = 0;
-    const SHAKE_DECAY = 0.82;
-
+    // Camera-only shake (render-time only; does NOT affect aim/server look).
+    // Stored on window so the render loop can apply/decay it every frame.
     function applyRecoil(weapon) {
       const r = RECOIL[weapon] || RECOIL.rifle;
+
+      // Gun model kick (visible every second) — decays in controls-loop.
       if (fpRig?.gunRoot) fpRig.gunRoot.position.z -= r.gunKick;
-      // Screen shake disabled (too nauseating on mobile).
-      // _shakePitch += r.pitchKick * (0.8 + Math.random() * 0.4);
-      // _shakeYaw   += (Math.random() - 0.5) * r.shakeAmt * 2;
+
+      // Screen/camera shake + kick — subtle on guns, big on explosions.
+      // Keep it readable: bias recoil patterns instead of pure random.
+      try {
+        if (typeof window.__camKickPitch !== 'number') window.__camKickPitch = 0;
+        if (typeof window.__camKickYaw !== 'number') window.__camKickYaw = 0;
+        if (typeof window.__camShakePitch !== 'number') window.__camShakePitch = 0;
+        if (typeof window.__camShakeYaw !== 'number') window.__camShakeYaw = 0;
+
+        // Pattern bias (AK-ish up-right for rifle; others mostly straight).
+        const yawBias = (weapon === 'rifle') ? 0.85 : (weapon === 'minigun') ? 0.15 : 0.0;
+        const yawJitter = (Math.random() - 0.5) * r.yawKick * 2;
+        const yawKick = yawBias * r.yawKick + yawJitter;
+
+        window.__camKickPitch += r.pitchKick * (0.85 + Math.random() * 0.30);
+        window.__camKickYaw   += yawKick;
+
+        // Micro shake (decays fast; makes shots feel less "flat").
+        window.__camShakePitch += r.shakeAmt * (0.6 + Math.random() * 0.4);
+        window.__camShakeYaw   += (Math.random() - 0.5) * r.shakeAmt * 2;
+      } catch {}
     }
     // Sound FX (procedural WebAudio; no external files)
     const SFX = (() => {

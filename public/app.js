@@ -3183,11 +3183,23 @@ function spawnExplosion(msg) {
           streaks.push(line);
         }
 
-        // Sound (distance-cull so far explosions don't overwhelm)
+        // Sound + screen shake (distance-cull so far explosions don't overwhelm)
         try {
           const meP = (lastServerState?.players || []).find(p=>String(p.id)===String(myId));
           const d = meP ? Math.hypot((meP.x - x), (meP.z - z)) : 0;
           if (!meP || d < 18) SFX.boom();
+
+          // Big, satisfying blast shake when close (feel upgrade).
+          // Render-only shake so it won't mess with server aim.
+          const maxD = 18;
+          const t0 = Math.max(0, 1 - (d / maxD));
+          const amt = t0 * t0; // ease
+          if (amt > 0.02) {
+            window.__camKickPitch = (window.__camKickPitch || 0) + 0.08 * amt;
+            window.__camKickYaw   = (window.__camKickYaw || 0) + (Math.random() - 0.5) * 0.08 * amt;
+            window.__camShakePitch = (window.__camShakePitch || 0) + 0.05 * amt;
+            window.__camShakeYaw   = (window.__camShakeYaw || 0) + (Math.random() - 0.5) * 0.06 * amt;
+          }
         } catch { try { SFX.boom(); } catch {} }
 
         const start = performance.now();
@@ -4904,6 +4916,35 @@ function spawnDent(pos, normal, size, kind) {
               try { engine.resize(); } catch {}
             }
           }
+        }
+      } catch {}
+
+      // Render-time camera kick + shake (major feel upgrade; does NOT change aim/server look).
+      try {
+        const DECAY = 0.80;
+        const KICK_DECAY = 0.68;
+        if (typeof window.__camKickPitch === 'number' || typeof window.__camKickYaw === 'number') {
+          window.__camKickPitch = (window.__camKickPitch || 0) * KICK_DECAY;
+          window.__camKickYaw   = (window.__camKickYaw || 0) * KICK_DECAY;
+        }
+        if (typeof window.__camShakePitch === 'number' || typeof window.__camShakeYaw === 'number') {
+          window.__camShakePitch = (window.__camShakePitch || 0) * DECAY;
+          window.__camShakeYaw   = (window.__camShakeYaw || 0) * DECAY;
+        }
+
+        const kp = window.__camKickPitch || 0;
+        const ky = window.__camKickYaw || 0;
+        const sp = window.__camShakePitch || 0;
+        const sy = window.__camShakeYaw || 0;
+
+        // Low-frequency wobble so shake feels "physical" instead of random noise.
+        const t = performance.now() * 0.02;
+        const wobP = Math.sin(t) * sp;
+        const wobY = Math.cos(t * 1.17) * sy;
+
+        if (camera) {
+          camera.rotation.x += (kp + wobP);
+          camera.rotation.y += (ky + wobY);
         }
       } catch {}
 

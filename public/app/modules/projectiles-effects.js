@@ -591,16 +591,38 @@ function spawnDent(pos, normal, size, kind) {
           if (fpRig?.muzzleFlash && fpRig._flashBaseSize) {
             fpRig.muzzleFlash.scaling.setAll(4.5);
             fpRig.muzzleFlash.isVisible = true;
+            try {
+              if (fpRig?.muzzleLight) {
+                fpRig.muzzleLight.diffuse = new BABYLON.Color3(1.0, 0.65, 0.20);
+                fpRig.muzzleLight.range = 14;
+                fpRig.muzzleLight.intensity = 5.0;
+              }
+            } catch {}
             applyRecoil('rocket');
-            setTimeout(() => { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; }, 180);
+            setTimeout(() => { try { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; } catch {} }, 180);
+            setTimeout(() => { try { if (fpRig?.muzzleLight) fpRig.muzzleLight.intensity = 0.0; } catch {} }, 220);
           }
         } else if (fpRig?.muzzleFlash && fpRig._flashBaseSize) {
           fpRig.muzzleFlash.scaling.setAll(rc.flashScale);
           fpRig.muzzleFlash.isVisible = true;
+          try {
+            if (fpRig?.muzzleLight) {
+              // Weapon-specific light feel.
+              const warm = (wpn === 'shotgun' || wpn === 'rocket')
+                ? new BABYLON.Color3(1.0, 0.70, 0.22)
+                : (wpn === 'sniper')
+                  ? new BABYLON.Color3(1.0, 0.85, 0.35)
+                  : new BABYLON.Color3(1.0, 0.92, 0.45);
+              fpRig.muzzleLight.diffuse = warm;
+              fpRig.muzzleLight.range = (wpn === 'shotgun') ? 8.5 : (wpn === 'sniper') ? 7.5 : 6.5;
+              fpRig.muzzleLight.intensity = (wpn === 'shotgun') ? 3.2 : (wpn === 'sniper') ? 2.6 : (wpn === 'minigun') ? 2.0 : 1.8;
+            }
+          } catch {}
           applyRecoil(wpn);
           setTimeout(() => {
-            if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false;
-          }, 55);
+            try { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; } catch {}
+            try { if (fpRig?.muzzleLight) fpRig.muzzleLight.intensity = 0.0; } catch {}
+          }, 70);
         }
         if (wpn === 'rocket') { try { SFX.whoosh(); } catch {} }
         else if (wpn === 'knife') { /* no gun sound */ }
