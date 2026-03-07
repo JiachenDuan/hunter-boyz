@@ -191,6 +191,8 @@
       width: min(380px, 88vw);
       max-height: calc(100vh - 120px);
       overflow: auto;
+      /* Prevent iOS overscroll "rubber band" from dragging the page behind the modal. */
+      overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       background: rgba(10,14,26,0.95);
       border:1px solid rgba(255,255,255,0.16);
@@ -737,6 +739,8 @@
          (Old 60vh felt cramped, especially in landscape.) */
       max-height: calc(100vh - 140px);
       overflow:auto;
+      /* Prevent iOS overscroll "rubber band" from dragging the page behind the modal. */
+      overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       background: rgba(0,0,0,0.78);
       border:1px solid rgba(255,255,255,0.16);
