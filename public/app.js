@@ -106,7 +106,9 @@
       }
       else if (state === 'connecting') {
         el.style.background = 'rgba(255,220,100,0.95)';
-        if (txt) txt.textContent = 'RECONNECT';
+        // Default label for first load / initial socket open.
+        // (scheduleReconnect() overwrites this with RECONNECT N when applicable.)
+        if (txt) txt.textContent = 'CONNECTING';
       }
       else {
         el.style.background = 'rgba(255,80,80,0.95)';

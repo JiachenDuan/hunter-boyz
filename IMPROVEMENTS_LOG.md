@@ -1,3 +1,4 @@
+- 2026-03-06 20:40 PST — UI clarity: connection status shows CONNECTING on first load (RECONNECT remains for reconnects)
 - 2026-03-06 20:10 PST — UI polish: weapon picker modal adds subtle background blur (clearer focus)
 - 2026-03-06 20:00 PST — Join UX: Join button label clarifies state (Enter name / Joining… / Joined)
 - 2026-03-06 19:30 PST — Join UX: disable Join until Name is non-empty; Enter/Return joins
