@@ -1,3 +1,4 @@
+- 2026-03-07 09:20 PST — UI polish: scoreboard player color dots now have a subtle outline/shadow so very light colors remain visible on the dark modal.
 - 2026-03-07 09:10 PST — Security/robustness: replaced in-HUD score rendering innerHTML with DOM node construction + safeCssColor so player names/colors can’t inject markup.
 - 2026-03-07 09:00 PST — UI clarity: modal hint text on touch now mentions the ✕ close button (“Tap outside or ✕ to close”) so players notice the explicit close affordance.
 - 2026-03-07 08:52 PST — iOS polish: Copy Link now has clear in-button feedback (Copying…/Copied!) and a manual-copy prompt fallback when clipboard APIs are blocked.
