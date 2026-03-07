@@ -1,3 +1,4 @@
+- 2026-03-06 23:00 PST — Perf: round timer UI update loop no longer runs at 60fps (dynamic 2–8Hz tick; better mobile battery)
 - 2026-03-06 22:50 PST — Accessibility: weapon picker modal options + close are now real buttons (better a11y + keyboard semantics)
 - 2026-03-06 22:40 PST — Accessibility: added focus-visible ring on buttons (clear keyboard navigation on desktop, no touch impact)
 - 2026-03-06 22:30 PST — UI polish: weapon picker highlight stays synced if weapon changes while the modal is open

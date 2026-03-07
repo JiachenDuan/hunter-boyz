@@ -63,24 +63,38 @@
       return String(m).padStart(2,'0') + ':' + String(r).padStart(2,'0');
     }
 
+    // Round timer UI update loop.
+    // This used to run on requestAnimationFrame (60fps), which is wasteful on mobile.
+    // The timer only needs to tick a few times per second for readability.
+    let _roundTimerT = null;
     function updateRoundTimer() {
       const el = document.getElementById('roundTimer');
       if (!el) return;
+
       const now = Date.now();
       const left = Math.max(0, (roundEndsAtMs || 0) - now);
       const inLobby = !roundEndsAtMs;
       const str = inLobby ? 'LOBBY' : fmtMs(left);
+
       if (str !== lastTimerStr) {
         lastTimerStr = str;
         el.textContent = str;
       }
+
       try {
         el.classList.toggle('isLobby', inLobby);
         el.classList.toggle('isEnding', !inLobby && left <= 10_000);
       } catch {}
-      requestAnimationFrame(updateRoundTimer);
+
+      // Dynamic tick rate:
+      // - Lobby: slow
+      // - Match: medium
+      // - Last 10s: a bit faster to keep the 'panic' pulse feeling responsive
+      const delay = inLobby ? 500 : (left <= 10_000 ? 120 : 250);
+      try { clearTimeout(_roundTimerT); } catch {}
+      _roundTimerT = setTimeout(updateRoundTimer, delay);
     }
-    requestAnimationFrame(updateRoundTimer);
+    updateRoundTimer();
     function setConnState(state /* 'online'|'offline'|'connecting' */) {
       const el = document.getElementById('connDot');
       if (!el) return;
