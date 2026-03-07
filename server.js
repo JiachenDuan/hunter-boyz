@@ -1668,8 +1668,9 @@ if (msg.t === 'input') {
 });
 
 setInterval(() => {
-  // Handle respawns + reload completion + fart debuff + cleanup disconnected players
+  // Handle respawns + reload completion + DOTs + cleanup disconnected players
   const t = nowMs();
+  let dirty = false;
   // expire minigun drop
   if (minigunDrop && t >= (minigunDrop.expiresAt||0)) {
     minigunDrop = null;
@@ -1743,8 +1744,22 @@ setInterval(() => {
   }
 
   for (const p of players.values()) {
-    if (p.hp <= 0 && p.respawnAt && t >= p.respawnAt) respawn(p);
-    if (p.hp > 0 && p.reloadUntil && t >= p.reloadUntil) { p.ammo = 12; p.reloadUntil = 0; }
+    // Failsafe: ensure dead players always have a respawn scheduled.
+    if (p.hp <= 0 && !p.respawnAt) {
+      p.respawnAt = t + 1500;
+      dirty = true;
+    }
+
+    if (p.hp <= 0 && p.respawnAt && t >= p.respawnAt) {
+      respawn(p);
+      dirty = true;
+    }
+
+    if (p.hp > 0 && p.reloadUntil && t >= p.reloadUntil) {
+      p.ammo = 12;
+      p.reloadUntil = 0;
+      dirty = true;
+    }
 
     // Fart cloud DOT: -5 HP each second for up to 5s
     if (p.hp > 0 && p.fartUntil && t < p.fartUntil) {
@@ -1754,9 +1769,11 @@ setInterval(() => {
         // Apply damage without awarding a kill to a specific shooter.
         p.hp = Math.max(0, p.hp - 5);
         broadcast({ t: 'fartDot', to: p.id, dmg: 5 });
+        dirty = true;
         if (p.hp <= 0) {
           p.hp = 0;
           p.respawnAt = t + 1500;
+          dirty = true;
         }
       }
     }
@@ -1773,10 +1790,12 @@ setInterval(() => {
         p.burnTickAt = t + 1000;
         p.hp = Math.max(0, p.hp - 10);
         broadcast({ t: 'burnDot', to: p.id, dmg: 10 });
+        dirty = true;
         if (p.hp <= 0) {
           const killer = p.burnFrom ? players.get(p.burnFrom) : null;
           if (killer) killer.kills = (killer.kills || 0) + 1;
           p.respawnAt = nowMs() + 3000;
+          dirty = true;
           broadcast({ t: 'killed', by: p.burnFrom || 'fire', victim: p.id });
         }
       }
