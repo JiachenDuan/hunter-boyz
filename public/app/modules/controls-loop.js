@@ -781,7 +781,11 @@
       btnScoreClose.addEventListener('pointerdown', doScoreClose, { passive:false });
       btnScoreClose.addEventListener('touchend', doScoreClose, { passive:false });
     }
-    if (scoreModal) scoreModal.addEventListener('click', (e)=>{ if (e.target===scoreModal) doScoreClose(e); });
+    // Tap/click backdrop to close (use pointerdown for iOS responsiveness; keep click as fallback).
+    if (scoreModal) {
+      scoreModal.addEventListener('pointerdown', (e)=>{ if (e.target===scoreModal) doScoreClose(e); }, { passive:false });
+      scoreModal.addEventListener('click', (e)=>{ if (e.target===scoreModal) doScoreClose(e); });
+    }
 
     // Desktop QoL: ESC closes scoreboard.
     document.addEventListener('keydown', (e) => {

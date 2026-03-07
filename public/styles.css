@@ -698,8 +698,10 @@
       /* Respect iPhone home-indicator safe area so the close button/last rows don't sit on it. */
       margin:0 0 calc(14px + env(safe-area-inset-bottom)) 0;
     }
-    .scoreModalHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .scoreModalHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; }
+    .scoreModalTitleWrap { display:flex; flex-direction:column; gap:2px; }
     .scoreModalTitle { font-weight:900; letter-spacing:0.4px; }
+    .scoreModalHint { font-size:12px; font-weight:800; opacity:0.72; }
     #btnScoreClose {
       border-radius:12px;
       border:1px solid rgba(255,255,255,0.22);
