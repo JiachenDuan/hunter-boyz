@@ -1,3 +1,4 @@
+- 2026-03-07 14:50 PST — UI/a11y polish: connection status pill now keeps title + aria-label synced (including live ping updates), so hover + screen readers reflect the current ONLINE 42ms style text.
 - 2026-03-07 14:20 PST — iOS bugfix: Reload + Scope buttons now use pointerdown-only + debounce in the live-loaded module, preventing duplicate actions from touchend/click double-firing.
 - 2026-03-07 14:00 PST — UI polish: set render canvas background to match page bg (reduces white flash before Babylon renders, esp. on iPhone).
 - 2026-03-07 13:50 PST — Security/robustness: boot “Loading…” overlay no longer uses innerHTML (DOM nodes only).

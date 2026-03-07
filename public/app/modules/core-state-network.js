@@ -123,7 +123,10 @@
         if (txt) txt.textContent = 'OFFLINE';
       }
 
-      try { el.title = (txt?.textContent || state); } catch {}
+      const label = (txt?.textContent || state);
+      try { el.title = label; } catch {}
+      try { if (wrap) wrap.title = label; } catch {}
+      try { if (wrap) wrap.setAttribute('aria-label', `Connection: ${label}`); } catch {}
     }
 
     function normalizePlayerName(raw) {
@@ -233,7 +236,16 @@
                 const rtt = Math.max(0, Date.now() - at);
                 window.__lastRttMs = rtt;
                 const txt = document.getElementById('connText');
-                if (txt && (txt.textContent || '').startsWith('ONLINE')) txt.textContent = `ONLINE ${Math.round(rtt)}ms`;
+                if (txt && (txt.textContent || '').startsWith('ONLINE')) {
+                  txt.textContent = `ONLINE ${Math.round(rtt)}ms`;
+                  // Keep hover/a11y label in sync (connDot title is set on state changes only).
+                  try {
+                    const wrap = txt.parentElement;
+                    const label = txt.textContent;
+                    if (wrap) wrap.title = label;
+                    if (wrap) wrap.setAttribute('aria-label', `Connection: ${label}`);
+                  } catch {}
+                }
               }
             } catch {}
           }
