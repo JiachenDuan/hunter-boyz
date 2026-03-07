@@ -737,6 +737,9 @@
       color:#e6edf3;
       padding:8px 10px;
       font-weight:900;
+      line-height: 1;
+      min-width: 40px;
+      text-align: center;
     }
     #scoreboardBody { font-size:13px; line-height:1.45; }
 

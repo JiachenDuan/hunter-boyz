@@ -1,3 +1,4 @@
+- 2026-03-07 02:40 PST — UI polish + a11y: scoreboard close button is now an ✕ icon (bigger tap target) and modals declare role="dialog"/aria attributes for screen readers
 - 2026-03-07 01:50 PST — iOS polish: lock page scrolling while the scoreboard modal is open (prevents background drift)
 - 2026-03-07 01:40 PST — UI clarity: scoreboard adds a small header (“Player” + “K / D”) so the numbers are immediately readable
 - 2026-03-07 01:20 PST — UX: scoreboard modal shows “Tap outside to close” hint + closes immediately on backdrop tap (pointerdown)
