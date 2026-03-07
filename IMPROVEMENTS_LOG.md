@@ -1,3 +1,4 @@
+- 2026-03-07 13:50 PST — Security/robustness: boot “Loading…” overlay no longer uses innerHTML (DOM nodes only).
 - 2026-03-07 13:40 PST — UX robustness: if the UI/module fetch boot fails, the banner now includes the underlying error and a one-tap “Retry” button (no innerHTML).
 - 2026-03-07 13:30 PST — iOS bugfix: Join button no longer binds touchend (keeps click+pointerdown), reducing triple-fire join events while preserving keyboard accessibility.
 - 2026-03-07 13:10 PST — UX polish: player Name input is normalized client-side (strip control chars, collapse whitespace, max 16 chars) so join/reconnect always uses a clean, HUD-safe name.
