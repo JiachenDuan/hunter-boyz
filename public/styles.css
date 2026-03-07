@@ -242,6 +242,14 @@
     .controlLabel { font-size:12px; opacity:.8; }
     .controlLabelStrong { opacity:.85; font-weight:800; }
     .controlLabelHeavy { opacity:.9; font-weight:900; }
+    .rangeVal {
+      margin-left:6px;
+      display:inline-block;
+      min-width:38px;
+      text-align:right;
+      font-variant-numeric: tabular-nums;
+      opacity:.85;
+    }
     .controlNote { font-size:12px; opacity:.6; }
     #weapon, #map, #mapLobby { cursor:pointer; padding:8px 10px; }
     .hudActions { margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }

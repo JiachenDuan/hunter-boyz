@@ -51,6 +51,36 @@
       el.addEventListener('pointerleave', end, { passive: false });
     }
 
+    function bindRange({ id, storageKey, valId, fmt }) {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      // Load persisted value (if any)
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved != null && saved !== '') el.value = String(saved);
+      } catch {}
+
+      const valEl = valId ? document.getElementById(valId) : null;
+      const render = () => {
+        if (!valEl) return;
+        const v = parseFloat(el.value);
+        valEl.textContent = (fmt ? fmt(v) : String(v));
+      };
+
+      render();
+
+      el.addEventListener('input', () => {
+        try { localStorage.setItem(storageKey, String(el.value)); } catch {}
+        render();
+      });
+    }
+
+    // UI polish: show + persist important sensitivity/deadzone settings.
+    bindRange({ id: 'sensTurn', storageKey: 'hunterBoyz.sensTurn', valId: 'sensTurnVal', fmt: (v) => v.toFixed(1) });
+    bindRange({ id: 'sensAim', storageKey: 'hunterBoyz.sensAim', valId: 'sensAimVal', fmt: (v) => v.toFixed(1) });
+    bindRange({ id: 'deadzone', storageKey: 'hunterBoyz.deadzone', valId: 'deadzoneVal', fmt: (v) => v.toFixed(2) });
+
     makeStick(
       document.getElementById('moveStick'),
       document.getElementById('moveNub'),
