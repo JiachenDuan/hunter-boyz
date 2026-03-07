@@ -737,6 +737,7 @@
          (Old 60vh felt cramped, especially in landscape.) */
       max-height: calc(100vh - 140px);
       overflow:auto;
+      -webkit-overflow-scrolling: touch;
       background: rgba(0,0,0,0.78);
       border:1px solid rgba(255,255,255,0.16);
       border-radius:18px;
