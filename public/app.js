@@ -2279,13 +2279,7 @@
         scopeLines.isVisible = scoped;
         ret.isVisible = !scoped;
 
-        // HUD hint: when compact HUD is active, show scoped state on the weapon chip.
-        try {
-          if (weaponSel === 'sniper') {
-            const chip = document.getElementById('weaponChip');
-            if (chip) chip.textContent = `🔫 Sniper${scoped ? ' 🎯' : ''}`;
-          }
-        } catch {}
+        // HUD hint: weapon chip text is synced via syncWeaponChip() to include scoped state.
 
         // Rocket launcher: bigger reticle (big splash)
         if (!scoped) {
@@ -4225,7 +4219,30 @@ function spawnDent(pos, normal, size, kind) {
     }
     function syncWeaponChip() {
       if (!weaponChipEl || !weaponEl) return;
-      weaponChipEl.textContent = `🔫 ${weaponLabel(weaponEl.value)}`;
+
+      // UI clarity: when a power weapon is active, make it obvious the selection is overridden.
+      let power = null;
+      try {
+        const me = (lastServerState && myId)
+          ? (lastServerState.players || []).find(p => String(p.id) === String(myId))
+          : null;
+        power = me?.powerWeapon || null;
+      } catch {}
+
+      if (power === 'minigun') {
+        weaponChipEl.textContent = `🔥 ${weaponLabel('minigun')}`;
+        weaponChipEl.setAttribute('aria-label', 'Weapon: Minigun (power weapon)');
+        weaponChipEl.title = 'Power weapon active: Minigun';
+        weaponChipEl.classList.add('powerWeapon');
+        return;
+      }
+
+      weaponChipEl.classList.remove('powerWeapon');
+      const w = String(weaponEl.value || 'rifle');
+      const scoped = (w === 'sniper') && (state.scope === true);
+      weaponChipEl.textContent = `🔫 ${weaponLabel(w)}${scoped ? ' 🎯' : ''}`;
+      weaponChipEl.setAttribute('aria-label', `Weapon: ${weaponLabel(w)}${scoped ? ' (scoped)' : ''}`);
+      weaponChipEl.title = '';
     }
 
     // Quick weapon access: tap the chip (when visible) to toggle the weapon picker.
@@ -4606,6 +4623,10 @@ function spawnDent(pos, normal, size, kind) {
     // Network tick
     let seq = 0;
     let lastSend = performance.now();
+
+    // Keep HUD weapon chip synced to power-weapon + scoped state without needing special-case calls.
+    let _lastWeaponChipKey = '';
+
     engine.runRenderLoop(() => {
       // Low-HP warning beep (arcade tension)
       try {
@@ -4618,6 +4639,18 @@ function spawnDent(pos, normal, size, kind) {
             window.__kb_lowHpAt = now;
             try { SFX.lowhp?.(); } catch {}
           }
+        }
+      } catch {}
+
+      // HUD weapon chip sync (power weapon overrides selection; sniper shows scoped state)
+      try {
+        const me = (lastServerState && myId) ? (lastServerState.players || []).find(p => String(p.id) === String(myId)) : null;
+        const pw = me?.powerWeapon || '';
+        const sel = String(weaponEl?.value || 'rifle');
+        const key = `${pw}|${sel}|${state.scope ? 1 : 0}`;
+        if (key !== _lastWeaponChipKey) {
+          _lastWeaponChipKey = key;
+          syncWeaponChip();
         }
       } catch {}
 

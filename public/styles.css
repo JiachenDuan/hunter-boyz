@@ -307,6 +307,13 @@
     }
     /* Show current weapon when HUD is compact (settings hidden) */
     #hud.hudCompact .weaponChip { display:inline-flex; }
+    /* Power weapon: make the chip more obvious without adding visual spam. */
+    #hud.hudCompact .weaponChip.powerWeapon {
+      border-color: rgba(255,170,80,0.55);
+      background: rgba(255,170,80,0.10);
+      box-shadow: 0 0 0 2px rgba(255,170,80,0.12);
+      opacity: 0.98;
+    }
     .connWrap {
       display:flex;
       align-items:center;

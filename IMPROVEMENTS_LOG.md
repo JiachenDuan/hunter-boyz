@@ -1,3 +1,4 @@
+- 2026-03-07 08:10 PST — UI clarity: HUD weapon chip now shows active Minigun power weapon as “🔥 Minigun” with a subtle highlight, making it obvious the dropdown selection is overridden.
 - 2026-03-07 08:00 PST — UI clarity: scoreboard now sorts ties deterministically (Score desc → Deaths asc → Name) to reduce row “jumping” when players are tied.
 - 2026-03-07 07:50 PST — UI polish: Copy link button now shows quick “Copying…/Copied!” label feedback and disables while in-flight (clearer on iPhone).
 - 2026-03-07 07:40 PST — UI polish: scoreboard close button + rows now have desktop hover states (clearer affordance).
