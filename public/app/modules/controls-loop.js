@@ -710,6 +710,7 @@
     }
 
     let pendingStart = false;
+    let lastStartAt = 0;
     function trySendStart() {
       if (!pendingStart) return;
       if (!socket || socket.readyState !== 1) return;
@@ -720,13 +721,24 @@
 
     function doStart(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
+      const now = Date.now();
+      // iOS can fire pointerdown + touchend + click; debounce so we only send start once.
+      if (now - lastStartAt < 600) return;
+      lastStartAt = now;
+
       sendMapSelection();
       pendingStart = true;
       trySendStart();
     }
 
+    let lastSnapAt = 0;
     function doSnap(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
+      const now = Date.now();
+      // iOS can fire pointerdown + touchend + click; debounce to avoid double-uploading snapshots.
+      if (now - lastSnapAt < 600) return;
+      lastSnapAt = now;
+
       if (!socket || socket.readyState !== 1) { log('Snapshot failed: offline'); return; }
 
       // Downscale before encoding (iPhone can choke on huge base64 payloads).
