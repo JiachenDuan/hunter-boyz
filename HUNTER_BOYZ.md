@@ -97,6 +97,7 @@ This file exists so future changes don’t regress prior fixes or violate design
 - Connection HUD can include lightweight live RTT (ONLINE 42ms) via app-level ping/pong.
 - If the connection is **OFFLINE** / **RECONNECTING**, show text (not just a colored dot) even when Settings are open.
 - Joining should require a non-empty Name (disable Join until a name is entered; Enter/Return should join).
+- Player names are normalized client-side for lobby readability: trim, collapse repeated whitespace, strip control chars, max length 16 (server must still treat as untrusted).
 - "Copy Link" must work during LAN play even on non-HTTPS origins (fallback to `document.execCommand('copy')` when Clipboard API is blocked).
 - Weapon picker modal should be easy to dismiss: tap the 🔫 button again to close; **ESC** closes on desktop.
 - Scoreboard should always be accessible: HUD top row includes a **Score** button that opens the scoreboard modal.

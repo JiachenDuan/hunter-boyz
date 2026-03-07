@@ -132,8 +132,21 @@
       try { el.title = (txt?.textContent || state); } catch {}
     }
 
+    function sanitizePlayerName(raw) {
+      // Keep lobby readable + prevent weird whitespace/control chars.
+      // Server should still treat the name as untrusted.
+      let s = String(raw || '');
+      try { s = s.replace(/[\u0000-\u001f\u007f]/g, ''); } catch {}
+      try { s = s.replace(/\s+/g, ' '); } catch {}
+      s = s.trim();
+      if (!s) s = 'Hunter';
+      // Keep in sync with the UI input maxlength.
+      try { s = s.slice(0, 16); } catch {}
+      return s;
+    }
+
     function connectAndJoin() {
-      const name = (document.getElementById('name').value || 'Hunter').trim();
+      const name = sanitizePlayerName(document.getElementById('name').value);
       const proto = location.protocol === 'https:' ? 'wss' : 'ws';
 
       // Persistent client id so reconnects replace the old session (prevents "two of myself" bugs).
@@ -4076,7 +4089,7 @@ function spawnDent(pos, normal, size, kind) {
       try {
         if (!joinBtn || !nameInput) return;
         if (state.joined) { joinBtn.disabled = true; return; }
-        const ok = String(nameInput.value || '').trim().length > 0;
+        const ok = sanitizePlayerName(nameInput.value).trim().length > 0;
         joinBtn.disabled = !ok;
       } catch {}
     }
@@ -4381,8 +4394,10 @@ function spawnDent(pos, normal, size, kind) {
       try { joinBtn.disabled = true; nameInput.disabled = true; } catch {}
 
       // Save name + settings before joining.
+      // (Normalize so reconnects keep a clean, readable name.)
       try {
-        const v = (nameInput.value || '').trim();
+        const v = sanitizePlayerName(nameInput.value);
+        nameInput.value = v;
         if (v) localStorage.setItem(NAME_KEY, v);
         if (autoReloadEl) localStorage.setItem(AUTO_RELOAD_KEY, autoReloadEl.checked ? '1' : '0');
         localStorage.setItem(MAP_KEY, getSelectedMapId());
