@@ -1,3 +1,4 @@
+- 2026-03-07 01:00 PST — Desktop QoL: scoreboard modal now supports ESC-to-close and restores keyboard focus to the opener button
 - 2026-03-07 00:50 PST — UX: weapon picker modal now auto-focuses the selected weapon (and restores focus on close) for smoother keyboard/desktop use
 - 2026-03-07 00:40 PST — UI polish: weapon picker stacks to a single column on very small screens (less cramped)
 - 2026-03-07 00:30 PST — UI polish: weapon picker modal now scrolls if it would overflow the viewport (better on small/landscape iPhones)
