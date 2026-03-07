@@ -63,9 +63,22 @@
       return String(m).padStart(2,'0') + ':' + String(r).padStart(2,'0');
     }
 
+    // Round timer UI: avoid a 60fps requestAnimationFrame loop (wastes battery on phones).
+    // We tick a few times per second instead; we speed up slightly near the end for responsiveness.
+    function timerTickIntervalMs(leftMs) {
+      if (!roundEndsAtMs) return 800;          // lobby state
+      if (leftMs > 30_000) return 500;         // most of the round
+      if (leftMs > 10_000) return 220;         // mid/late
+      return 120;                               // last 10s (panic mode)
+    }
+
     function updateRoundTimer() {
       const el = document.getElementById('roundTimer');
-      if (!el) return;
+      if (!el) {
+        setTimeout(updateRoundTimer, 1000);
+        return;
+      }
+
       const now = Date.now();
       const left = Math.max(0, (roundEndsAtMs || 0) - now);
       const str = roundEndsAtMs ? fmtMs(left) : 'LOBBY';
@@ -73,9 +86,10 @@
         lastTimerStr = str;
         el.textContent = str;
       }
-      requestAnimationFrame(updateRoundTimer);
+
+      setTimeout(updateRoundTimer, timerTickIntervalMs(left));
     }
-    requestAnimationFrame(updateRoundTimer);
+    setTimeout(updateRoundTimer, 80);
     function setConnState(state /* 'online'|'offline'|'connecting' */) {
       const el = document.getElementById('connDot');
       if (!el) return;

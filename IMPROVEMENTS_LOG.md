@@ -1,3 +1,4 @@
+- 2026-03-07 03:51 PST — Perf: round timer UI no longer uses a 60fps requestAnimationFrame loop; now ticks 1–8×/sec depending on round state (better mobile battery)
 - 2026-03-07 03:30 PST — iOS bugfix: debounce scoreboard open/close to prevent double-fire (pointerdown+touchend+click) causing flicker/focus weirdness
 - 2026-03-07 03:10 PST — UI polish: scoreboard rows now truncate long player names with ellipsis (prevents K/D column wrap)
 - 2026-03-07 02:50 PST — Security polish: hardened safeCssColor sanitizer (rgb/rgba now strictly validates 0–255 channels + 0–1 alpha; normalizes output)
