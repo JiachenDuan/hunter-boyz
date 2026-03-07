@@ -776,7 +776,15 @@
       line-height: 1;
       min-width: 40px;
       text-align: center;
-      transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+      transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease, background 120ms ease;
+      cursor: pointer;
+    }
+    @media (hover:hover) {
+      #btnScoreClose:hover {
+        filter: brightness(1.12) saturate(1.05);
+        background: rgba(255,255,255,0.06);
+        box-shadow: 0 0 0 2px rgba(255,255,255,0.10);
+      }
     }
     #btnScoreClose:active {
       transform: scale(0.96);
@@ -795,6 +803,17 @@
       border-radius:12px;
       border:1px solid rgba(255,255,255,0.10);
       margin-bottom:8px;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+    @media (hover:hover) {
+      .scoreboardRow:hover {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.16);
+      }
+      .scoreboardRow.me:hover {
+        background: rgba(124,92,255,0.20);
+        border-color: rgba(124,92,255,0.34);
+      }
     }
     .scoreboardRow.me {
       background: rgba(124,92,255,0.16);
