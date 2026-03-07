@@ -1,3 +1,4 @@
+- 2026-03-06 22:40 PST — Accessibility: added focus-visible ring on buttons (clear keyboard navigation on desktop, no touch impact)
 - 2026-03-06 22:30 PST — UI polish: weapon picker highlight stays synced if weapon changes while the modal is open
 - 2026-03-06 21:20 PST — Perf: prevent stacking multiple requestAnimationFrame loops during sniper scope FOV lerp
 - 2026-03-06 21:10 PST — iOS UX: Name input font-size set to 16px to prevent Safari zoom-on-focus

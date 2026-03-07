@@ -36,6 +36,14 @@
     }
     #hud button { margin-left:6px; border-radius:10px; border:1px solid rgba(255,255,255,0.16); background: var(--accent); color:white; padding:8px 10px; }
 
+    /* Keyboard / accessibility: show a clear focus ring without impacting touch UX */
+    button:focus { outline: none; }
+    button:focus-visible {
+      outline: 2px solid rgba(80,200,255,0.85);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.25);
+    }
+
     /* Compact HUD to avoid overlapping the score box when Settings are closed */
     #hud.hudCompact {
       padding: 8px 10px;
