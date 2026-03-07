@@ -1,3 +1,4 @@
+- 2026-03-06 19:30 PST — Join UX: disable Join until Name is non-empty; Enter/Return joins
 - 2026-03-06 19:20 PST — Minigun HUD now respects iPhone notch (safe-area inset top)
 - 2026-03-06 19:00 PST — First-time touch devices now default to showing control labels (JUMP/SHOOT/etc)
 - 2026-03-06 18:50 PST — Settings sliders now show numeric values + persist (Look/Aim/Deadzone)
