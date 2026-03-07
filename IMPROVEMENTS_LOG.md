@@ -1,3 +1,4 @@
+- 2026-03-07 10:10 PST — UI clarity: scoreboard top 3 rows now have subtle gold/silver/bronze tint for faster leaderboard parsing.
 - 2026-03-07 10:00 PST — A11y/UI polish: added aria-label + title attributes to key HUD/lobby buttons (Settings/Join/Start/Copy link/Sound/etc) for clearer semantics and desktop hover hints.
 - 2026-03-07 09:40 PST — iOS polish: prevent overscroll “rubber band” from dragging the page behind weapon/scoreboard modals (overscroll-behavior: contain).
 - 2026-03-07 09:50 PST — UI robustness: temp button label helper now only restores the previous label if nothing else has updated the button text (prevents clobbering state labels).

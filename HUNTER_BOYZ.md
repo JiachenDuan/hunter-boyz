@@ -100,6 +100,7 @@ This file exists so future changes don’t regress prior fixes or violate design
 - "Copy Link" must work during LAN play even on non-HTTPS origins (fallback to `document.execCommand('copy')` when Clipboard API is blocked).
 - Weapon picker modal should be easy to dismiss: tap the 🔫 button again to close; **ESC** closes on desktop.
 - Scoreboard should always be accessible: HUD top row includes a **Score** button that opens the scoreboard modal.
+- Scoreboard readability: top 3 ranks should have a subtle gold/silver/bronze tint so leaders pop at a glance.
 - Scoreboard modal should be easy to dismiss on desktop: **ESC** closes, and keyboard focus should return to the button that opened it.
 - Desktop shortcut: hold **Tab** to view the scoreboard (release to close). Don’t hijack Tab while typing in inputs.
 - Optional readability toggle: **Settings → Control labels** shows text under touch buttons (persisted locally). Default: **ON for first-time touch devices**, OFF otherwise.

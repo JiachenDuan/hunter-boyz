@@ -204,7 +204,8 @@ function spawnExplosion(msg) {
           const isMe = String(p.id) === meId;
 
           const row = document.createElement('div');
-          row.className = 'scoreboardRow' + (isMe ? ' me' : '');
+          const rankClass = i === 0 ? ' top1' : (i === 1 ? ' top2' : (i === 2 ? ' top3' : ''));
+          row.className = 'scoreboardRow' + rankClass + (isMe ? ' me' : '');
 
           const left = document.createElement('div');
           left.className = 'scoreboardLeft';

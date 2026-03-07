@@ -819,10 +819,36 @@
       margin-bottom:8px;
       transition: background 120ms ease, border-color 120ms ease;
     }
+    /* Make the top 3 a bit easier to parse at a glance (subtle medal tint).
+       "me" styling still wins via specificity below. */
+    .scoreboardRow.top1:not(.me) {
+      background: rgba(255, 215, 0, 0.07);
+      border-color: rgba(255, 215, 0, 0.18);
+    }
+    .scoreboardRow.top2:not(.me) {
+      background: rgba(220, 220, 230, 0.06);
+      border-color: rgba(220, 220, 230, 0.16);
+    }
+    .scoreboardRow.top3:not(.me) {
+      background: rgba(205, 127, 50, 0.07);
+      border-color: rgba(205, 127, 50, 0.18);
+    }
     @media (hover:hover) {
       .scoreboardRow:hover {
         background: rgba(255,255,255,0.05);
         border-color: rgba(255,255,255,0.16);
+      }
+      .scoreboardRow.top1:not(.me):hover {
+        background: rgba(255, 215, 0, 0.10);
+        border-color: rgba(255, 215, 0, 0.22);
+      }
+      .scoreboardRow.top2:not(.me):hover {
+        background: rgba(220, 220, 230, 0.09);
+        border-color: rgba(220, 220, 230, 0.20);
+      }
+      .scoreboardRow.top3:not(.me):hover {
+        background: rgba(205, 127, 50, 0.10);
+        border-color: rgba(205, 127, 50, 0.22);
       }
       .scoreboardRow.me:hover {
         background: rgba(124,92,255,0.20);
