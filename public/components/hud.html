@@ -1,10 +1,10 @@
 <div id="hud">
   <div class="hudTopRow">
     <div class="hudTitle">Hunter Boyz</div>
-    <div id="weaponChip" class="weaponChip"></div>
+    <div id="weaponChip" class="weaponChip" aria-hidden="true"></div>
     <div class="connWrap">
-      <div id="connDot"></div>
-      <div id="connText" class="connText"></div>
+      <div id="connDot" aria-hidden="true"></div>
+      <div id="connText" class="connText" role="status" aria-live="polite"></div>
     </div>
     <button id="btnScoreboard" type="button" class="btnGhost" aria-label="Open scoreboard" title="Scoreboard">Score</button>
     <button id="settingsBtn" type="button">Settings</button>
@@ -90,5 +90,5 @@
     </div>
   </div>
 
-  <div id="log">Tip: tap Settings to hide this panel while playing.</div>
+  <div id="log" role="status" aria-live="polite">Tip: tap Settings to hide this panel while playing.</div>
 </div>

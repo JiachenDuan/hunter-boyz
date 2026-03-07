@@ -1,3 +1,4 @@
+- 2026-03-07 06:30 PST — A11y: HUD connection text + log now use role=status + aria-live; decorative HUD dots/chips are aria-hidden
 - 2026-03-07 06:20 PST — A11y: weapon picker modal now has aria-describedby + focusable inner container (better screen reader / keyboard semantics)
 - 2026-03-07 06:10 PST — UI clarity: modal hint text now adapts to touch vs desktop (adds Esc/Tab hints on desktop)
 - 2026-03-07 06:00 PST — Mobile polish: set <meta name="theme-color"> so the browser UI tint matches the game
