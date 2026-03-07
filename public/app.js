@@ -13,6 +13,10 @@
     let reconnectTimer = null;
     let intentionalClose = false;
 
+    // Crash guard needs a way to re-open the socket, but openSocket() lives inside connectAndJoin().
+    // We stash a function here once connectAndJoin() is initialized.
+    let _tryReconnectNow = null;
+
     const state = {
       move: { x: 0, z: 0 },
       look: { yaw: 0, pitch: 0 },
@@ -45,7 +49,11 @@
       try { console.error('[FATAL]', msg); } catch {}
       try { log(`⚠️ ${String(msg).slice(0, 120)} - reconnecting…`); } catch {}
       try { intentionalClose = false; socket?.close(); } catch {}
-      try { setTimeout(() => { try { openSocket(); } catch {} }, 250); } catch {}
+      try {
+        setTimeout(() => {
+          try { _tryReconnectNow?.(); } catch {}
+        }, 250);
+      } catch {}
     }
 
     window.addEventListener('error', (e) => {
@@ -476,6 +484,9 @@
           scheduleReconnect();
         });
       }
+
+      // Allow the global crash guard (fatal()) to trigger a reconnect.
+      _tryReconnectNow = () => { try { openSocket(); } catch {} };
 
       openSocket();
 
