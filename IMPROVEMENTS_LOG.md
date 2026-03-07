@@ -1,3 +1,4 @@
+- 2026-03-07 05:10 PST — Perf: added preconnect/dns-prefetch hints for Babylon CDN (slightly faster first load, especially on mobile)
 - 2026-03-07 05:00 PST — Perf/polish: added favicon assets (favicon.svg + favicon.ico) to prevent noisy /favicon.ico 404s and reduce pointless requests
 - 2026-03-07 04:40 PST — Desktop QoL: hold Tab to view the scoreboard (release to close), with hint text in the modal
 - 2026-03-07 04:30 PST — Security/UI: score overlay now renders via DOM (no innerHTML) so player names/colors can’t inject markup
