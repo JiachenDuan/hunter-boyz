@@ -1,3 +1,4 @@
+- 2026-03-07 00:10 PST — UI polish: weapon picker options now have clearer pressed feedback (brightness + shadow)
 - 2026-03-07 00:00 PST — UI polish: weapon picker modal close (×) button now has pressed feedback on touch
 - 2026-03-06 23:50 PST — Bugfix: set type="button" on HUD/lobby/modal buttons to prevent accidental form-submit behavior
 - 2026-03-06 23:30 PST — Accessibility: respect prefers-reduced-motion (disable most UI transitions/animations when enabled)

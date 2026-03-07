@@ -204,12 +204,16 @@
       font-size: 16px;
       text-align: center;
       cursor: pointer;
-      transition: border-color 120ms, background 120ms;
+      transition: border-color 120ms, background 120ms, transform 120ms, filter 120ms, box-shadow 120ms;
       font-family: inherit;
       -webkit-appearance: none;
       appearance: none;
     }
-    #weaponModalInner .wm-opt:active { transform: scale(0.96); }
+    #weaponModalInner .wm-opt:active {
+      transform: scale(0.96);
+      filter: brightness(1.12);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.32);
+    }
     #weaponModalInner .wm-opt.selected { border-color: rgba(124,92,255,0.85); background: rgba(124,92,255,0.18); }
 
     #btnReload, #btnScope { position:absolute; bottom: calc(var(--bottom) + var(--btn) + 12px); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); z-index: 12; transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease; }
