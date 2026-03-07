@@ -708,8 +708,13 @@
       display:none;
       align-items:flex-end;
       justify-content:center;
-      z-index:120;
+      z-index: 9999;
       background: rgba(0,0,0,0.35);
+      /* #ui uses pointer-events:none; modals must explicitly opt back in. */
+      pointer-events: auto;
+      touch-action: manipulation;
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
     }
     #scoreModalInner {
       width:min(520px, 96vw);
