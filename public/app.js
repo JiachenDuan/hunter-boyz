@@ -3142,13 +3142,21 @@ function spawnExplosion(msg) {
         if (!body) return;
         const meId = String(myId || '');
         const rows = (s.players || []).slice().sort((a,b)=> (b.score||0)-(a.score||0));
-        body.innerHTML = rows.map((p,i) => {
+
+        const header = `<div style="display:flex; justify-content:space-between; padding:0 6px 8px 6px; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; opacity:0.7;">
+          <div>Player</div>
+          <div style="min-width:64px; text-align:right;">K / D</div>
+        </div>`;
+
+        const rowsHtml = rows.map((p,i) => {
           const isMe = String(p.id) === meId;
           return `<div style="display:flex; justify-content:space-between; padding:8px 6px; border-radius:12px; ${isMe?'background: rgba(124,92,255,0.16); border:1px solid rgba(124,92,255,0.28);':'border:1px solid rgba(255,255,255,0.10);'} margin-bottom:8px;">
             <div><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span><span style="font-weight:900;">${i+1}. ${p.name}${isMe?' (you)':''}</span></div>
-            <div style="font-weight:900;">K ${p.score||0} <span style="opacity:.8;">D ${p.deaths||0}</span></div>
+            <div style="font-weight:900; min-width:64px; text-align:right;">${p.score||0} <span style="opacity:.8;">/ ${p.deaths||0}</span></div>
           </div>`;
-        }).join('') || '<div style="opacity:.8;">No players.</div>';
+        }).join('');
+
+        body.innerHTML = rowsHtml ? (header + rowsHtml) : '<div style="opacity:.8;">No players.</div>';
       } catch {}
     }
 
