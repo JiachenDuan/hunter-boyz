@@ -497,6 +497,25 @@
       }
     } catch {}
 
+    // UX: don't let players "join" with an empty name (common on mobile).
+    function syncJoinEnabled() {
+      try {
+        if (!joinBtn || !nameInput) return;
+        if (state.joined) return;
+        const v = (nameInput.value || '').trim();
+        joinBtn.disabled = !v;
+      } catch {}
+    }
+    syncJoinEnabled();
+    nameInput?.addEventListener('input', syncJoinEnabled);
+    nameInput?.addEventListener('change', syncJoinEnabled);
+    nameInput?.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      e.stopPropagation();
+      doJoin(e);
+    });
+
     function getSelectedMapId() {
       const lobby = document.getElementById('mapLobby');
       const settings = document.getElementById('map');
@@ -564,6 +583,15 @@
       lastJoinAt = now;
 
       if (state.joined || joinInFlight) return;
+
+      const v = (nameInput?.value || '').trim();
+      if (!v) {
+        try { log('Enter a name to join.'); } catch {}
+        try { nameInput?.focus(); } catch {}
+        try { syncJoinEnabled(); } catch {}
+        return;
+      }
+
       joinInFlight = true;
 
       // Disable immediately so duplicate events can't open multiple sockets.
@@ -571,8 +599,7 @@
 
       // Save name + settings before joining.
       try {
-        const v = (nameInput.value || '').trim();
-        if (v) localStorage.setItem(NAME_KEY, v);
+        localStorage.setItem(NAME_KEY, v);
         if (autoReloadEl) localStorage.setItem(AUTO_RELOAD_KEY, autoReloadEl.checked ? '1' : '0');
         localStorage.setItem(MAP_KEY, getSelectedMapId());
       } catch {}
