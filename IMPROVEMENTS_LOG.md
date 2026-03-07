@@ -1,3 +1,4 @@
+- 2026-03-06 22:50 PST — Accessibility: weapon picker modal options + close are now real buttons (better a11y + keyboard semantics)
 - 2026-03-06 22:40 PST — Accessibility: added focus-visible ring on buttons (clear keyboard navigation on desktop, no touch impact)
 - 2026-03-06 22:30 PST — UI polish: weapon picker highlight stays synced if weapon changes while the modal is open
 - 2026-03-06 21:20 PST — Perf: prevent stacking multiple requestAnimationFrame loops during sniper scope FOV lerp
