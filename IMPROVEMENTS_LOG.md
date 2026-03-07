@@ -65,3 +65,4 @@
 - 2026-02-20 22:12 PST — DM QoL: added tap-to-respawn near end of respawn timer (<=0.55s)
 - 2026-03-06 18:00 PST — iOS UX: disabled autocomplete/autocorrect/autocapitalize on Name input (less keyboard friction)
 - 2026-03-06 18:20 PST — iOS UI: HUD + scoreboard now respect safe-area inset top (less notch overlap)
+- 2026-03-06 18:40 PST — Bugfix: local damage vignette + floating damage numbers now trigger correctly (msg.to compared to myId)

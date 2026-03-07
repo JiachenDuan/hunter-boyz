@@ -2735,7 +2735,8 @@
 
     function onDamageMsg(msg) {
       try {
-        if (String(msg.to) !== String(state.me)) return;
+        // msg.to is the victim id; compare to our real id (myId). "state.me" is not used.
+        if (String(msg.to) !== String(myId)) return;
         const el = document.getElementById('dmgVignette');
         if (el) {
           el.style.opacity = '1';
