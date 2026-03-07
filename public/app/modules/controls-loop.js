@@ -756,15 +756,24 @@
 
     // --- Scoreboard modal ---
     // Desktop QoL: focus + ESC-to-close, plus restore focus to the button that opened it.
+    // iOS Safari can fire multiple events (pointerdown + touchend + click). Debounce to avoid
+    // double-open/double-close flicker or focus weirdness.
     let lastScoreFocus = null;
+    let lastScoreToggleAt = 0;
     function doScoreboard(e){
       if (e) { e.preventDefault(); e.stopPropagation(); }
+      const now = Date.now();
+      if (now - lastScoreToggleAt < 350) return;
+      lastScoreToggleAt = now;
       try { lastScoreFocus = document.activeElement; } catch { lastScoreFocus = null; }
       try { scoreModal.style.display = 'flex'; } catch {}
       try { btnScoreClose?.focus?.(); } catch {}
     }
     function doScoreClose(e){
       if (e) { e.preventDefault(); e.stopPropagation(); }
+      const now = Date.now();
+      if (now - lastScoreToggleAt < 350) return;
+      lastScoreToggleAt = now;
       try { scoreModal.style.display = 'none'; } catch {}
       try {
         if (lastScoreFocus && typeof lastScoreFocus.focus === 'function') lastScoreFocus.focus();
