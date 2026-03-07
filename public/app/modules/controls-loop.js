@@ -373,7 +373,7 @@
     holdButton(document.getElementById('btnJump'), (v)=> state.jump = v);
     // sprint removed
 
-    // Reload: tap
+    // Reload: tap (debounced to avoid iOS double-fire)
     (() => {
       const el = document.getElementById('btnReload');
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
@@ -383,9 +383,17 @@
         if (!socket || socket.readyState !== 1) return;
         socket.send(JSON.stringify({ t:'reload' }));
       };
-      el.addEventListener('click', fire);
-      el.addEventListener('pointerdown', fire, { passive:false });
-      el.addEventListener('touchend', fire, { passive:false });
+
+      let lastReloadAt = 0;
+      const fireOnce = (e) => {
+        const now = Date.now();
+        if (now - lastReloadAt < 450) return;
+        lastReloadAt = now;
+        fire(e);
+      };
+
+      // Use pointerdown only (covers mouse + touch); avoid click/touchend duplicates on mobile Safari.
+      el.addEventListener('pointerdown', fireOnce, { passive:false });
     })();
 
     // Scope: toggle (only affects sniper)
@@ -411,9 +419,9 @@
         fire(e);
       };
 
-      // Prefer pointerup/touchend; skip click to avoid double-trigger.
-      el.addEventListener('pointerup', fireOnce, { passive:false });
-      el.addEventListener('touchend', fireOnce, { passive:false });
+      // iOS can deliver both PointerEvents and legacy TouchEvents for the same gesture.
+      // Using pointerdown only keeps this single-fire and consistent with the other HUD buttons.
+      el.addEventListener('pointerdown', fireOnce, { passive:false });
     })();
 
     // Join
