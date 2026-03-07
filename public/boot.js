@@ -1,5 +1,20 @@
 (async () => {
   const ui = document.getElementById('ui');
+
+  // UX: show a lightweight loading overlay while the UI + modules are fetched.
+  // On slow iPhone networks the screen can otherwise look "stuck" for a few seconds.
+  if (document.body && !document.getElementById('uiLoading')) {
+    const loading = document.createElement('div');
+    loading.id = 'uiLoading';
+    loading.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:9999;';
+    loading.innerHTML = `
+      <div style="padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.16);color:#fff;font-weight:800;letter-spacing:.3px;backdrop-filter: blur(6px);">
+        Loading…
+      </div>
+    `;
+    document.body.appendChild(loading);
+  }
+
   const uiParts = [
     'components/hud.html',
     'components/lobby-respawn.html',
@@ -26,6 +41,9 @@
 
     ui.innerHTML = htmlParts.join('\n\n');
 
+    const loadingEl = document.getElementById('uiLoading');
+    if (loadingEl) loadingEl.remove();
+
     const jsParts = await Promise.all(
       scriptParts.map(async (path) => {
         const res = await fetch(path, { cache: 'no-store' });
@@ -39,6 +57,10 @@
     document.body.appendChild(appScript);
   } catch (err) {
     console.error(err);
+
+    const loadingEl = document.getElementById('uiLoading');
+    if (loadingEl) loadingEl.remove();
+
     if (ui) {
       ui.innerHTML = '<div style="position:fixed;top:10px;left:10px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);font-weight:700;pointer-events:auto;">UI failed to load. Refresh page.</div>';
     }
