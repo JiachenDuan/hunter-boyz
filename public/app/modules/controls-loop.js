@@ -966,17 +966,26 @@
       }
     });
 
+    // Sound is *actually* gated behind a user gesture on iOS/WebAudio.
+    // Keep the UI honest: show OFF until we've successfully enabled the audio context.
+    let soundEnabled = false;
+
     function setSoundUI(on) {
       try {
         if (!soundBtn) return;
-        soundBtn.classList.toggle('soundOn', !!on);
-        soundBtn.textContent = on ? 'Sound: ON' : 'Sound: OFF';
+        const enabled = !!on;
+        soundBtn.classList.toggle('soundOn', enabled);
+        soundBtn.textContent = enabled ? 'Sound: ON' : 'Sound: OFF';
+        soundBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        soundBtn.title = enabled ? 'Sound enabled' : 'Tap to enable sound';
       } catch {}
     }
 
     function enableSoundNow() {
+      if (soundEnabled) return;
       try { SFX.enable(); } catch {}
       try { SFX.hit(); } catch {}
+      soundEnabled = true;
       setSoundUI(true);
       try { log('Sound enabled.'); } catch {}
     }
@@ -986,9 +995,9 @@
       enableSoundNow();
     }
 
-    // Audio ON by default: auto-enable on the first user gesture.
+    // Audio starts OFF in UI; auto-enable on the first user gesture.
     // (Still requires a gesture on iOS, so we do it as soon as the user touches/clicks anything.)
-    setSoundUI(true);
+    setSoundUI(false);
     window.addEventListener('pointerdown', () => { try { enableSoundNow(); } catch {} }, { passive: true, once: true });
     window.addEventListener('touchstart', () => { try { enableSoundNow(); } catch {} }, { passive: true, once: true });
 

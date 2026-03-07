@@ -1,3 +1,4 @@
+- 2026-03-07 10:20 PST — UI clarity: Sound button now starts as “Sound: OFF” until WebAudio is actually enabled (avoids misleading ON state on iOS); adds aria-pressed + clearer tooltip.
 - 2026-03-07 10:10 PST — UI clarity: scoreboard top 3 rows now have subtle gold/silver/bronze tint for faster leaderboard parsing.
 - 2026-03-07 10:00 PST — A11y/UI polish: added aria-label + title attributes to key HUD/lobby buttons (Settings/Join/Start/Copy link/Sound/etc) for clearer semantics and desktop hover hints.
 - 2026-03-07 09:40 PST — iOS polish: prevent overscroll “rubber band” from dragging the page behind weapon/scoreboard modals (overscroll-behavior: contain).
