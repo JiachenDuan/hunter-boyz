@@ -22,6 +22,12 @@ app.use((req, res, next) => {
   if (req.url.startsWith('/index.html?v=')) req.url = '/index.html';
   next();
 });
+// iOS/Safari will often probe these endpoints automatically (home screen icons).
+// Return 204 to avoid noisy 404s without implying we ship a real app icon yet.
+app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'], (req, res) => {
+  res.status(204).end();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 // Serve saved snapshots
 app.use('/snaps', express.static(path.join(__dirname, 'snaps')));

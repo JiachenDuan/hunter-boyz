@@ -1,3 +1,4 @@
+- 2026-03-07 15:20 PST — Server polish: respond 204 to Safari’s automatic /apple-touch-icon(.png|precomposed) probes to avoid noisy 404s.
 - 2026-03-07 15:10 PST — UI polish: connection status pill now has a small min-width + centered text so changing ping digits doesn’t nudge the HUD.
 - 2026-03-07 15:00 PST — UI polish: connection status pill now uses tabular numerals so live ping updates don’t cause tiny width jitter.
 - 2026-03-07 14:50 PST — UI/a11y polish: connection status pill now keeps title + aria-label synced (including live ping updates), so hover + screen readers reflect the current ONLINE 42ms style text.
