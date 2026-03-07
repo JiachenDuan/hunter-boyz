@@ -4455,12 +4455,15 @@ function spawnDent(pos, normal, size, kind) {
       let t = null;
       try {
         t = window.setTimeout(() => {
-          try { btn.textContent = prev; } catch {}
+          // Guard: if the button label changed since we set nextLabel (e.g. join state updated),
+          // don't clobber it by restoring the old text.
+          try { if (btn.textContent === nextLabel) btn.textContent = prev; } catch {}
         }, ms);
       } catch {}
       return () => {
         try { if (t) window.clearTimeout(t); } catch {}
-        try { btn.textContent = prev; } catch {}
+        // Same guard for manual restore.
+        try { if (btn.textContent === nextLabel) btn.textContent = prev; } catch {}
       };
     }
 
