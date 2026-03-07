@@ -191,7 +191,13 @@
         });
 
         socket.addEventListener('message', (ev) => {
-          const msg = JSON.parse(ev.data);
+          let msg = null;
+          try {
+            msg = JSON.parse(ev.data);
+          } catch (e) {
+            try { console.warn('[ws] bad message payload', e); } catch {}
+            return;
+          }
           if (msg.t === 'welcome') {
             myId = msg.id;
             // Expose for automation/debug tooling (e.g., puppeteer capture scripts)
