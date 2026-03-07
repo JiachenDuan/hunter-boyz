@@ -666,10 +666,43 @@
     async function doCopyLink(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
       const link = location.href;
-      try {
+
+      // iOS Safari (and non-HTTPS origins) can reject navigator.clipboard.
+      // Provide a low-tech fallback so "Copy Link" works during LAN play.
+      async function tryClipboardAPI() {
+        if (!navigator.clipboard?.writeText) return false;
         await navigator.clipboard.writeText(link);
+        return true;
+      }
+
+      function tryExecCommandCopy() {
+        const ta = document.createElement('textarea');
+        ta.value = link;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        ta.style.top = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch { ok = false; }
+        try { document.body.removeChild(ta); } catch {}
+        return ok;
+      }
+
+      try {
+        const ok = await tryClipboardAPI().catch(() => false);
+        if (ok) {
+          log('Link copied. Paste into the other phone.');
+          return;
+        }
+      } catch {}
+
+      if (tryExecCommandCopy()) {
         log('Link copied. Paste into the other phone.');
-      } catch {
+      } else {
         log('Copy failed. Link: ' + link);
       }
     }
