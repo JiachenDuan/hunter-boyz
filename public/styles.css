@@ -676,3 +676,13 @@
       font-weight:900;
     }
     #scoreboardBody { font-size:13px; line-height:1.45; }
+
+/* Accessibility: respect system reduced-motion preference (helps avoid motion sickness). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
