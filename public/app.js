@@ -451,8 +451,9 @@
           joinInFlight = false;
           setConnState('offline');
           try {
-            joinBtn.disabled = false;
             nameInput.disabled = false;
+            const okName = String(nameInput.value || '').trim().length > 0;
+            joinBtn.disabled = !okName;
           } catch {}
           scheduleReconnect();
         });
@@ -4011,6 +4012,17 @@ function spawnDent(pos, normal, size, kind) {
     const weaponEl = document.getElementById('weapon');
     const mapEls = [document.getElementById('map'), document.getElementById('mapLobby')].filter(Boolean);
 
+    // Join UX: require a non-empty name.
+    // This avoids anonymous "" entries and makes the lobby clearer.
+    function syncJoinEnabled() {
+      try {
+        if (!joinBtn || !nameInput) return;
+        if (state.joined) { joinBtn.disabled = true; return; }
+        const ok = String(nameInput.value || '').trim().length > 0;
+        joinBtn.disabled = !ok;
+      } catch {}
+    }
+
     // --- Weapon picker modal ---
     const weaponModal = document.getElementById('weaponModal');
     const weaponModalClose = document.getElementById('weaponModalClose');
@@ -4352,6 +4364,21 @@ function spawnDent(pos, normal, size, kind) {
         }
       }
     }
+
+    // Name input drives join button enabled state.
+    // Also: Enter/Return joins on desktop.
+    if (nameInput) {
+      nameInput.addEventListener('input', syncJoinEnabled);
+      nameInput.addEventListener('keydown', (e) => {
+        try {
+          if (e.key === 'Enter') {
+            // Only join if the button is enabled.
+            if (!joinBtn?.disabled) doJoin(e);
+          }
+        } catch {}
+      });
+    }
+    syncJoinEnabled();
 
     // iOS Safari can be flaky with click depending on viewport/overlays; wire multiple events.
     joinBtn.addEventListener('click', doJoin);
