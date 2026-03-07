@@ -382,11 +382,68 @@
         lobby.style.display = 'flex';
         // keep settings hidden unless user opens it
         settingsPanel.style.display = state.settingsOpen ? 'block' : 'none';
-        lobbyPlayers.innerHTML = s.players.map(p => {
-          const tag = p.id === s.game?.hostId ? ' <span style="opacity:.75">(host)</span>' : '';
-          const label = `${p.name} #${p.id}`;
-          return `<div style="margin:6px 0;"><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${label}${tag}</div>`;
-        }).join('');
+        // Security/UI robustness: avoid innerHTML here so player names/colors can’t inject markup.
+        // (Server still treats inputs as untrusted; client should too.)
+        const safeCssColor = (c) => {
+          // Accept only simple hex or rgb/rgba; fallback to a neutral color.
+          if (typeof c !== 'string') return '#888';
+          const s = c.trim();
+          if (/^#[0-9a-fA-F]{3}$/.test(s)) return s.toLowerCase();
+          if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+          const m = s.match(/^rgba?\(([^)]+)\)$/i);
+          if (m) {
+            const parts = m[1].split(',').map(x => x.trim());
+            if (parts.length === 3 || parts.length === 4) {
+              const r = Number(parts[0]), g = Number(parts[1]), b = Number(parts[2]);
+              const a = parts.length === 4 ? Number(parts[3]) : null;
+              const okRgb = [r, g, b].every(n => Number.isFinite(n) && n >= 0 && n <= 255);
+              const okA = (a === null) || (Number.isFinite(a) && a >= 0 && a <= 1);
+              if (okRgb && okA) {
+                return (a === null)
+                  ? `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`
+                  : `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${Math.round(a * 1000) / 1000})`;
+              }
+            }
+          }
+          return '#888';
+        };
+
+        try { lobbyPlayers.textContent = ''; } catch {}
+        const players = Array.isArray(s.players) ? s.players : [];
+        players.forEach((p) => {
+          const row = document.createElement('div');
+          row.style.margin = '6px 0';
+
+          const dot = document.createElement('span');
+          dot.style.display = 'inline-block';
+          dot.style.width = '10px';
+          dot.style.height = '10px';
+          dot.style.borderRadius = '999px';
+          dot.style.background = safeCssColor(p?.color);
+          dot.style.marginRight = '8px';
+          row.appendChild(dot);
+
+          const name = String(p?.name || 'Player');
+          const id = (typeof p?.id === 'number' || typeof p?.id === 'string') ? String(p.id) : '?';
+          row.appendChild(document.createTextNode(`${name} #${id}`));
+
+          if (p?.id === s.game?.hostId) {
+            const hostTag = document.createElement('span');
+            hostTag.style.opacity = '.75';
+            hostTag.textContent = ' (host)';
+            row.appendChild(hostTag);
+          }
+
+          lobbyPlayers.appendChild(row);
+        });
+
+        if (!players.length) {
+          const empty = document.createElement('div');
+          empty.style.opacity = '.75';
+          empty.style.margin = '6px 0';
+          empty.textContent = 'No players yet.';
+          lobbyPlayers.appendChild(empty);
+        }
         startBtn.style.display = 'inline-block';
         startBtn.disabled = false;
         startBtn.style.opacity = '1';

@@ -1,3 +1,4 @@
+- 2026-03-07 12:30 PST — Security/UI robustness: lobby player list no longer uses innerHTML; player colors are sanitized and names are rendered via text nodes.
 - 2026-03-07 12:20 PST — UI clarity: Join button now shows state labels ("Enter name" when disabled, "Joining…" during connect, "Joined" after welcome) and sets a helpful tooltip.
 - 2026-03-07 12:10 PST — UI clarity: connection indicator now shows text status (CONNECTING/RECONNECT/OFFLINE/ONLINE) and displays live ping ms when available.
 - 2026-03-07 12:00 PST — UI clarity: name input now says "Name (required)" and allows iOS nickname autocomplete for faster joining.
