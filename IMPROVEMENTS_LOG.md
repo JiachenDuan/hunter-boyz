@@ -144,3 +144,4 @@
 - 2026-03-07 02:30 PST — Security polish: escape player names + sanitize color tokens in scoreboard HTML (prevents name-based HTML injection)
 
 - 2026-03-07 07:01 PST — A11y/mobile: Name input now has aria-label and iOS enterkeyhint="go" (better screen readers + keyboard UX)
+- 2026-03-07 11:00 PST — iOS bugfix: sniper scope toggle now uses pointerdown only (avoids iOS pointer+touch double events) while keeping debounce protection.
