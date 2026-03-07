@@ -7,11 +7,12 @@
     const loading = document.createElement('div');
     loading.id = 'uiLoading';
     loading.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:9999;';
-    loading.innerHTML = `
-      <div style="padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.16);color:#fff;font-weight:800;letter-spacing:.3px;backdrop-filter: blur(6px);">
-        Loading…
-      </div>
-    `;
+    // Avoid innerHTML for consistency with the rest of the boot UX.
+    const pill = document.createElement('div');
+    pill.textContent = 'Loading…';
+    pill.style.cssText = 'padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.16);color:#fff;font-weight:800;letter-spacing:.3px;backdrop-filter: blur(6px);';
+    loading.appendChild(pill);
+
     document.body.appendChild(loading);
   }
 
