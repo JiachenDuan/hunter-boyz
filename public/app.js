@@ -1034,8 +1034,8 @@
     const scene = new BABYLON.Scene(engine);
     const DEFAULT_FOV = 0.9;
     const SCOPE_FOV = 0.35;
-    // More colorful vibe
-    scene.clearColor = new BABYLON.Color4(0.72, 0.86, 0.98, 1);
+    // Color vibe: slightly deeper sky so emissive props + player colors pop.
+    scene.clearColor = new BABYLON.Color4(0.18, 0.24, 0.34, 1);
 
     const light = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0, 1, 0), scene);
     light.intensity = 0.95;
@@ -1053,13 +1053,13 @@
     skyMat.disableLighting = true;
     skyMat.diffuseColor = new BABYLON.Color3(0,0,0);
     // Fake gradient by using emissive color + vertex colors-like effect via fresnel
-    // Light-blue sky vibe
-    skyMat.emissiveColor = new BABYLON.Color3(0.55, 0.75, 0.95);
+    // Sky vibe: deeper blue with a subtle violet edge (less washed out than pure light-blue).
+    skyMat.emissiveColor = new BABYLON.Color3(0.22, 0.36, 0.62);
     skyMat.emissiveFresnelParameters = new BABYLON.FresnelParameters();
-    skyMat.emissiveFresnelParameters.bias = 0.15;
-    skyMat.emissiveFresnelParameters.power = 1.6;
-    skyMat.emissiveFresnelParameters.leftColor = new BABYLON.Color3(0.82, 0.92, 1.00);
-    skyMat.emissiveFresnelParameters.rightColor = new BABYLON.Color3(0.35, 0.70, 0.98);
+    skyMat.emissiveFresnelParameters.bias = 0.12;
+    skyMat.emissiveFresnelParameters.power = 1.8;
+    skyMat.emissiveFresnelParameters.leftColor = new BABYLON.Color3(0.38, 0.52, 0.88);
+    skyMat.emissiveFresnelParameters.rightColor = new BABYLON.Color3(0.52, 0.34, 0.78);
     sky.material = skyMat;
 
     const camera = new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(0, 2, -5), scene);
@@ -1069,10 +1069,10 @@
     // Ground + some blocks
     const ground = BABYLON.MeshBuilder.CreateGround('g', { width: 60, height: 60 }, scene);
     ground.isPickable = true;
-    // Floor: make it feel like a real floor (grass-ish)
+    // Floor: richer green with slightly warmer bounce so it doesn't look muddy.
     const gmat = new BABYLON.StandardMaterial('gm', scene);
-    gmat.diffuseColor = new BABYLON.Color3(0.22, 0.50, 0.28);
-    gmat.emissiveColor = new BABYLON.Color3(0.03, 0.06, 0.03);
+    gmat.diffuseColor = new BABYLON.Color3(0.16, 0.54, 0.26);
+    gmat.emissiveColor = new BABYLON.Color3(0.04, 0.08, 0.05);
     gmat.specularColor = new BABYLON.Color3(0,0,0);
     ground.material = gmat;
 

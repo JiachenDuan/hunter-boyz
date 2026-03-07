@@ -1,4 +1,15 @@
-    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#05070f; color:#e6edf3; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial; touch-action: manipulation; }
+    :root {
+      --uiText: #e6edf3;
+      --uiBg: rgba(10,14,26,0.44);
+      --uiBorder: rgba(255,255,255,0.14);
+      --accent: rgba(124,92,255,0.95);
+      --accent2: rgba(80,200,255,0.22);
+      --danger: rgba(255,80,80,0.28);
+      --dangerBorder: rgba(255,80,80,0.65);
+      --ok: rgba(80,255,140,0.95);
+    }
+
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#05070f; color:var(--uiText); font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial; touch-action: manipulation; }
     #renderCanvas { width:100%; height:100%; touch-action:none; }
     /* iOS long-press / selection prevention */
     body, #ui, canvas, button, input, select, textarea {
@@ -9,7 +20,7 @@
       overscroll-behavior: none;
     }
     #ui { position: fixed; inset: 0; pointer-events:none; }
-    #hud { position:absolute; top: calc(10px + env(safe-area-inset-top)); left: calc(10px + env(safe-area-inset-left)); background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:auto; max-width: min(72vw, 420px); display:inline-flex; flex-direction:column; gap:8px; }
+    #hud { position:absolute; top: calc(10px + env(safe-area-inset-top)); left: calc(10px + env(safe-area-inset-left)); background: var(--uiBg); border:1px solid var(--uiBorder); border-radius:12px; padding:10px 12px; pointer-events:auto; max-width: min(72vw, 420px); display:inline-flex; flex-direction:column; gap:8px; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
     #hud input {
       border-radius:10px;
       border:1px solid rgba(255,255,255,0.15);
@@ -23,7 +34,7 @@
       -webkit-user-select: text;
       user-select: text;
     }
-    #hud button { margin-left:6px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background: rgba(124,92,255,0.9); color:white; padding:8px 10px; }
+    #hud button { margin-left:6px; border-radius:10px; border:1px solid rgba(255,255,255,0.16); background: var(--accent); color:white; padding:8px 10px; }
 
     /* Compact HUD to avoid overlapping the score box when Settings are closed */
     #hud.hudCompact {
@@ -59,8 +70,8 @@
       --move-bottom: calc(var(--bottom) + 18px);
     }
     #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; z-index: 11; transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease; }
-    #btnShoot { right: calc(var(--padR) + var(--btn) + var(--btn-gap)); background: rgba(255,80,80,0.25); border-color: rgba(255,80,80,0.6); }
-    #btnJump { right: calc(var(--padR) + (var(--btn) + var(--btn-gap)) * 2); background: rgba(80,200,255,0.18); border-color: rgba(80,200,255,0.55); }
+    #btnShoot { right: calc(var(--padR) + var(--btn) + var(--btn-gap)); background: var(--danger); border-color: var(--dangerBorder); }
+    #btnJump { right: calc(var(--padR) + (var(--btn) + var(--btn-gap)) * 2); background: var(--accent2); border-color: rgba(80,200,255,0.62); }
     #btnJump:active, #btnShoot:active {
       transform: scale(0.95);
       filter: saturate(1.1) brightness(1.15);
@@ -98,7 +109,7 @@
       filter: saturate(1.1) brightness(1.2);
       box-shadow: 0 0 0 2px rgba(255,255,255,0.14), 0 8px 20px rgba(0,0,0,0.35);
     }
-    #score { position:absolute; top: calc(10px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); background: rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 12px; pointer-events:none; font-size:12px; min-width: 140px; }
+    #score { position:absolute; top: calc(10px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); background: var(--uiBg); border:1px solid var(--uiBorder); border-radius:12px; padding:10px 12px; pointer-events:none; font-size:12px; min-width: 140px; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 
     /* Extra buttons (sprint/reload) sit above jump/shoot */
 
