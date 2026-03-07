@@ -226,6 +226,13 @@
             world = msg.world;
             state.joined = true;
             joinInFlight = false;
+            // UI: lock Join controls + show final label immediately.
+            try {
+              const jb = document.getElementById('joinBtn');
+              const ni = document.getElementById('name');
+              if (jb) { jb.disabled = true; jb.textContent = 'Joined'; jb.title = 'Joined'; }
+              if (ni) ni.disabled = true;
+            } catch {}
             // Apply immediately so host detection + Start button works even before the next tick.
             if (msg.state) applyState(msg.state);
             trySendStart();
@@ -4099,9 +4106,16 @@ function spawnDent(pos, normal, size, kind) {
     function syncJoinEnabled() {
       try {
         if (!joinBtn || !nameInput) return;
-        if (state.joined) { joinBtn.disabled = true; return; }
+        if (state.joined) {
+          joinBtn.disabled = true;
+          try { joinBtn.textContent = 'Joined'; } catch {}
+          return;
+        }
         const ok = sanitizePlayerName(nameInput.value).trim().length > 0;
         joinBtn.disabled = !ok;
+        // UI clarity: make it obvious why Join is disabled on first load.
+        try { joinBtn.textContent = ok ? 'Join' : 'Enter name'; } catch {}
+        try { joinBtn.title = ok ? 'Join' : 'Enter a name to join'; } catch {}
       } catch {}
     }
 
@@ -4403,6 +4417,8 @@ function spawnDent(pos, normal, size, kind) {
 
       // Disable immediately so duplicate events can't open multiple sockets.
       try { joinBtn.disabled = true; nameInput.disabled = true; } catch {}
+      // UI clarity: show in-progress state (esp. if connection is slow on iPhone).
+      try { joinBtn.textContent = 'Joining…'; } catch {}
 
       // Save name + settings before joining.
       // (Normalize so reconnects keep a clean, readable name.)
