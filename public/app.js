@@ -4778,18 +4778,27 @@ function spawnDent(pos, normal, size, kind) {
     })();
 
     // iOS orientation changes can report stale viewport sizes briefly; resize a few times.
+    // Perf: coalesce the multi-pass resize sequence so visualViewport scroll events don't stack timers.
     (() => {
       let t = null;
+      let extra1 = null;
+      let extra2 = null;
       const doResize = () => {
         try { engine.resize(); } catch {}
       };
-      const schedule = () => {
+      const clearTimers = () => {
         try { if (t) clearTimeout(t); } catch {}
+        try { if (extra1) clearTimeout(extra1); } catch {}
+        try { if (extra2) clearTimeout(extra2); } catch {}
+        t = null; extra1 = null; extra2 = null;
+      };
+      const schedule = () => {
+        clearTimers();
         t = setTimeout(() => {
           doResize();
           // extra passes for iOS Safari URL bar / rotation settling
-          setTimeout(doResize, 120);
-          setTimeout(doResize, 320);
+          extra1 = setTimeout(doResize, 120);
+          extra2 = setTimeout(doResize, 320);
         }, 50);
       };
       window.addEventListener('resize', schedule);

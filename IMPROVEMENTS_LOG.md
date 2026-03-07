@@ -1,3 +1,4 @@
+- 2026-03-07 06:50 PST — Perf: coalesced iOS multi-pass resize timers so visualViewport scroll events don’t stack extra engine.resize() calls
 - 2026-03-07 06:40 PST — UI clarity: Score button tooltip/aria-label now mention the desktop shortcut (“hold Tab”)
 - 2026-03-07 06:30 PST — A11y: HUD connection text + log now use role=status + aria-live; decorative HUD dots/chips are aria-hidden
 - 2026-03-07 06:20 PST — A11y: weapon picker modal now has aria-describedby + focusable inner container (better screen reader / keyboard semantics)
