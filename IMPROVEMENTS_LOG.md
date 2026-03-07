@@ -1,3 +1,4 @@
+- 2026-03-07 11:40 PST — UI polish: Sound button now defaults to “Sound: OFF” in the HTML template (prevents brief “Sound: ON” flash before JS initializes).
 - 2026-03-07 11:30 PST — Bugfix: fatal crash guard can now actually trigger a reconnect (wired to connectAndJoin’s openSocket).
 - 2026-03-07 11:10 PST — UX: show a lightweight “Loading…” overlay while UI/modules fetch (prevents a blank/stuck-looking screen on slow iPhone loads).
 - 2026-03-07 10:40 PST — iOS UI polish: increased modal close (✕) buttons to a reliable 44×44 tap target (weapon picker + scoreboard).
