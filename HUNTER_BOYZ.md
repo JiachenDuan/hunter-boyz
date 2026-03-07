@@ -96,6 +96,7 @@ This file exists so future changes don’t regress prior fixes or violate design
 - WebAudio unlock must be synchronous in gesture handler (avoid async in that path).
 - Connection HUD can include lightweight live RTT (ONLINE 42ms) via app-level ping/pong.
 - Joining should require a non-empty Name (disable Join until a name is entered; Enter/Return should join).
+- "Copy Link" must work during LAN play even on non-HTTPS origins (fallback to `document.execCommand('copy')` when Clipboard API is blocked).
 - Optional readability toggle: **Settings → Control labels** shows text under touch buttons (persisted locally). Default: **ON for first-time touch devices**, OFF otherwise.
 - iOS safe-area: HUD + touch controls should respect **top/bottom/left/right** safe-area insets (especially landscape on notched iPhones).
 
