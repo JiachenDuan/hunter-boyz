@@ -695,7 +695,8 @@
       border:1px solid rgba(255,255,255,0.16);
       border-radius:18px;
       padding:14px;
-      margin:0 0 14px 0;
+      /* Respect iPhone home-indicator safe area so the close button/last rows don't sit on it. */
+      margin:0 0 calc(14px + env(safe-area-inset-bottom)) 0;
     }
     .scoreModalHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
     .scoreModalTitle { font-weight:900; letter-spacing:0.4px; }
