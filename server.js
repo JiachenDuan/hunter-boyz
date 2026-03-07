@@ -1576,13 +1576,14 @@ if (msg.t === 'input') {
               if (other.id === p.id || other.hp <= 0) continue;
               const dist = Math.hypot(other.x - ex, other.y - ey, other.z - ez);
               if (dist <= R) {
-                const dmg = Math.round((tkDef.dmgMax || 150) * (1 - dist / R) + (tkDef.dmgMin || 25));
-                other.hp = Math.max(0, other.hp - dmg);
-                if (!hitId) { hitId = other.id; hitHp = other.hp; }
+                const dmgAmt = Math.round((tkDef.dmgMax || 150) * (1 - dist / R) + (tkDef.dmgMin || 25));
+                const dmg = doDamage({ shooter: p, target: other, amount: dmgAmt });
+                if (!hitId && dmg.hitId) { hitId = dmg.hitId; hitHp = dmg.hitHp; }
               }
             }
             broadcast({ t: 'explode', x: ex, y: ey, z: ez, r: R, kind: 'tank' });
             broadcast({ t: 'shot', weapon: 'tank', from: p.id, sx: p.x, sy: p.y, sz: p.z, yaw: p.yaw, pitch: p.pitch, ex, ey, ez, hit: hitId, hitHp });
+            broadcast({ t: 'state', state: serializeState() });
 
           } else if (weapon === 'fart') {
             // Fart gun: applies a 5s fart cloud debuff; -5 HP per second.
