@@ -1,3 +1,4 @@
+- 2026-03-07 14:00 PST — UI polish: set render canvas background to match page bg (reduces white flash before Babylon renders, esp. on iPhone).
 - 2026-03-07 13:50 PST — Security/robustness: boot “Loading…” overlay no longer uses innerHTML (DOM nodes only).
 - 2026-03-07 13:40 PST — UX robustness: if the UI/module fetch boot fails, the banner now includes the underlying error and a one-tap “Retry” button (no innerHTML).
 - 2026-03-07 13:30 PST — iOS bugfix: Join button no longer binds touchend (keeps click+pointerdown), reducing triple-fire join events while preserving keyboard accessibility.
