@@ -687,8 +687,14 @@
       }
     }
 
+    let lastCopyLinkAt = 0;
     async function doCopyLink(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
+      const now = Date.now();
+      // iOS can fire pointerdown + touchend + click; debounce so we only copy once.
+      if (now - lastCopyLinkAt < 600) return;
+      lastCopyLinkAt = now;
+
       const link = location.href;
 
       // iOS Safari (and non-HTTPS origins) can reject navigator.clipboard.
