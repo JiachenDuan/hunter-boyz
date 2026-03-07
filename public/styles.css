@@ -51,6 +51,13 @@
       color: white;
       padding: 8px 10px;
       transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+
+      /* Mobile QoL: reduce accidental text selection + remove 300ms click heuristics */
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+      cursor: pointer;
     }
     #hud button:active {
       transform: scale(0.97);
