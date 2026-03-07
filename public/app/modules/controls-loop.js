@@ -754,8 +754,23 @@
     copyLinkBtn.addEventListener('pointerdown', doCopyLink, { passive: false });
     copyLinkBtn.addEventListener('touchend', doCopyLink, { passive: false });
 
-    function doScoreboard(e){ if (e) { e.preventDefault(); e.stopPropagation(); } try { scoreModal.style.display = 'flex'; } catch {} }
-    function doScoreClose(e){ if (e) { e.preventDefault(); e.stopPropagation(); } try { scoreModal.style.display = 'none'; } catch {} }
+    // --- Scoreboard modal ---
+    // Desktop QoL: focus + ESC-to-close, plus restore focus to the button that opened it.
+    let lastScoreFocus = null;
+    function doScoreboard(e){
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      try { lastScoreFocus = document.activeElement; } catch { lastScoreFocus = null; }
+      try { scoreModal.style.display = 'flex'; } catch {}
+      try { btnScoreClose?.focus?.(); } catch {}
+    }
+    function doScoreClose(e){
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      try { scoreModal.style.display = 'none'; } catch {}
+      try {
+        if (lastScoreFocus && typeof lastScoreFocus.focus === 'function') lastScoreFocus.focus();
+        else btnScoreboard?.focus?.();
+      } catch {}
+    }
     if (btnScoreboard) {
       btnScoreboard.addEventListener('click', doScoreboard);
       btnScoreboard.addEventListener('pointerdown', doScoreboard, { passive:false });
@@ -767,6 +782,14 @@
       btnScoreClose.addEventListener('touchend', doScoreClose, { passive:false });
     }
     if (scoreModal) scoreModal.addEventListener('click', (e)=>{ if (e.target===scoreModal) doScoreClose(e); });
+
+    // Desktop QoL: ESC closes scoreboard.
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && scoreModal?.style?.display === 'flex') {
+        e.preventDefault();
+        doScoreClose(e);
+      }
+    });
 
     function setSoundUI(on) {
       try {
