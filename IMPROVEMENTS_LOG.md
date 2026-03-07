@@ -1,3 +1,4 @@
+- 2026-03-07 09:00 PST — UI clarity: modal hint text on touch now mentions the ✕ close button (“Tap outside or ✕ to close”) so players notice the explicit close affordance.
 - 2026-03-07 08:52 PST — iOS polish: Copy Link now has clear in-button feedback (Copying…/Copied!) and a manual-copy prompt fallback when clipboard APIs are blocked.
 - 2026-03-07 08:30 PST — iOS polish: scoreboard modal now uses momentum scrolling (-webkit-overflow-scrolling: touch) for smoother flick scroll.
 - 2026-03-07 08:20 PST — UI clarity: map selection dropdowns are now disabled until you join, and locked once the round starts (reduces confusion and “Map locked…” log spam).

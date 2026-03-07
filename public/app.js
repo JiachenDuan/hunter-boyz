@@ -4290,12 +4290,12 @@ function spawnDent(pos, normal, size, kind) {
         if (scoreModalHint) {
           scoreModalHint.textContent = desktopLike
             ? 'Hold Tab to view • Click outside or press Esc to close'
-            : 'Tap outside to close';
+            : 'Tap outside or ✕ to close';
         }
         if (weaponModalHint) {
           weaponModalHint.textContent = desktopLike
             ? 'Click a weapon • Click outside or press Esc to close'
-            : 'Tap a weapon • Tap outside to close';
+            : 'Tap a weapon • Tap outside or ✕ to close';
         }
       } catch {}
     }
