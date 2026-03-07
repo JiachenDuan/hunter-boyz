@@ -4367,6 +4367,22 @@ function spawnDent(pos, normal, size, kind) {
     }
 
     // iOS can fire pointerdown + touchend + click; debounce to avoid multiple clipboard writes/prompts.
+    function __tempButtonLabel(btn, nextLabel, ms=1200) {
+      if (!btn) return () => {};
+      const prev = btn.textContent;
+      btn.textContent = nextLabel;
+      let t = null;
+      try {
+        t = window.setTimeout(() => {
+          try { btn.textContent = prev; } catch {}
+        }, ms);
+      } catch {}
+      return () => {
+        try { if (t) window.clearTimeout(t); } catch {}
+        try { btn.textContent = prev; } catch {}
+      };
+    }
+
     let lastCopyLinkAt = 0;
     async function doCopyLink(e) {
       if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -4375,17 +4391,26 @@ function spawnDent(pos, normal, size, kind) {
       lastCopyLinkAt = now;
 
       const link = location.href;
+      const restoreLabel = __tempButtonLabel(copyLinkBtn, 'Copying…', 8000);
+      try { copyLinkBtn.disabled = true; } catch {}
       try {
         await navigator.clipboard.writeText(link);
+        restoreLabel();
+        __tempButtonLabel(copyLinkBtn, 'Copied!', 1100);
         log('Link copied. Paste into the other phone.');
       } catch {
+        restoreLabel();
         // Fallback (older iOS / clipboard permissions): prompt so user can copy manually.
         try {
           window.prompt('Copy this link:', link);
+          __tempButtonLabel(copyLinkBtn, 'Copy manually', 1300);
           log('Copy link: select + copy from the prompt.');
         } catch {
+          __tempButtonLabel(copyLinkBtn, 'Copy failed', 1300);
           log('Copy failed. Link: ' + link);
         }
+      } finally {
+        try { copyLinkBtn.disabled = false; } catch {}
       }
     }
 
