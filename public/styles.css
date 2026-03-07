@@ -707,7 +707,26 @@
       /* Respect iPhone home-indicator safe area so the close button/last rows don't sit on it. */
       margin:0 0 calc(14px + env(safe-area-inset-bottom)) 0;
     }
-    .scoreModalHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; }
+    .scoreModalHeader {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:10px;
+      gap:10px;
+
+      /* Keep the title + close button visible while scrolling long scoreboards. */
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: rgba(0,0,0,0.82);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 10px 10px 8px;
+      margin: -14px -14px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      border-top-left-radius: 18px;
+      border-top-right-radius: 18px;
+    }
     .scoreModalTitleWrap { display:flex; flex-direction:column; gap:2px; }
     .scoreModalTitle { font-weight:900; letter-spacing:0.4px; }
     .scoreModalHint { font-size:12px; font-weight:800; opacity:0.72; }
