@@ -4876,6 +4876,26 @@ function spawnDent(pos, normal, size, kind) {
         } catch {}
       }
 
+      // iOS Safari sometimes reports a stale viewport after rotation; if the canvas aspect
+      // drifts from the engine render size, force a resize to recover from the "squished" view.
+      try {
+        const cw = canvas.clientWidth || 0;
+        const ch = canvas.clientHeight || 0;
+        if (cw > 10 && ch > 10) {
+          const ew = engine.getRenderWidth(true);
+          const eh = engine.getRenderHeight(true);
+          // If mismatch is noticeable, resize (rate-limited).
+          const mismatch = Math.abs(cw - ew) > 2 || Math.abs(ch - eh) > 2;
+          if (mismatch) {
+            const now = performance.now();
+            if (!window.__lastAutoResizeAt || (now - window.__lastAutoResizeAt) > 350) {
+              window.__lastAutoResizeAt = now;
+              try { engine.resize(); } catch {}
+            }
+          }
+        }
+      } catch {}
+
       try {
         scene.render();
       } catch (e) {
