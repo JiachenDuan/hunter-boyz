@@ -206,7 +206,43 @@
     // Recoil is rendered client-side only (does NOT affect server aim/look).
     // Stored on window so the render loop can apply/decay it every frame.
     function applyRecoil(weapon) {
-      const r = RECOIL[weapon] || RECOIL.rifle;
+      const r0 = RECOIL[weapon] || RECOIL.rifle;
+
+      // Recoil ramp: consecutive shots feel punchier (especially on auto weapons),
+      // but resets quickly after you pause. This is visual only.
+      let mult = 1.0;
+      try {
+        const now = performance.now();
+        const last = (typeof window.__hbLastRecoilAt === 'number') ? window.__hbLastRecoilAt : 0;
+        const streak = (typeof window.__hbRecoilStreak === 'number') ? window.__hbRecoilStreak : 0;
+
+        const windowMs = (weapon === 'minigun') ? 110
+          : (weapon === 'rifle') ? 160
+          : (weapon === 'shotgun') ? 220
+          : (weapon === 'sniper') ? 260
+          : 180;
+
+        const nextStreak = (now - last) <= windowMs ? Math.min(10, streak + 1) : 0;
+        window.__hbRecoilStreak = nextStreak;
+        window.__hbLastRecoilAt = now;
+
+        // A gentle ramp: +0% … +55% max.
+        mult = 1.0 + Math.min(0.55, nextStreak * 0.065);
+
+        // Keep single-tap rifle satisfying even when not streaking.
+        if (weapon === 'rifle' && nextStreak === 0) mult = 1.15;
+      } catch {}
+
+      // Copy (so we can scale per-shot without mutating constants)
+      const r = {
+        gunKick: (r0.gunKick || 0) * mult,
+        gunLift: (r0.gunLift || 0) * mult,
+        gunSide: (r0.gunSide || 0) * mult,
+        rollKick: (r0.rollKick || 0) * mult,
+        pitchKick: (r0.pitchKick || 0) * mult,
+        yawKick: (r0.yawKick || 0) * mult,
+        flashScale: (r0.flashScale || 1),
+      };
 
       // ── Gun model recoil (kick + torque) ──
       // Make the viewmodel *move* (not just rotate) so recoil is obvious on mobile.
@@ -247,8 +283,9 @@
         const yawKick = yawBias * r.yawKick + yawJitter;
 
         // Cap accumulation so burst fire feels punchy without going totally off-screen.
-        window.__camKickPitch = Math.min(0.32, window.__camKickPitch + r.pitchKick);
-        window.__camKickYaw   = Math.max(-0.20, Math.min(0.20, window.__camKickYaw + yawKick));
+        // Slightly higher cap now that recoil ramps per-shot.
+        window.__camKickPitch = Math.min(0.45, window.__camKickPitch + r.pitchKick);
+        window.__camKickYaw   = Math.max(-0.24, Math.min(0.24, window.__camKickYaw + yawKick));
       } catch {}
     }
     // Sound FX (procedural WebAudio; no external files)

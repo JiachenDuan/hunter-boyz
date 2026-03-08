@@ -82,28 +82,31 @@ async function main(){
         if (window.__socket && window.__socket.readyState === 1) {
           window.__socket.send(JSON.stringify({ t:'setMap', mapId:'mansion' }));
           window.__socket.send(JSON.stringify({ t:'start' }));
-          return;
         }
       } catch {}
+      // Always force-start via localhost debug (works even if not host).
       try { await fetch('/debug/start', { method: 'POST' }); } catch {}
     });
 
-    // Wait until the round actually starts (server state says started)
-    try {
-      await page.waitForFunction(() => {
-        const s = window.__lastState;
-        return !!(s && s.game && s.game.started);
-      }, { timeout: 8000 });
-    } catch {}
+    // Wait until the round actually starts (server state says started).
+    // Occasionally we can race the host/round reset, so we actively re-issue /debug/start.
+    for (let i = 0; i < 40; i++) {
+      const started = await page.evaluate(() => !!(window.__lastState && window.__lastState.game && window.__lastState.game.started));
+      if (started) break;
+      try { await page.evaluate(() => fetch('/debug/start', { method: 'POST' }).catch(()=>{})); } catch {}
+      await sleep(250);
+    }
 
     // Also wait until the round timer is no longer showing LOBBY (i.e., countdown is live)
-    try {
-      await page.waitForFunction(() => {
+    for (let i = 0; i < 40; i++) {
+      const ok = await page.evaluate(() => {
         const el = document.getElementById('roundTimer');
         const t = (el && el.textContent || '').trim();
-        return t && t !== 'LOBBY';
-      }, { timeout: 8000 });
-    } catch {}
+        return !!(t && t !== 'LOBBY');
+      });
+      if (ok) break;
+      await sleep(200);
+    }
 
     // Belt + suspenders: hide lobby overlay if it’s still visible for any reason
     await page.evaluate(() => {
@@ -156,14 +159,23 @@ async function main(){
     // Let state + camera settle
     await sleep(450);
 
-    // UI capture: open the weapon picker so the screenshot also shows current weapon selection.
-    // (This makes small UX tweaks to the picker/title visible in automated captures.)
+    // Proof capture: fire a short burst so recoil is obvious in a *still* screenshot.
+    // (Recoil is #1 in the improvement order; screen-shake is #2 so we avoid shake here.)
     try {
-      await page.evaluate(() => {
-        const btn = document.getElementById('btnWeaponPick');
-        if (btn) btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-      });
-      await sleep(120);
+      await page.evaluate(async (fromId) => {
+        const shoot = () => fetch('/debug/shoot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fromId }),
+        });
+        try { await shoot(); } catch {}
+        try { await new Promise(r=>setTimeout(r, 45)); } catch {}
+        try { await shoot(); } catch {}
+        try { await new Promise(r=>setTimeout(r, 45)); } catch {}
+        try { await shoot(); } catch {}
+      }, shooterId);
+      // Let the client process the shot packet + apply recoil before we screenshot.
+      await sleep(90);
     } catch {}
 
     const ts = Date.now();
