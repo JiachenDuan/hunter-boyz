@@ -1182,12 +1182,39 @@
     let seq = 0;
     let lastSend = performance.now();
     engine.runRenderLoop(() => {
-      // ── Recoil decay: smoothly return gun position + camera shake ──
-      if (fpRig?.gunRoot) {
-        const gz = fpRig.gunRoot.position.z;
-        if (gz < -0.001) fpRig.gunRoot.position.z += (-gz) * 0.18;
-        else fpRig.gunRoot.position.z = 0;
-      }
+      // ── Recoil decay (gun + camera) ──
+      try {
+        const g = fpRig?.gunRoot;
+        if (g) {
+          g.metadata = g.metadata || {};
+          const baseZ = (typeof g.metadata._basePosZ === 'number') ? g.metadata._basePosZ : 0;
+          const baseRotX = (typeof g.metadata._baseRotX === 'number') ? g.metadata._baseRotX : 0;
+          const baseRotY = (typeof g.metadata._baseRotY === 'number') ? g.metadata._baseRotY : 0;
+
+          // Position spring-back (fast)
+          g.position.z += (baseZ - g.position.z) * 0.22;
+          // Rotation spring-back (slightly slower so you "feel" the kick)
+          g.rotation.x += (baseRotX - g.rotation.x) * 0.14;
+          g.rotation.y += (baseRotY - g.rotation.y) * 0.14;
+        }
+      } catch {}
+
+      // Camera recoil is purely visual: apply on top of the authoritative server yaw/pitch.
+      try {
+        const baseYaw = (typeof window.__hbBaseYaw === 'number') ? window.__hbBaseYaw : camera.rotation.y;
+        const basePitch = (typeof window.__hbBasePitch === 'number') ? window.__hbBasePitch : camera.rotation.x;
+        if (typeof window.__camKickPitch !== 'number') window.__camKickPitch = 0;
+        if (typeof window.__camKickYaw !== 'number') window.__camKickYaw = 0;
+
+        camera.rotation.x = basePitch + window.__camKickPitch;
+        camera.rotation.y = baseYaw + window.__camKickYaw;
+
+        // Decay (quick return, no "shake" yet — that's the next scheduled task)
+        window.__camKickPitch *= 0.72;
+        window.__camKickYaw   *= 0.72;
+        if (Math.abs(window.__camKickPitch) < 0.00008) window.__camKickPitch = 0;
+        if (Math.abs(window.__camKickYaw) < 0.00008) window.__camKickYaw = 0;
+      } catch {}
       // Minigun barrel spin (cosmetic)
       try {
         const eff = (lastServerState && myId) ? (lastServerState.players.find(p=>p.id===myId)?.powerWeapon) : null;

@@ -1247,6 +1247,8 @@
           camera.position.x = p.x;
           camera.position.y = (p.y || 1.8);
           camera.position.z = p.z;
+          // Store authoritative look from server; render-loop applies recoil on top (visual only).
+          try { window.__hbBaseYaw = p.yaw; window.__hbBasePitch = p.pitch; } catch {}
           camera.rotation.y = p.yaw;
           camera.rotation.x = p.pitch;
           try {
