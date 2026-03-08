@@ -1,3 +1,4 @@
+- 2026-03-07 16:50 PST — A11y polish: Connection indicator now keeps its wrapper aria-label + title synced to the live ONLINE/RECONNECT/OFFLINE text (not just the dot), improving screen reader + hover hints.
 - 2026-03-07 16:30 PST — UI clarity: Lobby player list now makes the host easy to spot (bold row + 👑 host tag).
 - 2026-03-07 16:20 PST — UI clarity/a11y: Scope button now visually disables + sets aria-disabled/aria-pressed + tooltip when non-sniper weapon is selected (prevents “why doesn’t this work?” confusion).
 - 2026-03-07 16:00 PST — Server polish: respond 204 for /robots.txt + /site.webmanifest (common default browser/crawler probes) and assert via smoke-test.

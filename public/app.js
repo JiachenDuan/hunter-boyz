@@ -137,7 +137,14 @@
         if (txt) txt.textContent = 'OFFLINE';
       }
 
-      try { el.title = (txt?.textContent || state); } catch {}
+      // Keep hover hints + screen reader label in sync with the live connection text.
+      try {
+        const label = (txt?.textContent || state);
+        el.title = label;
+        if (wrap) wrap.title = label;
+        if (wrap) wrap.setAttribute('aria-label', label);
+        if (txt) txt.setAttribute('aria-label', label);
+      } catch {}
     }
 
     function sanitizePlayerName(raw) {
