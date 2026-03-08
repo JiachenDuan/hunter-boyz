@@ -7,6 +7,13 @@
     const loading = document.createElement('div');
     loading.id = 'uiLoading';
     loading.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:9999;';
+    // A11y: make the boot state discoverable to screen readers.
+    try {
+      loading.setAttribute('role', 'status');
+      loading.setAttribute('aria-live', 'polite');
+      loading.setAttribute('aria-label', 'Loading Hunter Boyz UI');
+    } catch {}
+
     // Avoid innerHTML for consistency with the rest of the boot UX.
     const pill = document.createElement('div');
     pill.textContent = 'Loading…';
