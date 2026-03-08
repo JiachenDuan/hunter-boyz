@@ -1187,15 +1187,21 @@
         const g = fpRig?.gunRoot;
         if (g) {
           g.metadata = g.metadata || {};
+          const baseX = (typeof g.metadata._basePosX === 'number') ? g.metadata._basePosX : 0;
+          const baseY = (typeof g.metadata._basePosY === 'number') ? g.metadata._basePosY : 0;
           const baseZ = (typeof g.metadata._basePosZ === 'number') ? g.metadata._basePosZ : 0;
           const baseRotX = (typeof g.metadata._baseRotX === 'number') ? g.metadata._baseRotX : 0;
           const baseRotY = (typeof g.metadata._baseRotY === 'number') ? g.metadata._baseRotY : 0;
+          const baseRotZ = (typeof g.metadata._baseRotZ === 'number') ? g.metadata._baseRotZ : 0;
 
-          // Position spring-back (fast)
+          // Viewmodel spring-back (fast-ish position, slightly slower rotation).
+          g.position.x += (baseX - g.position.x) * 0.20;
+          g.position.y += (baseY - g.position.y) * 0.20;
           g.position.z += (baseZ - g.position.z) * 0.22;
-          // Rotation spring-back (slightly slower so you "feel" the kick)
-          g.rotation.x += (baseRotX - g.rotation.x) * 0.14;
-          g.rotation.y += (baseRotY - g.rotation.y) * 0.14;
+
+          g.rotation.x += (baseRotX - g.rotation.x) * 0.13;
+          g.rotation.y += (baseRotY - g.rotation.y) * 0.13;
+          g.rotation.z += (baseRotZ - g.rotation.z) * 0.13;
         }
       } catch {}
 

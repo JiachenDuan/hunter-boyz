@@ -165,6 +165,16 @@ async function main(){
       await sleep(120);
     } catch {}
 
+    // Fire one shot right before the screenshot so we capture recoil in-frame.
+    // (Recoil is purely visual; this is only to make the proof screenshot obvious.)
+    try {
+      await page.evaluate(() => {
+        const shoot = document.getElementById('btnShoot');
+        if (shoot) shoot.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      });
+      await sleep(70);
+    } catch {}
+
     const ts = Date.now();
     const file = path.join(outDir, `iphone-${ts}.png`);
     await page.screenshot({ path: file, fullPage: false });
