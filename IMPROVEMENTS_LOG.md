@@ -1,3 +1,4 @@
+- 2026-03-07 17:10 PST — UI polish: HUD + Lobby <select> controls now match button styling and show a not-allowed cursor when disabled (clearer affordance).
 - 2026-03-07 17:00 PST — UI polish: Disabled HUD buttons now show a not-allowed cursor (clearer affordance on desktop).
 - 2026-03-07 17:00 PST — Tooling: iPhone capture script now joins via pointerdown (plus click fallback) so it reliably gets a player id on iOS-like UA.
 - 2026-03-07 16:50 PST — A11y polish: Connection indicator now keeps its wrapper aria-label + title synced to the live ONLINE/RECONNECT/OFFLINE text (not just the dot), improving screen reader + hover hints.

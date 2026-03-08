@@ -43,6 +43,25 @@
       -webkit-user-select: text;
       user-select: text;
     }
+
+    /* Selects (map/weapon/etc) should have the same affordance + disabled clarity as buttons. */
+    #hud select,
+    #lobby select {
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      color: #e6edf3;
+      padding: 8px 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #hud select:disabled,
+    #lobby select:disabled {
+      opacity: 0.55;
+      filter: grayscale(0.2);
+      cursor: not-allowed;
+    }
+
     #hud button {
       margin-left: 6px;
       border-radius: 10px;
