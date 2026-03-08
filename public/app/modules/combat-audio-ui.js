@@ -186,21 +186,21 @@
     }
 
     const RECOIL = {
-      // Kick values are in radians (camera) and meters-ish (gunRoot position).
-      // This tick is specifically about "gun recoil" (task #1): punchy kick + springy recovery.
-      // Screen shake is a separate tick (#2), so we keep shakeAmt unchanged here.
+      // Kick values are in radians (camera) and meters-ish (gunRoot z).
+      // Patterns are biased so weapons feel distinct:
+      // - Rifle: climbs up + slight right pull (AK-ish)
+      // - Sniper: heavy straight-back kick
+      // - Shotgun: big slam + wide shake
       //
-      // gunKick: pull the viewmodel back (z)
-      // gunLift: lift the viewmodel up (y)
-      // gunSide: small sideways shove (x)
-      // rollKick: tiny roll so the gun feels like it torques in your hands
-      rifle:   { gunKick: 0.155, gunLift: 0.030, gunSide: 0.010, rollKick: 0.028, pitchKick: 0.090, yawKick: 0.0125, shakeAmt: 0.004, flashScale: 1.05 },
-      shotgun: { gunKick: 0.220, gunLift: 0.050, gunSide: 0.016, rollKick: 0.055, pitchKick: 0.115, yawKick: 0.0140, shakeAmt: 0.012, flashScale: 1.90 },
-      sniper:  { gunKick: 0.240, gunLift: 0.040, gunSide: 0.004, rollKick: 0.020, pitchKick: 0.140, yawKick: 0.0040, shakeAmt: 0.006, flashScale: 1.55 },
-      fart:    { gunKick: 0.040, gunLift: 0.012, gunSide: 0.004, rollKick: 0.010, pitchKick: 0.016, yawKick: 0.0060, shakeAmt: 0.002, flashScale: 0.75 },
-      minigun: { gunKick: 0.070, gunLift: 0.018, gunSide: 0.010, rollKick: 0.038, pitchKick: 0.028, yawKick: 0.0090, shakeAmt: 0.007, flashScale: 2.10 },
-      rocket:  { gunKick: 0.170, gunLift: 0.045, gunSide: 0.018, rollKick: 0.060, pitchKick: 0.070, yawKick: 0.0135, shakeAmt: 0.014, flashScale: 2.20 },
-      tank:    { gunKick: 0.250, gunLift: 0.055, gunSide: 0.025, rollKick: 0.075, pitchKick: 0.090, yawKick: 0.0160, shakeAmt: 0.020, flashScale: 4.50 },
+      // NOTE: "Gun recoil" tick (task #1) intentionally focuses on kick strength/shape.
+      // Screen shake is a separate scheduled tick (#2), so keep shakeAmt unchanged here.
+      rifle:   { gunKick: 0.115, pitchKick: 0.070, yawKick: 0.0105, shakeAmt: 0.004, flashScale: 1.05 },
+      shotgun: { gunKick: 0.165, pitchKick: 0.088, yawKick: 0.0130, shakeAmt: 0.012, flashScale: 1.90 },
+      sniper:  { gunKick: 0.185, pitchKick: 0.105, yawKick: 0.0034, shakeAmt: 0.006, flashScale: 1.55 },
+      fart:    { gunKick: 0.030, pitchKick: 0.010, yawKick: 0.0050, shakeAmt: 0.002, flashScale: 0.75 },
+      minigun: { gunKick: 0.045, pitchKick: 0.020, yawKick: 0.0080, shakeAmt: 0.007, flashScale: 2.10 },
+      rocket:  { gunKick: 0.125, pitchKick: 0.055, yawKick: 0.0125, shakeAmt: 0.014, flashScale: 2.20 },
+      tank:    { gunKick: 0.185, pitchKick: 0.070, yawKick: 0.0150, shakeAmt: 0.020, flashScale: 4.50 },
     };
 
     // Recoil is rendered client-side only (does NOT affect server aim/look).
@@ -208,31 +208,19 @@
     function applyRecoil(weapon) {
       const r = RECOIL[weapon] || RECOIL.rifle;
 
-      // ── Gun model recoil (kick + torque) ──
-      // Make the viewmodel *move* (not just rotate) so recoil is obvious on mobile.
+      // ── Gun model recoil (kick + small rotation) ──
       try {
         const g = fpRig?.gunRoot;
         if (g) {
           g.metadata = g.metadata || {};
-          if (typeof g.metadata._basePosX !== 'number') g.metadata._basePosX = g.position.x;
-          if (typeof g.metadata._basePosY !== 'number') g.metadata._basePosY = g.position.y;
           if (typeof g.metadata._basePosZ !== 'number') g.metadata._basePosZ = g.position.z;
           if (typeof g.metadata._baseRotX !== 'number') g.metadata._baseRotX = g.rotation.x;
           if (typeof g.metadata._baseRotY !== 'number') g.metadata._baseRotY = g.rotation.y;
-          if (typeof g.metadata._baseRotZ !== 'number') g.metadata._baseRotZ = g.rotation.z;
 
-          const sideSign = (weapon === 'rifle' || weapon === 'minigun') ? 1 : -1;
-          const sideJitter = (Math.random() - 0.5) * (r.gunSide || 0) * 0.8;
-
-          // Kick back + lift + small sideways torque.
-          g.position.z -= (r.gunKick || 0);
-          g.position.y += (r.gunLift || 0);
-          g.position.x += sideSign * (r.gunSide || 0) + sideJitter;
-
-          // Pitch + yaw + roll = "torque".
-          g.rotation.x += (r.pitchKick || 0) * 1.25;
-          g.rotation.y += (r.yawKick || 0) * ((weapon === 'rifle') ? 1.15 : 0.55);
-          g.rotation.z += sideSign * (r.rollKick || 0);
+          // Kick back + lift slightly (feels more like a shoulder-fired gun).
+          g.position.z -= r.gunKick;
+          g.rotation.x += r.pitchKick * 1.35;
+          g.rotation.y += r.yawKick * ((weapon === 'rifle') ? 1.15 : 0.55);
         }
       } catch {}
 
