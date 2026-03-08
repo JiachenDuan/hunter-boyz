@@ -221,7 +221,7 @@
         }
       } catch {}
 
-      // ── Camera recoil (pure kick; NOT the next "screen shake" task) ──
+      // ── Camera recoil (pure kick; does NOT affect server aim/look) ──
       try {
         if (typeof window.__camKickPitch !== 'number') window.__camKickPitch = 0;
         if (typeof window.__camKickYaw !== 'number') window.__camKickYaw = 0;
@@ -233,6 +233,16 @@
 
         window.__camKickPitch += r.pitchKick;
         window.__camKickYaw   += yawKick;
+      } catch {}
+
+      // ── Screen shake (separate from recoil kick) ──
+      // A small, quick camera *jitter* impulse that decays over ~200ms.
+      // Implemented in the render loop so it layers cleanly on top of server camera.
+      try {
+        if (typeof window.__camShakeMag !== 'number') window.__camShakeMag = 0;
+        const add = (r.shakeAmt || 0) * ((weapon === 'tank' || weapon === 'rocket') ? 1.25 : 1.0);
+        window.__camShakeMag = Math.min(0.065, window.__camShakeMag + add);
+        window.__camShakeSeed = Math.random() * 1000;
       } catch {}
     }
     // Sound FX (procedural WebAudio; no external files)
