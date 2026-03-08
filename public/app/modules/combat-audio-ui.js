@@ -246,29 +246,54 @@
 
       // ── Gun model recoil (kick + torque) ──
       // Make the viewmodel *move* (not just rotate) so recoil is obvious on mobile.
+      // IMPORTANT: we apply recoil as spring-driven offsets (metadata), NOT by directly
+      // moving the mesh every shot. This makes kick + recovery feel snappier and more physical.
       try {
         const g = fpRig?.gunRoot;
         if (g) {
           g.metadata = g.metadata || {};
-          if (typeof g.metadata._basePosX !== 'number') g.metadata._basePosX = g.position.x;
-          if (typeof g.metadata._basePosY !== 'number') g.metadata._basePosY = g.position.y;
-          if (typeof g.metadata._basePosZ !== 'number') g.metadata._basePosZ = g.position.z;
-          if (typeof g.metadata._baseRotX !== 'number') g.metadata._baseRotX = g.rotation.x;
-          if (typeof g.metadata._baseRotY !== 'number') g.metadata._baseRotY = g.rotation.y;
-          if (typeof g.metadata._baseRotZ !== 'number') g.metadata._baseRotZ = g.rotation.z;
+          const md = g.metadata;
+
+          // Base pose (captured once)
+          if (typeof md._basePosX !== 'number') md._basePosX = g.position.x;
+          if (typeof md._basePosY !== 'number') md._basePosY = g.position.y;
+          if (typeof md._basePosZ !== 'number') md._basePosZ = g.position.z;
+          if (typeof md._baseRotX !== 'number') md._baseRotX = g.rotation.x;
+          if (typeof md._baseRotY !== 'number') md._baseRotY = g.rotation.y;
+          if (typeof md._baseRotZ !== 'number') md._baseRotZ = g.rotation.z;
+
+          // Recoil offsets + velocities (spring sim in render loop)
+          if (typeof md._rPosX !== 'number') md._rPosX = 0;
+          if (typeof md._rPosY !== 'number') md._rPosY = 0;
+          if (typeof md._rPosZ !== 'number') md._rPosZ = 0;
+          if (typeof md._rRotX !== 'number') md._rRotX = 0;
+          if (typeof md._rRotY !== 'number') md._rRotY = 0;
+          if (typeof md._rRotZ !== 'number') md._rRotZ = 0;
+
+          if (typeof md._rVelPosX !== 'number') md._rVelPosX = 0;
+          if (typeof md._rVelPosY !== 'number') md._rVelPosY = 0;
+          if (typeof md._rVelPosZ !== 'number') md._rVelPosZ = 0;
+          if (typeof md._rVelRotX !== 'number') md._rVelRotX = 0;
+          if (typeof md._rVelRotY !== 'number') md._rVelRotY = 0;
+          if (typeof md._rVelRotZ !== 'number') md._rVelRotZ = 0;
 
           const sideSign = (weapon === 'rifle' || weapon === 'minigun') ? 1 : -1;
-          const sideJitter = (Math.random() - 0.5) * (r.gunSide || 0) * 0.8;
+          const sideJitter = (Math.random() - 0.5) * (r.gunSide || 0) * 0.65;
 
-          // Kick back + lift + small sideways shove.
-          g.position.z -= (r.gunKick || 0);
-          g.position.y += (r.gunLift || 0);
-          g.position.x += sideSign * (r.gunSide || 0) + sideJitter;
+          // Position kick (offset space)
+          md._rPosZ -= (r.gunKick || 0);
+          md._rPosY += (r.gunLift || 0);
+          md._rPosX += sideSign * (r.gunSide || 0) + sideJitter;
 
-          // Pitch + yaw + roll = "torque".
-          g.rotation.x += (r.pitchKick || 0) * 1.25;
-          g.rotation.y += (r.yawKick || 0) * ((weapon === 'rifle') ? 1.15 : 0.55);
-          g.rotation.z += sideSign * (r.rollKick || 0);
+          // Torque (offset space)
+          md._rRotX += (r.pitchKick || 0) * 1.25;
+          md._rRotY += (r.yawKick || 0) * ((weapon === 'rifle') ? 1.15 : 0.55);
+          md._rRotZ += sideSign * (r.rollKick || 0);
+
+          // Extra snap: small impulse to velocity so recoil feels instantaneous even
+          // with spring recovery.
+          md._rVelPosZ -= (r.gunKick || 0) * 6.0;
+          md._rVelRotX += (r.pitchKick || 0) * 7.0;
         }
       } catch {}
 

@@ -1183,7 +1183,7 @@
     let lastSend = performance.now();
     engine.runRenderLoop(() => {
       // ── Recoil decay + application (visual only; does NOT affect server aim) ──
-      // Gun model: spring back to its base pose.
+      // Gun model recoil: spring offsets back to 0 (base pose stays stable).
       try {
         const g = fpRig?.gunRoot;
         if (g) {
@@ -1195,14 +1195,57 @@
           if (typeof md._baseRotY !== 'number') md._baseRotY = g.rotation.y;
           if (typeof md._baseRotZ !== 'number') md._baseRotZ = g.rotation.z;
 
-          // Pull positions/rots back toward base with a smooth exponential.
-          g.position.x += (md._basePosX - g.position.x) * 0.22;
-          g.position.y += (md._basePosY - g.position.y) * 0.22;
-          g.position.z += (md._basePosZ - g.position.z) * 0.22;
+          // Offsets are written by applyRecoil() (combat-audio-ui.js)
+          if (typeof md._rPosX !== 'number') md._rPosX = 0;
+          if (typeof md._rPosY !== 'number') md._rPosY = 0;
+          if (typeof md._rPosZ !== 'number') md._rPosZ = 0;
+          if (typeof md._rRotX !== 'number') md._rRotX = 0;
+          if (typeof md._rRotY !== 'number') md._rRotY = 0;
+          if (typeof md._rRotZ !== 'number') md._rRotZ = 0;
 
-          g.rotation.x += (md._baseRotX - g.rotation.x) * 0.13;
-          g.rotation.y += (md._baseRotY - g.rotation.y) * 0.13;
-          g.rotation.z += (md._baseRotZ - g.rotation.z) * 0.13;
+          if (typeof md._rVelPosX !== 'number') md._rVelPosX = 0;
+          if (typeof md._rVelPosY !== 'number') md._rVelPosY = 0;
+          if (typeof md._rVelPosZ !== 'number') md._rVelPosZ = 0;
+          if (typeof md._rVelRotX !== 'number') md._rVelRotX = 0;
+          if (typeof md._rVelRotY !== 'number') md._rVelRotY = 0;
+          if (typeof md._rVelRotZ !== 'number') md._rVelRotZ = 0;
+
+          const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
+
+          // Stiffer spring for position, slightly softer for rotation.
+          const kPos = 120, cPos = 22;
+          const kRot = 92,  cRot = 18;
+
+          // Integrate toward 0 in offset space.
+          md._rVelPosX += (-kPos * md._rPosX - cPos * md._rVelPosX) * dt;
+          md._rVelPosY += (-kPos * md._rPosY - cPos * md._rVelPosY) * dt;
+          md._rVelPosZ += (-kPos * md._rPosZ - cPos * md._rVelPosZ) * dt;
+          md._rVelRotX += (-kRot * md._rRotX - cRot * md._rVelRotX) * dt;
+          md._rVelRotY += (-kRot * md._rRotY - cRot * md._rVelRotY) * dt;
+          md._rVelRotZ += (-kRot * md._rRotZ - cRot * md._rVelRotZ) * dt;
+
+          md._rPosX += md._rVelPosX * dt;
+          md._rPosY += md._rVelPosY * dt;
+          md._rPosZ += md._rVelPosZ * dt;
+          md._rRotX += md._rVelRotX * dt;
+          md._rRotY += md._rVelRotY * dt;
+          md._rRotZ += md._rVelRotZ * dt;
+
+          // Snap tiny residuals (prevents micro-jitter when nearly settled).
+          if (Math.abs(md._rPosX) < 0.00005 && Math.abs(md._rVelPosX) < 0.00005) { md._rPosX = 0; md._rVelPosX = 0; }
+          if (Math.abs(md._rPosY) < 0.00005 && Math.abs(md._rVelPosY) < 0.00005) { md._rPosY = 0; md._rVelPosY = 0; }
+          if (Math.abs(md._rPosZ) < 0.00005 && Math.abs(md._rVelPosZ) < 0.00005) { md._rPosZ = 0; md._rVelPosZ = 0; }
+          if (Math.abs(md._rRotX) < 0.00005 && Math.abs(md._rVelRotX) < 0.00005) { md._rRotX = 0; md._rVelRotX = 0; }
+          if (Math.abs(md._rRotY) < 0.00005 && Math.abs(md._rVelRotY) < 0.00005) { md._rRotY = 0; md._rVelRotY = 0; }
+          if (Math.abs(md._rRotZ) < 0.00005 && Math.abs(md._rVelRotZ) < 0.00005) { md._rRotZ = 0; md._rVelRotZ = 0; }
+
+          // Apply base pose + recoil offsets.
+          g.position.x = md._basePosX + md._rPosX;
+          g.position.y = md._basePosY + md._rPosY;
+          g.position.z = md._basePosZ + md._rPosZ;
+          g.rotation.x = md._baseRotX + md._rRotX;
+          g.rotation.y = md._baseRotY + md._rRotY;
+          g.rotation.z = md._baseRotZ + md._rRotZ;
         }
       } catch {}
 
