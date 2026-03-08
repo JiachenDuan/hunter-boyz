@@ -4164,6 +4164,8 @@ function spawnDent(pos, normal, size, kind) {
         if (state.joined) {
           joinBtn.disabled = true;
           try { joinBtn.textContent = 'Joined'; } catch {}
+          try { joinBtn.setAttribute('aria-disabled', 'true'); } catch {}
+          try { joinBtn.setAttribute('aria-label', 'Joined'); } catch {}
           return;
         }
         const ok = sanitizePlayerName(nameInput.value).trim().length > 0;
@@ -4171,6 +4173,8 @@ function spawnDent(pos, normal, size, kind) {
         // UI clarity: make it obvious why Join is disabled on first load.
         try { joinBtn.textContent = ok ? 'Join' : 'Enter name'; } catch {}
         try { joinBtn.title = ok ? 'Join' : 'Enter a name to join'; } catch {}
+        try { joinBtn.setAttribute('aria-disabled', joinBtn.disabled ? 'true' : 'false'); } catch {}
+        try { joinBtn.setAttribute('aria-label', ok ? 'Join game' : 'Join game (enter name first)'); } catch {}
       } catch {}
     }
 

@@ -673,6 +673,8 @@
           joinBtn.disabled = true;
           joinBtn.textContent = 'Joined';
           try { joinBtn.title = 'Joined'; } catch {}
+          try { joinBtn.setAttribute('aria-disabled', 'true'); } catch {}
+          try { joinBtn.setAttribute('aria-label', 'Joined'); } catch {}
           return;
         }
 
@@ -681,6 +683,9 @@
         joinBtn.disabled = !ok;
         joinBtn.textContent = ok ? 'Join' : 'Enter name';
         try { joinBtn.title = ok ? 'Join' : 'Enter a name to join'; } catch {}
+        try { joinBtn.setAttribute('aria-disabled', joinBtn.disabled ? 'true' : 'false'); } catch {}
+        // Keep screen reader intent clear when Join is disabled (common on mobile/touch).
+        try { joinBtn.setAttribute('aria-label', ok ? 'Join game' : 'Join game (enter name first)'); } catch {}
       } catch {}
     }
     syncJoinEnabled();
