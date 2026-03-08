@@ -280,6 +280,12 @@
     }
     /* Put scope above the shoot cluster (so it doesn't overlap the look pad) */
     #btnScope { right: calc(var(--padR) + var(--btn) + var(--btn-gap)); }
+    /* UI clarity: scope only works for sniper; visually hint when it’s unavailable. */
+    #btnScope.isDisabled {
+      opacity: 0.5;
+      filter: grayscale(0.35) brightness(0.9);
+      box-shadow: none;
+    }
     /* Reload sits to the left of scope when visible */
     #btnReload { right: calc(var(--padR) + (var(--btn) + var(--btn-gap)) * 2); background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.35); }
 

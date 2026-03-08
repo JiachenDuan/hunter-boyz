@@ -399,17 +399,46 @@
     // Scope: toggle (only affects sniper)
     (() => {
       const el = document.getElementById('btnScope');
+      if (!el) return;
+
       const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+
+      function syncScopeButtonA11y() {
+        try {
+          const w = document.getElementById('weapon')?.value;
+          const isSniper = (w === 'sniper');
+          el.classList.toggle('isDisabled', !isSniper);
+
+          // Screen readers: expose toggle state + disabled affordance.
+          el.setAttribute('aria-disabled', isSniper ? 'false' : 'true');
+          el.setAttribute('aria-pressed', (isSniper && state.scope) ? 'true' : 'false');
+
+          // Hover/tooltips (desktop) + long-press hints (mobile).
+          if (!isSniper) {
+            el.title = 'Scope (Sniper only)';
+            el.setAttribute('aria-label', 'Scope (sniper only)');
+          } else {
+            el.title = `Scope: ${state.scope ? 'ON' : 'OFF'}`;
+            el.setAttribute('aria-label', state.scope ? 'Scope on' : 'Scope off');
+          }
+        } catch {}
+      }
+
       const fire = (e) => {
         prevent(e);
         // Only toggle scope when sniper is selected
         const w = document.getElementById('weapon')?.value;
-        if (w !== 'sniper') return;
+        if (w !== 'sniper') {
+          syncScopeButtonA11y();
+          return;
+        }
         state.scope = !state.scope;
         updateScopeUI();
         try { el.classList.toggle('btnPressed', state.scope); } catch {}
+        syncScopeButtonA11y();
         try { log(`Scope: ${state.scope ? 'ON' : 'OFF'}`); } catch {}
       };
+
       // iOS fires multiple events (touchend + click). Debounce so scope doesn't instantly flip back.
       let lastScopeAt = 0;
       const fireOnce = (e) => {
@@ -422,6 +451,9 @@
       // iOS can deliver both PointerEvents and legacy TouchEvents for the same gesture.
       // Using pointerdown only keeps this single-fire and consistent with the other HUD buttons.
       el.addEventListener('pointerdown', fireOnce, { passive:false });
+
+      // Set the initial affordance on load.
+      syncScopeButtonA11y();
     })();
 
     // Join
@@ -674,6 +706,24 @@
       // If switching away from sniper, force scope off.
       if (weaponEl.value !== 'sniper') state.scope = false;
       updateScopeUI();
+
+      // Keep the Scope button affordance/semantics in sync with the selected weapon.
+      try {
+        const el = document.getElementById('btnScope');
+        if (el) {
+          const isSniper = (weaponEl.value === 'sniper');
+          el.classList.toggle('isDisabled', !isSniper);
+          el.setAttribute('aria-disabled', isSniper ? 'false' : 'true');
+          el.setAttribute('aria-pressed', (isSniper && state.scope) ? 'true' : 'false');
+          if (!isSniper) {
+            el.title = 'Scope (Sniper only)';
+            el.setAttribute('aria-label', 'Scope (sniper only)');
+          } else {
+            el.title = `Scope: ${state.scope ? 'ON' : 'OFF'}`;
+            el.setAttribute('aria-label', state.scope ? 'Scope on' : 'Scope off');
+          }
+        }
+      } catch {}
     });
     const startBtn = document.getElementById('startBtn');
     const snapBtn = document.getElementById('snapBtn');
