@@ -194,7 +194,7 @@
       // gunLift: lift viewmodel up (y)
       // gunSide: small sideways shove (x)
       // rollKick: tiny roll torque so the gun feels like it twists in your hands
-      rifle:   { gunKick: 0.155, gunLift: 0.030, gunSide: 0.010, rollKick: 0.028, pitchKick: 0.090, yawKick: 0.0125, flashScale: 1.05 },
+      rifle:   { gunKick: 0.210, gunLift: 0.045, gunSide: 0.012, rollKick: 0.034, pitchKick: 0.125, yawKick: 0.0160, flashScale: 1.05 },
       shotgun: { gunKick: 0.220, gunLift: 0.050, gunSide: 0.016, rollKick: 0.055, pitchKick: 0.115, yawKick: 0.0140, flashScale: 1.90 },
       sniper:  { gunKick: 0.240, gunLift: 0.040, gunSide: 0.004, rollKick: 0.020, pitchKick: 0.140, yawKick: 0.0040, flashScale: 1.55 },
       fart:    { gunKick: 0.040, gunLift: 0.012, gunSide: 0.004, rollKick: 0.010, pitchKick: 0.016, yawKick: 0.0060, flashScale: 0.75 },
@@ -230,7 +230,7 @@
         mult = 1.0 + Math.min(0.55, nextStreak * 0.065);
 
         // Keep single-tap rifle satisfying even when not streaking.
-        if (weapon === 'rifle' && nextStreak === 0) mult = 1.15;
+        if (weapon === 'rifle' && nextStreak === 0) mult = 1.25;
       } catch {}
 
       // Copy (so we can scale per-shot without mutating constants)
