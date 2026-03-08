@@ -654,6 +654,24 @@
     syncJoinEnabled();
     nameInput?.addEventListener('input', syncJoinEnabled);
     nameInput?.addEventListener('change', syncJoinEnabled);
+
+    // UI clarity: apply the same normalization the server/join flow uses, but only when the
+    // player is "done typing" (blur / paste). This avoids cursor-jumps during typing while
+    // still preventing surprises like leading/trailing whitespace or >16-char names.
+    function normalizeNameInputOnce() {
+      try {
+        if (!nameInput) return;
+        const before = String(nameInput.value || '');
+        const after = normalizePlayerName(before);
+        if (after !== before) nameInput.value = after;
+        syncJoinEnabled();
+        // Keep the saved name aligned with what the user sees.
+        try { if (after) localStorage.setItem(NAME_KEY, after); } catch {}
+      } catch {}
+    }
+    nameInput?.addEventListener('blur', normalizeNameInputOnce);
+    nameInput?.addEventListener('paste', () => { try { setTimeout(normalizeNameInputOnce, 0); } catch {} });
+
     nameInput?.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter') return;
       e.preventDefault();
