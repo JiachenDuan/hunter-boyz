@@ -109,6 +109,7 @@ This file exists so future changes don’t regress prior fixes or violate design
 - Desktop accessibility: HUD touch buttons are focusable and should work via keyboard (**Enter/Space** acts like a press/hold). (Implemented in `public/app/modules/controls-loop.js` `holdButton()` keydown/keyup handlers.)
 - iOS safe-area: HUD + touch controls should respect **top/bottom/left/right** safe-area insets (especially landscape on notched iPhones).
 - iOS viewport stability: prefer `100dvh` when available to avoid Safari URL-bar resizing the play area / drifting touch controls.
+- Accessibility: respect `prefers-reduced-motion` (minimize UI transitions/animations when the OS requests reduced motion).
 
 ## 10) Mansion tower teleport
 
