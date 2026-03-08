@@ -4965,6 +4965,12 @@ function spawnDent(pos, normal, size, kind) {
             const now = performance.now();
             if (!window.__lastAutoResizeAt || (now - window.__lastAutoResizeAt) > 350) {
               window.__lastAutoResizeAt = now;
+              try {
+                // Hard resize: iOS sometimes keeps the canvas backing store at the old size after rotation.
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = Math.max(1, Math.floor(cw * dpr));
+                canvas.height = Math.max(1, Math.floor(ch * dpr));
+              } catch {}
               try { engine.resize(); } catch {}
             }
           }
@@ -5160,6 +5166,15 @@ function spawnDent(pos, normal, size, kind) {
       let extra1 = null;
       let extra2 = null;
       const doResize = () => {
+        try {
+          const cw = canvas.clientWidth || 0;
+          const ch = canvas.clientHeight || 0;
+          if (cw > 10 && ch > 10) {
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.max(1, Math.floor(cw * dpr));
+            canvas.height = Math.max(1, Math.floor(ch * dpr));
+          }
+        } catch {}
         try { engine.resize(); } catch {}
       };
       const clearTimers = () => {
