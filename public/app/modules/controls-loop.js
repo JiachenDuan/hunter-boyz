@@ -1182,12 +1182,66 @@
     let seq = 0;
     let lastSend = performance.now();
     engine.runRenderLoop(() => {
-      // ── Recoil decay: smoothly return gun position + camera shake ──
-      if (fpRig?.gunRoot) {
-        const gz = fpRig.gunRoot.position.z;
-        if (gz < -0.001) fpRig.gunRoot.position.z += (-gz) * 0.18;
-        else fpRig.gunRoot.position.z = 0;
-      }
+      // ── Recoil decay + application (visual only; does NOT affect server aim) ──
+      // Gun model: spring back to its base pose.
+      try {
+        const g = fpRig?.gunRoot;
+        if (g) {
+          const md = g.metadata || (g.metadata = {});
+          if (typeof md._basePosX !== 'number') md._basePosX = g.position.x;
+          if (typeof md._basePosY !== 'number') md._basePosY = g.position.y;
+          if (typeof md._basePosZ !== 'number') md._basePosZ = g.position.z;
+          if (typeof md._baseRotX !== 'number') md._baseRotX = g.rotation.x;
+          if (typeof md._baseRotY !== 'number') md._baseRotY = g.rotation.y;
+          if (typeof md._baseRotZ !== 'number') md._baseRotZ = g.rotation.z;
+
+          // Pull positions/rots back toward base with a smooth exponential.
+          g.position.x += (md._basePosX - g.position.x) * 0.22;
+          g.position.y += (md._basePosY - g.position.y) * 0.22;
+          g.position.z += (md._basePosZ - g.position.z) * 0.22;
+
+          g.rotation.x += (md._baseRotX - g.rotation.x) * 0.13;
+          g.rotation.y += (md._baseRotY - g.rotation.y) * 0.13;
+          g.rotation.z += (md._baseRotZ - g.rotation.z) * 0.13;
+        }
+      } catch {}
+
+      // Camera recoil: apply on top of authoritative server yaw/pitch.
+      // Use a critically-damped-ish spring instead of naive multiplicative decay.
+      try {
+        const baseYaw = (typeof window.__hbBaseYaw === 'number') ? window.__hbBaseYaw : camera.rotation.y;
+        const basePitch = (typeof window.__hbBasePitch === 'number') ? window.__hbBasePitch : camera.rotation.x;
+        if (typeof window.__camKickPitch !== 'number') window.__camKickPitch = 0;
+        if (typeof window.__camKickYaw !== 'number') window.__camKickYaw = 0;
+        if (typeof window.__camKickVelPitch !== 'number') window.__camKickVelPitch = 0;
+        if (typeof window.__camKickVelYaw !== 'number') window.__camKickVelYaw = 0;
+
+        // Integrate spring toward 0 (recovery). Clamp dt so tab hitches don't explode.
+        const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
+        const kPitch = 62; // spring strength
+        const cPitch = 16; // damping
+        const kYaw = 55;
+        const cYaw = 15;
+
+        window.__camKickVelPitch += (-kPitch * window.__camKickPitch - cPitch * window.__camKickVelPitch) * dt;
+        window.__camKickVelYaw   += (-kYaw   * window.__camKickYaw   - cYaw   * window.__camKickVelYaw)   * dt;
+        window.__camKickPitch    += window.__camKickVelPitch * dt;
+        window.__camKickYaw      += window.__camKickVelYaw   * dt;
+
+        // Snap tiny values to 0 (prevents micro-jitter when nearly settled).
+        if (Math.abs(window.__camKickPitch) < 0.00006 && Math.abs(window.__camKickVelPitch) < 0.00006) {
+          window.__camKickPitch = 0;
+          window.__camKickVelPitch = 0;
+        }
+        if (Math.abs(window.__camKickYaw) < 0.00006 && Math.abs(window.__camKickVelYaw) < 0.00006) {
+          window.__camKickYaw = 0;
+          window.__camKickVelYaw = 0;
+        }
+
+        camera.rotation.x = basePitch + window.__camKickPitch;
+        camera.rotation.y = baseYaw + window.__camKickYaw;
+      } catch {}
+
       // Minigun barrel spin (cosmetic)
       try {
         const eff = (lastServerState && myId) ? (lastServerState.players.find(p=>p.id===myId)?.powerWeapon) : null;

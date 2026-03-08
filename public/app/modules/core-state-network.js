@@ -1249,6 +1249,9 @@
           camera.position.z = p.z;
           camera.rotation.y = p.yaw;
           camera.rotation.x = p.pitch;
+          // Store authoritative look from server; render-loop applies recoil on top (visual only).
+          window.__hbBaseYaw = p.yaw;
+          window.__hbBasePitch = p.pitch;
           try {
             const eff = (p.vehicle === 'tank') ? 'tank' : ((p.powerWeapon === 'minigun') ? 'minigun' : (document.getElementById('weapon')?.value || 'rifle'));
             fpRig?.setGun?.(eff);
