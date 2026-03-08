@@ -22,10 +22,11 @@ async function main(){
     // Page 1: iPhone (the screenshot)
     const page = await browser.newPage();
 
-    // iPhone 14-ish viewport
+    // iPhone 14-ish viewport (set LANDSCAPE=1 to capture landscape aspect)
+    const landscape = String(process.env.LANDSCAPE || '') === '1';
     await page.setViewport({
-      width: 390,
-      height: 844,
+      width: landscape ? 844 : 390,
+      height: landscape ? 390 : 844,
       deviceScaleFactor: 3,
       isMobile: true,
       hasTouch: true,
