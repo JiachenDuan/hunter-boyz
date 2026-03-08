@@ -312,6 +312,24 @@
         window.__camKickPitch = Math.min(0.45, window.__camKickPitch + r.pitchKick);
         window.__camKickYaw   = Math.max(-0.24, Math.min(0.24, window.__camKickYaw + yawKick));
       } catch {}
+
+      // ── Screen shake impulse (visual only) ──
+      // This tick is task #2: give every gunshot a quick, readable jolt.
+      try {
+        if (typeof window.__hbShakeTrauma !== 'number') window.__hbShakeTrauma = 0;
+        if (typeof window.__hbShakeSeed !== 'number') window.__hbShakeSeed = 0;
+
+        const add = (weapon === 'shotgun') ? 0.26
+          : (weapon === 'sniper') ? 0.22
+          : (weapon === 'rocket') ? 0.30
+          : (weapon === 'tank') ? 0.34
+          : (weapon === 'minigun') ? 0.08
+          : (weapon === 'fart') ? 0.04
+          : 0.14; // rifle default
+
+        window.__hbShakeTrauma = Math.min(1.0, window.__hbShakeTrauma + add);
+        window.__hbShakeSeed = (window.__hbShakeSeed + 1) % 1000000;
+      } catch {}
     }
     // Sound FX (procedural WebAudio; no external files)
     const SFX = (() => {

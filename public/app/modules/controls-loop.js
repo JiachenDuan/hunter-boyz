@@ -1317,7 +1317,41 @@
         }
       } catch {}
 
-      // Screen shake disabled.
+      // ── Screen shake (visual only) ──
+      // Driven by window.__hbShakeTrauma impulses written by applyRecoil().
+      // We keep it purely client-side so it never affects server aim.
+      try {
+        const now = performance.now();
+        if (typeof window.__hbShakeLastT !== 'number') window.__hbShakeLastT = now;
+        const dt = Math.min(0.05, (now - window.__hbShakeLastT) / 1000);
+        window.__hbShakeLastT = now;
+
+        let trauma = (typeof window.__hbShakeTrauma === 'number') ? window.__hbShakeTrauma : 0;
+        if (trauma > 0) {
+          // Fast decay so the shake reads as a punchy jolt, not a wobble.
+          trauma = Math.max(0, trauma - dt * 3.4);
+          window.__hbShakeTrauma = trauma;
+
+          const s = trauma * trauma; // non-linear: small values die quickly
+          const seed = (typeof window.__hbShakeSeed === 'number') ? window.__hbShakeSeed : 0;
+
+          // Two-frequency shake for a crisp hit + slight after-jitter.
+          const t1 = (now * 0.028) + seed * 0.37;
+          const t2 = (now * 0.061) + seed * 0.91;
+
+          const nx = Math.sin(t1) * 0.65 + Math.sin(t2) * 0.35;
+          const ny = Math.cos(t1 * 1.07) * 0.60 + Math.cos(t2 * 0.93) * 0.40;
+          const nr = Math.sin(t1 * 0.83 + 1.7) * 0.70 + Math.cos(t2 * 1.11 + 0.4) * 0.30;
+
+          // Radians. Tuned to be visible on iPhone but not nausea-inducing.
+          camera.rotation.x += nx * s * 0.030;
+          camera.rotation.y += ny * s * 0.030;
+          camera.rotation.z += nr * s * 0.022;
+        } else {
+          // Clear tiny float drift.
+          if (trauma !== 0) window.__hbShakeTrauma = 0;
+        }
+      } catch {}
 
       // Grenade visual sim (client-side only)
       try {

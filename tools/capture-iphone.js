@@ -159,23 +159,18 @@ async function main(){
     // Let state + camera settle
     await sleep(450);
 
-    // Proof capture: fire a short burst so recoil is obvious in a *still* screenshot.
-    // (Recoil is #1 in the improvement order; screen-shake is #2 so we avoid shake here.)
+    // Proof capture: fire once and screenshot immediately so the still image catches
+    // the peak of the screen-shake jolt (task #2).
     try {
       await page.evaluate(async (fromId) => {
-        const shoot = () => fetch('/debug/shoot', {
+        await fetch('/debug/shoot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fromId }),
         });
-        try { await shoot(); } catch {}
-        try { await new Promise(r=>setTimeout(r, 45)); } catch {}
-        try { await shoot(); } catch {}
-        try { await new Promise(r=>setTimeout(r, 45)); } catch {}
-        try { await shoot(); } catch {}
       }, shooterId);
-      // Let the client process the shot packet + apply recoil before we screenshot.
-      await sleep(90);
+      // Let the client process the shot + apply shake before we screenshot.
+      await sleep(28);
     } catch {}
 
     const ts = Date.now();
