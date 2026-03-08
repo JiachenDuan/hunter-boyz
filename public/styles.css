@@ -51,6 +51,7 @@
       color: white;
       padding: 8px 10px;
       transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+      will-change: transform, filter;
 
       /* Mobile QoL: reduce accidental text selection + remove 300ms click heuristics */
       -webkit-tap-highlight-color: transparent;
@@ -114,7 +115,7 @@
       --bottom: calc(20px + env(safe-area-inset-bottom));
       --move-bottom: calc(var(--bottom) + 18px);
     }
-    #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; z-index: 11; transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease; cursor: pointer; }
+    #btnJump, #btnShoot { position:absolute; bottom: var(--bottom); width: var(--btn); height: var(--btn); border-radius: 999px; pointer-events:auto; touch-action:none; border:1px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; z-index: 11; transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease; will-change: transform, filter; cursor: pointer; }
     #btnShoot { right: calc(var(--padR) + var(--btn) + var(--btn-gap)); background: var(--danger); border-color: var(--dangerBorder); }
     #btnJump { right: calc(var(--padR) + (var(--btn) + var(--btn-gap)) * 2); background: var(--accent2); border-color: rgba(80,200,255,0.62); }
     #btnJump:active, #btnShoot:active {
@@ -171,6 +172,7 @@
       display:flex; align-items:center; justify-content:center;
       z-index: 12;
       transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+      will-change: transform, filter;
       cursor: pointer;
     }
     #btnWeaponPick:active { transform: scale(0.95); filter: saturate(1.1) brightness(1.15); }
