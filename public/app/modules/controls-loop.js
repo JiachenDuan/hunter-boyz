@@ -1200,21 +1200,40 @@
       } catch {}
 
       // Camera recoil is purely visual: apply on top of the authoritative server yaw/pitch.
+      // Use a critically-damped-ish spring instead of naive multiplicative decay.
+      // Result: recoil "snaps" on shot, then returns smoothly without looking like a linear fade.
       try {
         const baseYaw = (typeof window.__hbBaseYaw === 'number') ? window.__hbBaseYaw : camera.rotation.y;
         const basePitch = (typeof window.__hbBasePitch === 'number') ? window.__hbBasePitch : camera.rotation.x;
         if (typeof window.__camKickPitch !== 'number') window.__camKickPitch = 0;
         if (typeof window.__camKickYaw !== 'number') window.__camKickYaw = 0;
+        if (typeof window.__camKickVelPitch !== 'number') window.__camKickVelPitch = 0;
+        if (typeof window.__camKickVelYaw !== 'number') window.__camKickVelYaw = 0;
+
+        // Integrate spring toward 0 (recovery). Keep dt clamped so tab hitches don't explode.
+        const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
+        const kPitch = 62; // spring strength
+        const cPitch = 16; // damping
+        const kYaw = 55;
+        const cYaw = 15;
+
+        window.__camKickVelPitch += (-kPitch * window.__camKickPitch - cPitch * window.__camKickVelPitch) * dt;
+        window.__camKickVelYaw   += (-kYaw   * window.__camKickYaw   - cYaw   * window.__camKickVelYaw)   * dt;
+        window.__camKickPitch    += window.__camKickVelPitch * dt;
+        window.__camKickYaw      += window.__camKickVelYaw   * dt;
+
+        // Snap tiny values to 0 (prevents micro-jitter when nearly settled).
+        if (Math.abs(window.__camKickPitch) < 0.00006 && Math.abs(window.__camKickVelPitch) < 0.00006) {
+          window.__camKickPitch = 0;
+          window.__camKickVelPitch = 0;
+        }
+        if (Math.abs(window.__camKickYaw) < 0.00006 && Math.abs(window.__camKickVelYaw) < 0.00006) {
+          window.__camKickYaw = 0;
+          window.__camKickVelYaw = 0;
+        }
 
         camera.rotation.x = basePitch + window.__camKickPitch;
         camera.rotation.y = baseYaw + window.__camKickYaw;
-
-        // Decay (keep this as "recoil" only; screen shake is a separate scheduled task)
-        // Slightly slower recovery makes the kick *read* better and feels punchier in bursts.
-        window.__camKickPitch *= 0.86;
-        window.__camKickYaw   *= 0.86;
-        if (Math.abs(window.__camKickPitch) < 0.00008) window.__camKickPitch = 0;
-        if (Math.abs(window.__camKickYaw) < 0.00008) window.__camKickYaw = 0;
       } catch {}
       // Minigun barrel spin (cosmetic)
       try {

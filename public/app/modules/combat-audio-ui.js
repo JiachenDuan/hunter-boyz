@@ -194,9 +194,9 @@
       //
       // NOTE: "Gun recoil" tick (task #1) intentionally focuses on kick strength/shape.
       // Screen shake is a separate scheduled tick (#2), so keep shakeAmt unchanged here.
-      rifle:   { gunKick: 0.095, pitchKick: 0.055, yawKick: 0.0090, shakeAmt: 0.004, flashScale: 1.05 },
-      shotgun: { gunKick: 0.145, pitchKick: 0.075, yawKick: 0.0120, shakeAmt: 0.012, flashScale: 1.90 },
-      sniper:  { gunKick: 0.165, pitchKick: 0.090, yawKick: 0.0030, shakeAmt: 0.006, flashScale: 1.55 },
+      rifle:   { gunKick: 0.115, pitchKick: 0.070, yawKick: 0.0105, shakeAmt: 0.004, flashScale: 1.05 },
+      shotgun: { gunKick: 0.165, pitchKick: 0.088, yawKick: 0.0130, shakeAmt: 0.012, flashScale: 1.90 },
+      sniper:  { gunKick: 0.185, pitchKick: 0.105, yawKick: 0.0034, shakeAmt: 0.006, flashScale: 1.55 },
       fart:    { gunKick: 0.030, pitchKick: 0.010, yawKick: 0.0050, shakeAmt: 0.002, flashScale: 0.75 },
       minigun: { gunKick: 0.045, pitchKick: 0.020, yawKick: 0.0080, shakeAmt: 0.007, flashScale: 2.10 },
       rocket:  { gunKick: 0.125, pitchKick: 0.055, yawKick: 0.0125, shakeAmt: 0.014, flashScale: 2.20 },
