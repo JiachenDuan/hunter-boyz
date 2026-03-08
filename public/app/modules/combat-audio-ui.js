@@ -319,13 +319,15 @@
         if (typeof window.__hbShakeTrauma !== 'number') window.__hbShakeTrauma = 0;
         if (typeof window.__hbShakeSeed !== 'number') window.__hbShakeSeed = 0;
 
-        const add = (weapon === 'shotgun') ? 0.26
-          : (weapon === 'sniper') ? 0.22
-          : (weapon === 'rocket') ? 0.30
-          : (weapon === 'tank') ? 0.34
-          : (weapon === 'minigun') ? 0.08
-          : (weapon === 'fart') ? 0.04
-          : 0.14; // rifle default
+        // Per-weapon impulse tuning: make the shake read clearly on iPhone
+        // without becoming a constant wobble.
+        const add = (weapon === 'shotgun') ? 0.34
+          : (weapon === 'sniper') ? 0.30
+          : (weapon === 'rocket') ? 0.44
+          : (weapon === 'tank') ? 0.52
+          : (weapon === 'minigun') ? 0.11
+          : (weapon === 'fart') ? 0.05
+          : 0.20; // rifle default
 
         window.__hbShakeTrauma = Math.min(1.0, window.__hbShakeTrauma + add);
         window.__hbShakeSeed = (window.__hbShakeSeed + 1) % 1000000;

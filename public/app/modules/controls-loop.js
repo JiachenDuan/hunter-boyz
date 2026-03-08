@@ -1343,13 +1343,31 @@
           const ny = Math.cos(t1 * 1.07) * 0.60 + Math.cos(t2 * 0.93) * 0.40;
           const nr = Math.sin(t1 * 0.83 + 1.7) * 0.70 + Math.cos(t2 * 1.11 + 0.4) * 0.30;
 
-          // Radians. Tuned to be visible on iPhone but not nausea-inducing.
-          camera.rotation.x += nx * s * 0.030;
-          camera.rotation.y += ny * s * 0.030;
-          camera.rotation.z += nr * s * 0.022;
+          // Capture base camera position once (we apply positional shake on top).
+          if (typeof window.__hbShakeBasePosX !== 'number') window.__hbShakeBasePosX = camera.position.x;
+          if (typeof window.__hbShakeBasePosY !== 'number') window.__hbShakeBasePosY = camera.position.y;
+          if (typeof window.__hbShakeBasePosZ !== 'number') window.__hbShakeBasePosZ = camera.position.z;
+
+          // Rotation shake (radians): stronger + snappier so it reads as "punch".
+          camera.rotation.x += nx * s * 0.045;
+          camera.rotation.y += ny * s * 0.045;
+          camera.rotation.z += nr * s * 0.032;
+
+          // Positional shake (meters-ish): tiny camera bob adds weight without messing aim.
+          // Keep Z tiny to avoid motion sickness; bias Y a bit for "kick".
+          camera.position.x = window.__hbShakeBasePosX + nx * s * 0.055;
+          camera.position.y = window.__hbShakeBasePosY + Math.abs(ny) * s * 0.070;
+          camera.position.z = window.__hbShakeBasePosZ + nr * s * 0.010;
         } else {
-          // Clear tiny float drift.
+          // Clear tiny float drift + restore camera position.
           if (trauma !== 0) window.__hbShakeTrauma = 0;
+          try {
+            if (typeof window.__hbShakeBasePosX === 'number') {
+              camera.position.x = window.__hbShakeBasePosX;
+              camera.position.y = window.__hbShakeBasePosY;
+              camera.position.z = window.__hbShakeBasePosZ;
+            }
+          } catch {}
         }
       } catch {}
 
