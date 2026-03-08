@@ -882,30 +882,38 @@
 
         // Rifle: AK-style silhouette (wood furniture + curved mag)
         if (kind === 'rifle') {
-          const akMetalMat = new BABYLON.StandardMaterial(`akMetal_${kind}`, scene);
-          akMetalMat.diffuseColor = new BABYLON.Color3(0.10, 0.11, 0.13);
-          akMetalMat.emissiveColor = new BABYLON.Color3(0.006, 0.006, 0.007);
-          akMetalMat.specularColor = new BABYLON.Color3(0.20, 0.20, 0.22);
-          akMetalMat.specularPower = 84;
+          // Rifle material: PBR metal (less "toy" than StandardMaterial; reads like steel).
+          const akMetalMat = (() => {
+            try {
+              const m = new BABYLON.PBRMaterial(`akMetalPBR_${kind}`, scene);
+              m.albedoColor = new BABYLON.Color3(0.10, 0.11, 0.13);
+              m.metallic = 0.92;
+              m.roughness = 0.42;
+              m.microSurface = 0.85;
+              m.reflectivityColor = new BABYLON.Color3(0.55, 0.55, 0.60);
+              return m;
+            } catch {
+              const m = new BABYLON.StandardMaterial(`akMetal_${kind}`, scene);
+              m.diffuseColor = new BABYLON.Color3(0.10, 0.11, 0.13);
+              m.emissiveColor = new BABYLON.Color3(0.006, 0.006, 0.007);
+              m.specularColor = new BABYLON.Color3(0.20, 0.20, 0.22);
+              m.specularPower = 84;
+              return m;
+            }
+          })();
 
-          // Curved magazine (3-step curve)
-          const mag1 = BABYLON.MeshBuilder.CreateBox(`mag1_${kind}`, { width:0.060, height:0.10, depth:0.060 }, scene);
-          mag1.material = akMetalMat;
-          mag1.parent = g;
-          mag1.position.set(0.03, -0.10, 0.06);
-          mag1.rotation.x = 0.15;
-
-          const mag2 = BABYLON.MeshBuilder.CreateBox(`mag2_${kind}`, { width:0.060, height:0.10, depth:0.060 }, scene);
-          mag2.material = akMetalMat;
-          mag2.parent = g;
-          mag2.position.set(0.03, -0.16, 0.11);
-          mag2.rotation.x = 0.32;
-
-          const mag3 = BABYLON.MeshBuilder.CreateBox(`mag3_${kind}`, { width:0.060, height:0.10, depth:0.060 }, scene);
-          mag3.material = akMetalMat;
-          mag3.parent = g;
-          mag3.position.set(0.03, -0.22, 0.18);
-          mag3.rotation.x = 0.52;
+          // Curved magazine (rounded segments instead of boxes — less Minecraft-y)
+          const mkSeg = (name, y, z, rx) => {
+            const seg = BABYLON.MeshBuilder.CreateCylinder(name, { height: 0.11, diameterTop: 0.062, diameterBottom: 0.066, tessellation: 18 }, scene);
+            seg.material = akMetalMat;
+            seg.parent = g;
+            seg.rotation.x = Math.PI / 2 + rx;
+            seg.position.set(0.03, y, z);
+            return seg;
+          };
+          mkSeg(`mag1_${kind}`, -0.11, 0.06, 0.10);
+          mkSeg(`mag2_${kind}`, -0.17, 0.12, 0.28);
+          mkSeg(`mag3_${kind}`, -0.22, 0.20, 0.46);
 
           // Wooden handguard
           const handguard = BABYLON.MeshBuilder.CreateBox(`ak_hg_${kind}`, { width:0.10, height:0.07, depth:0.22 }, scene);
@@ -913,8 +921,8 @@
           handguard.parent = g;
           handguard.position.set(0.02, -0.02, 0.36);
 
-          // Gas tube above barrel
-          const gas = BABYLON.MeshBuilder.CreateCylinder(`ak_gas_${kind}`, { diameter:0.028, height:0.30, tessellation: 10 }, scene);
+          // Gas tube above barrel (higher tessellation so it reads round)
+          const gas = BABYLON.MeshBuilder.CreateCylinder(`ak_gas_${kind}`, { diameter:0.028, height:0.30, tessellation: 18 }, scene);
           gas.material = akMetalMat;
           gas.parent = g;
           gas.rotation.x = Math.PI / 2;
