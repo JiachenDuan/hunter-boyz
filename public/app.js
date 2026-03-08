@@ -487,8 +487,9 @@
           setConnState('offline');
           try {
             nameInput.disabled = false;
-            const okName = String(nameInput.value || '').trim().length > 0;
-            joinBtn.disabled = !okName;
+            // If we ever disconnect/reconnect after joining, make sure Join UI resets
+            // (button label + tooltip), not just the disabled state.
+            try { syncJoinEnabled(); } catch {}
           } catch {}
           scheduleReconnect();
         });
