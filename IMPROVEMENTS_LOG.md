@@ -1,3 +1,4 @@
+- 2026-03-07 18:30 PST — A11y polish: boot “Loading…” overlay now uses role=status + aria-live, so slow loads are announced by screen readers.
 - 2026-03-07 18:20 PST — Security/UI polish: Lobby player list now renders via DOM nodes (no innerHTML), sanitizes color tokens, and highlights the host with bold + 👑 tag.
 - 2026-03-07 18:00 PST — A11y polish: Join button now keeps aria-disabled + aria-label synced with its disabled/joined state (clearer for screen readers).
 - 2026-03-07 17:20 PST — Bugfix: Join button now properly resets its label/tooltip after a disconnect (no longer stuck showing “Joined” when the socket drops).
