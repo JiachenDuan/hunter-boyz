@@ -1,3 +1,4 @@
+- 2026-03-07 16:30 PST — UI clarity: Lobby player list now makes the host easy to spot (bold row + 👑 host tag).
 - 2026-03-07 16:20 PST — UI clarity/a11y: Scope button now visually disables + sets aria-disabled/aria-pressed + tooltip when non-sniper weapon is selected (prevents “why doesn’t this work?” confusion).
 - 2026-03-07 16:00 PST — Server polish: respond 204 for /robots.txt + /site.webmanifest (common default browser/crawler probes) and assert via smoke-test.
 - 2026-03-07 16:10 PST — Test robustness: smoke-test now also probes /manifest.webmanifest so we keep coverage for the server’s default manifest handler.
