@@ -406,6 +406,24 @@
       display:block;
       opacity: 0.95;
     }
+
+    /* UI clarity: tint the connection pill to match the dot state.
+       (Helps quick-glance readability on iPhone in bright light.) */
+    .connWrap.isOnline .connText {
+      background: rgba(80,255,140,0.14);
+      border-color: rgba(80,255,140,0.28);
+      color: rgba(220,255,235,0.98);
+    }
+    .connWrap.isConnecting .connText {
+      background: rgba(255,220,100,0.14);
+      border-color: rgba(255,220,100,0.28);
+      color: rgba(255,245,210,0.98);
+    }
+    .connWrap.isOffline .connText {
+      background: rgba(255,80,80,0.14);
+      border-color: rgba(255,80,80,0.28);
+      color: rgba(255,220,220,0.98);
+    }
     #btnScoreboard {
       border-radius:10px;
       border:1px solid rgba(255,255,255,0.15);
