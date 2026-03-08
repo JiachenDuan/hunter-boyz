@@ -1209,9 +1209,10 @@
         camera.rotation.x = basePitch + window.__camKickPitch;
         camera.rotation.y = baseYaw + window.__camKickYaw;
 
-        // Decay (quick return, no "shake" yet — that's the next scheduled task)
-        window.__camKickPitch *= 0.72;
-        window.__camKickYaw   *= 0.72;
+        // Decay (keep this as "recoil" only; screen shake is a separate scheduled task)
+        // Slightly slower recovery makes the kick *read* better and feels punchier in bursts.
+        window.__camKickPitch *= 0.86;
+        window.__camKickYaw   *= 0.86;
         if (Math.abs(window.__camKickPitch) < 0.00008) window.__camKickPitch = 0;
         if (Math.abs(window.__camKickYaw) < 0.00008) window.__camKickYaw = 0;
       } catch {}

@@ -191,13 +191,16 @@
       // - Rifle: climbs up + slight right pull (AK-ish)
       // - Sniper: heavy straight-back kick
       // - Shotgun: big slam + wide shake
-      rifle:   { gunKick: 0.070, pitchKick: 0.032, yawKick: 0.0070, shakeAmt: 0.004, flashScale: 1.05 },
-      shotgun: { gunKick: 0.110, pitchKick: 0.040, yawKick: 0.0100, shakeAmt: 0.012, flashScale: 1.90 },
-      sniper:  { gunKick: 0.125, pitchKick: 0.055, yawKick: 0.0025, shakeAmt: 0.006, flashScale: 1.55 },
-      fart:    { gunKick: 0.025, pitchKick: 0.006, yawKick: 0.0040, shakeAmt: 0.002, flashScale: 0.75 },
-      minigun: { gunKick: 0.030, pitchKick: 0.010, yawKick: 0.0060, shakeAmt: 0.007, flashScale: 2.10 },
-      rocket:  { gunKick: 0.090, pitchKick: 0.030, yawKick: 0.0100, shakeAmt: 0.014, flashScale: 2.20 },
-      tank:    { gunKick: 0.140, pitchKick: 0.040, yawKick: 0.0120, shakeAmt: 0.020, flashScale: 4.50 },
+      //
+      // NOTE: "Gun recoil" tick (task #1) intentionally focuses on kick strength/shape.
+      // Screen shake is a separate scheduled tick (#2), so keep shakeAmt unchanged here.
+      rifle:   { gunKick: 0.095, pitchKick: 0.055, yawKick: 0.0090, shakeAmt: 0.004, flashScale: 1.05 },
+      shotgun: { gunKick: 0.145, pitchKick: 0.075, yawKick: 0.0120, shakeAmt: 0.012, flashScale: 1.90 },
+      sniper:  { gunKick: 0.165, pitchKick: 0.090, yawKick: 0.0030, shakeAmt: 0.006, flashScale: 1.55 },
+      fart:    { gunKick: 0.030, pitchKick: 0.010, yawKick: 0.0050, shakeAmt: 0.002, flashScale: 0.75 },
+      minigun: { gunKick: 0.045, pitchKick: 0.020, yawKick: 0.0080, shakeAmt: 0.007, flashScale: 2.10 },
+      rocket:  { gunKick: 0.125, pitchKick: 0.055, yawKick: 0.0125, shakeAmt: 0.014, flashScale: 2.20 },
+      tank:    { gunKick: 0.185, pitchKick: 0.070, yawKick: 0.0150, shakeAmt: 0.020, flashScale: 4.50 },
     };
 
     // Recoil is rendered client-side only (does NOT affect server aim/look).
@@ -231,8 +234,9 @@
         const yawJitter = (Math.random() - 0.5) * r.yawKick * 0.55;
         const yawKick = yawBias * r.yawKick + yawJitter;
 
-        window.__camKickPitch += r.pitchKick;
-        window.__camKickYaw   += yawKick;
+        // Cap accumulation so burst fire feels punchy without going totally off-screen.
+        window.__camKickPitch = Math.min(0.32, window.__camKickPitch + r.pitchKick);
+        window.__camKickYaw   = Math.max(-0.20, Math.min(0.20, window.__camKickYaw + yawKick));
       } catch {}
 
       // ── Screen shake (separate from recoil kick) ──
