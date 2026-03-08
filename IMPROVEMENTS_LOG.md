@@ -1,3 +1,4 @@
+- 2026-03-07 17:20 PST — Bugfix: Join button now properly resets its label/tooltip after a disconnect (no longer stuck showing “Joined” when the socket drops).
 - 2026-03-07 17:10 PST — UI polish: HUD + Lobby <select> controls now match button styling and show a not-allowed cursor when disabled (clearer affordance).
 - 2026-03-07 17:00 PST — UI polish: Disabled HUD buttons now show a not-allowed cursor (clearer affordance on desktop).
 - 2026-03-07 17:00 PST — Tooling: iPhone capture script now joins via pointerdown (plus click fallback) so it reliably gets a player id on iOS-like UA.
