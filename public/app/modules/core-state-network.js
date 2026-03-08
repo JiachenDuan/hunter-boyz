@@ -460,9 +460,11 @@
           row.appendChild(document.createTextNode(`${name} #${id}`));
 
           if (p?.id === s.game?.hostId) {
+            // UI clarity: make the host easy to spot at a glance.
+            try { row.style.fontWeight = '900'; } catch {}
             const hostTag = document.createElement('span');
-            hostTag.style.opacity = '.75';
-            hostTag.textContent = ' (host)';
+            hostTag.style.opacity = '.85';
+            hostTag.textContent = ' 👑 host';
             row.appendChild(hostTag);
           }
 
