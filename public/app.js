@@ -567,11 +567,41 @@
         lobby.style.display = 'flex';
         // keep settings hidden unless user opens it
         settingsPanel.style.display = state.settingsOpen ? 'block' : 'none';
-        lobbyPlayers.innerHTML = s.players.map(p => {
-          const tag = p.id === s.game?.hostId ? ' <span style="opacity:.75">(host)</span>' : '';
-          const label = `${p.name} #${p.id}`;
-          return `<div style="margin:6px 0;"><span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${p.color};margin-right:8px;"></span>${label}${tag}</div>`;
-        }).join('');
+        // Render lobby player list via DOM nodes (avoid innerHTML injection).
+        try {
+          lobbyPlayers.textContent = '';
+          const hostId = s.game?.hostId;
+          (s.players || []).forEach((p) => {
+            const row = document.createElement('div');
+            row.style.margin = '6px 0';
+            row.style.display = 'flex';
+            row.style.alignItems = 'center';
+
+            const dot = document.createElement('span');
+            dot.style.display = 'inline-block';
+            dot.style.width = '10px';
+            dot.style.height = '10px';
+            dot.style.borderRadius = '999px';
+            dot.style.background = safeCssColor(p.color);
+            dot.style.marginRight = '8px';
+
+            const label = document.createElement('span');
+            label.textContent = `${p.name} #${p.id}`;
+
+            row.appendChild(dot);
+            row.appendChild(label);
+
+            if (hostId && p.id === hostId) {
+              row.style.fontWeight = '900';
+              const tag = document.createElement('span');
+              tag.textContent = ' 👑 host';
+              tag.style.opacity = '.8';
+              row.appendChild(tag);
+            }
+
+            lobbyPlayers.appendChild(row);
+          });
+        } catch {}
         startBtn.style.display = 'inline-block';
         startBtn.disabled = false;
         startBtn.style.opacity = '1';
