@@ -39,7 +39,13 @@ async function main(){
       document.getElementById('settingsPanel').style.display = 'block';
       document.getElementById('name').value = 'iPhoneTest';
     });
-    await page.evaluate(() => document.getElementById('joinBtn').dispatchEvent(new Event('click', { bubbles: true })));
+    await page.evaluate(() => {
+      const b = document.getElementById('joinBtn');
+      if (!b) return;
+      // Match in-game handler (pointerdown-first) to avoid iOS click oddities.
+      b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      b.dispatchEvent(new Event('click', { bubbles: true }));
+    });
 
     // Page 2: a victim bot so we can reliably trigger HIT/KILL UI for the screenshot
     const bot = await browser.newPage();
@@ -49,7 +55,12 @@ async function main(){
       document.getElementById('settingsPanel').style.display = 'block';
       document.getElementById('name').value = 'Bot';
     });
-    await bot.evaluate(() => document.getElementById('joinBtn').dispatchEvent(new Event('click', { bubbles: true })));
+    await bot.evaluate(() => {
+      const b = document.getElementById('joinBtn');
+      if (!b) return;
+      b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      b.dispatchEvent(new Event('click', { bubbles: true }));
+    });
 
     // Wait for ids to appear (we expose window.__myId in app.js)
     async function waitForId(p) {

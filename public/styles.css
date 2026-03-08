@@ -68,6 +68,7 @@
     #hud button:disabled {
       opacity: 0.55;
       filter: grayscale(0.2);
+      cursor: not-allowed;
     }
 
     /* Keyboard / accessibility: show a clear focus ring without impacting touch UX */
