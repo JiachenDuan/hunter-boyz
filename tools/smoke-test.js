@@ -52,6 +52,8 @@ async function main() {
       const probePaths = [
         '/apple-touch-icon.png',
         '/apple-touch-icon-precomposed.png',
+        '/robots.txt',
+        '/site.webmanifest',
       ];
 
       for (const p of probePaths) {

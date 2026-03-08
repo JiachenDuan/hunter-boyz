@@ -28,6 +28,11 @@ app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'], (req, re
   res.status(204).end();
 });
 
+// Crawlers / browsers sometimes request these by default; returning 204 keeps logs clean.
+app.get(['/robots.txt', '/site.webmanifest', '/manifest.webmanifest'], (req, res) => {
+  res.status(204).end();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 // Serve saved snapshots
 app.use('/snaps', express.static(path.join(__dirname, 'snaps')));

@@ -1,3 +1,4 @@
+- 2026-03-07 16:00 PST — Server polish: respond 204 for /robots.txt + /site.webmanifest (common default browser/crawler probes) and assert via smoke-test.
 - 2026-03-07 15:40 PST — Test robustness: smoke-test is now self-contained (spins up server on a temp port) and asserts /apple-touch-icon(.png|precomposed) returns 204/200.
 - 2026-03-07 15:20 PST — Server polish: respond 204 to Safari’s automatic /apple-touch-icon(.png|precomposed) probes to avoid noisy 404s.
 - 2026-03-07 15:10 PST — UI polish: connection status pill now has a small min-width + centered text so changing ping digits doesn’t nudge the HUD.
