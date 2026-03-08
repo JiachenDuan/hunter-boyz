@@ -1194,6 +1194,30 @@
     const light = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0, 1, 0), scene);
     light.intensity = 0.95;
 
+    // Color grading / tone mapping: more "premium" contrast + saturation (immediately visible).
+    try {
+      const ip = scene.imageProcessingConfiguration;
+      ip.toneMappingEnabled = true;
+      ip.toneMappingType = BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;
+      ip.exposure = 1.10;
+      ip.contrast = 1.18;
+      ip.vignetteEnabled = true;
+      ip.vignetteWeight = 1.45;
+      ip.vignetteColor = new BABYLON.Color4(0.02, 0.03, 0.06, 1.0);
+      ip.vignetteBlendMode = BABYLON.ImageProcessingConfiguration.VIGNETTEMODE_MULTIPLY;
+      ip.colorCurvesEnabled = true;
+      const curves = new BABYLON.ColorCurves();
+      // Slight S-curve + warm highlights, cool shadows.
+      curves.globalDensity = 10;
+      curves.globalExposure = 0;
+      curves.globalContrast = 10;
+      curves.highlightsHue = 30;
+      curves.highlightsDensity = 12;
+      curves.shadowsHue = 215;
+      curves.shadowsDensity = 10;
+      ip.colorCurves = curves;
+    } catch {}
+
     const dir = new BABYLON.DirectionalLight('sun', new BABYLON.Vector3(-0.4, -1, 0.2), scene);
     dir.intensity = 0.55;
 
