@@ -1247,59 +1247,7 @@
         }
       } catch {}
 
-      // ── Screen shake (gunfire impulse) ──
-      // Apply as an additive camera *position* + tiny roll wobble.
-      // We subtract last frame's offset first so we never drift.
-      try {
-        if (typeof window.__camShakeMag !== 'number') window.__camShakeMag = 0;
-        if (typeof window.__camShakePhase !== 'number') window.__camShakePhase = 0;
-        if (typeof window.__camShakeLastX !== 'number') window.__camShakeLastX = 0;
-        if (typeof window.__camShakeLastY !== 'number') window.__camShakeLastY = 0;
-        if (typeof window.__camShakeLastZ !== 'number') window.__camShakeLastZ = 0;
-        if (typeof window.__camShakeLastRoll !== 'number') window.__camShakeLastRoll = 0;
-        if (typeof window.__camShakeT !== 'number') window.__camShakeT = performance.now();
-
-        // Undo last frame
-        camera.position.x -= window.__camShakeLastX;
-        camera.position.y -= window.__camShakeLastY;
-        camera.position.z -= window.__camShakeLastZ;
-        camera.rotation.z -= window.__camShakeLastRoll;
-
-        const now = performance.now();
-        const dt = Math.min(0.05, (now - window.__camShakeT) / 1000);
-        window.__camShakeT = now;
-
-        // Decay quickly; clamp to 0.
-        window.__camShakeMag *= 0.82;
-        if (window.__camShakeMag < 0.00015) window.__camShakeMag = 0;
-
-        // Phase advances faster at higher magnitudes for more "violence" on big guns.
-        const mag = window.__camShakeMag;
-        window.__camShakePhase += dt * (55 + mag * 900);
-
-        // Cheap smooth-ish wobble (deterministic per seed).
-        const s = (typeof window.__camShakeSeed === 'number') ? window.__camShakeSeed : 0;
-        const p = window.__camShakePhase + s;
-
-        // Translate shake (meters). Keep Y smaller to avoid motion sickness.
-        const amt = mag * 2.6;
-        const x = Math.sin(p * 1.7) * amt;
-        const y = Math.sin(p * 2.3 + 1.2) * amt * 0.35;
-        const z = Math.cos(p * 1.9 + 0.7) * amt * 0.55;
-
-        // Tiny roll for "impact" feel.
-        const roll = Math.sin(p * 2.1 + 2.4) * (mag * 1.9);
-
-        camera.position.x += x;
-        camera.position.y += y;
-        camera.position.z += z;
-        camera.rotation.z += roll;
-
-        window.__camShakeLastX = x;
-        window.__camShakeLastY = y;
-        window.__camShakeLastZ = z;
-        window.__camShakeLastRoll = roll;
-      } catch {}
+      // Screen shake disabled.
 
       // Grenade visual sim (client-side only)
       try {
