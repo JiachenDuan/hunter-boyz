@@ -54,6 +54,7 @@ async function main() {
         '/apple-touch-icon-precomposed.png',
         '/robots.txt',
         '/site.webmanifest',
+        '/manifest.webmanifest',
       ];
 
       for (const p of probePaths) {
