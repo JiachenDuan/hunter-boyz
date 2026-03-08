@@ -227,6 +227,38 @@
         try { el.classList.toggle('btnPressed', !!v); } catch {}
         on(!!v);
       };
+
+      // Desktop accessibility: HUD touch buttons are focusable (tabindex=0).
+      // Support keyboard "press and hold" semantics via Enter/Space.
+      let keyHeld = false;
+      const isPressKey = (k) => (k === 'Enter' || k === ' ' || k === 'Spacebar');
+      el.addEventListener('keydown', (e) => {
+        try {
+          if (!isPressKey(e.key)) return;
+          prevent(e);
+          if (e.repeat) return;
+          if (keyHeld) return;
+          keyHeld = true;
+          press(true);
+        } catch {}
+      });
+      el.addEventListener('keyup', (e) => {
+        try {
+          if (!isPressKey(e.key)) return;
+          prevent(e);
+          if (!keyHeld) return;
+          keyHeld = false;
+          press(false);
+        } catch {}
+      });
+      el.addEventListener('blur', () => {
+        try {
+          if (!keyHeld) return;
+          keyHeld = false;
+          press(false);
+        } catch {}
+      });
+
       el.addEventListener('contextmenu', (e) => prevent(e));
       el.addEventListener('pointerdown', (e)=>{ prevent(e); el.setPointerCapture(e.pointerId); press(true); }, { passive:false });
       el.addEventListener('pointerup', (e)=>{ prevent(e); press(false); }, { passive:false });
