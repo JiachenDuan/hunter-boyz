@@ -426,6 +426,9 @@
                 thumpEnd: 70,
                 thumpPeak: 0.16,
                 thumpEndAt: 0.16,
+                mechGain: 0.022,
+                tailDelayMs: 34,
+                tailGain: 0.11,
               }
             : (w === 'sniper')
             ? {
@@ -446,6 +449,9 @@
                 clickHz: 3200,
                 clickMs: 18,
                 clickGain: 0.015,
+                mechGain: 0.018,
+                tailDelayMs: 34,
+                tailGain: 0.10,
               }
             : (w === 'fart')
             ? {
@@ -462,6 +468,7 @@
                 thumpEnd: 55,
                 thumpPeak: 0.10,
                 thumpEndAt: 0.20,
+                mechGain: 0.004,
               }
             : (w === 'minigun')
             ? {
@@ -479,6 +486,7 @@
                 thumpEnd: 95,
                 thumpPeak: 0.06,
                 thumpEndAt: 0.10,
+                mechGain: 0.008,
               }
             : {
                 // rifle default
@@ -495,6 +503,7 @@
                 thumpEnd: 95,
                 thumpPeak: 0.10,
                 thumpEndAt: 0.11,
+                mechGain: 0.016,
               };
 
           // Noise burst
@@ -553,6 +562,58 @@
             clickOsc.start(t0);
             clickOsc.stop(t0 + (cfg.clickMs || 12) / 1000);
           }
+
+          // ── Task #4: Gun sound layering ──
+          // Add a subtle "mechanical clack" transient + a very short tail.
+          // This makes shots feel less like pure noise and more like a gun (mechanism + space).
+          // Keep it tiny so it doesn't fatigue on auto weapons.
+          try {
+            // Mechanical clack: very short high-passed noise burst.
+            const mech = c.createBufferSource();
+            mech.buffer = noiseBuffer(c, 0.020);
+
+            const hp = c.createBiquadFilter();
+            hp.type = 'highpass';
+            hp.frequency.setValueAtTime((cfg.mechHpHz || 1800), t0);
+
+            const mbp = c.createBiquadFilter();
+            mbp.type = 'bandpass';
+            mbp.frequency.setValueAtTime((cfg.mechBpHz || 3200), t0);
+            mbp.Q.setValueAtTime((cfg.mechBpQ || 1.1), t0);
+
+            const mg = c.createGain();
+            const mechGain = (typeof cfg.mechGain === 'number') ? cfg.mechGain : 0.020;
+            mg.gain.setValueAtTime(0.0001, t0);
+            mg.gain.exponentialRampToValueAtTime(mechGain, t0 + 0.002);
+            mg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.030);
+
+            mech.connect(hp).connect(mbp).connect(mg).connect(mix);
+            mech.start(t0);
+            mech.stop(t0 + 0.032);
+          } catch {}
+
+          try {
+            // Micro-tail: quick delay+feedback to add a hint of space (esp. shotgun/sniper/rocket).
+            // We intentionally keep this "too short" to avoid obvious echo.
+            const tailDelayMs = (typeof cfg.tailDelayMs === 'number') ? cfg.tailDelayMs : ((w === 'shotgun' || w === 'sniper' || w === 'rocket' || w === 'tank') ? 34 : 0);
+            const tailGainVal = (typeof cfg.tailGain === 'number') ? cfg.tailGain : ((w === 'shotgun') ? 0.11 : (w === 'sniper') ? 0.10 : (w === 'rocket' || w === 'tank') ? 0.12 : 0.00);
+            if (tailDelayMs > 0 && tailGainVal > 0) {
+              const d = c.createDelay(0.2);
+              d.delayTime.setValueAtTime(tailDelayMs / 1000, t0);
+              const fb = c.createGain();
+              fb.gain.value = 0.22;
+              const tg = c.createGain();
+              tg.gain.value = tailGainVal;
+              // route: mix -> delay -> (tail out) + feedback
+              mix.connect(d);
+              d.connect(tg).connect(c.destination);
+              d.connect(fb).connect(d);
+
+              // Auto-fade tail bus so it doesn't keep ringing if browser keeps nodes alive.
+              tg.gain.setValueAtTime(tailGainVal, t0);
+              tg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+            }
+          } catch {}
 
           mix.connect(c.destination);
 
