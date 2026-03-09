@@ -1216,8 +1216,16 @@
           // Keep recoil *in the frame* long enough to read on iPhone (and in our
           // automated capture), while still snapping back quickly for gameplay.
           // Slightly more under-damped than before so it feels springy instead of mushy.
-          const kPos = 36, cPos = 8;
-          const kRot = 30, cRot = 7;
+          const now = performance.now();
+          const holdActive = (typeof md._rHoldUntil === 'number') && (now < md._rHoldUntil);
+
+          // While recoil is on "hold", we intentionally recover a bit slower so the kick
+          // is readable on mobile (and in our automated iPhone screenshot). Once hold expires,
+          // we snap back quickly so the gun doesn't feel floaty.
+          const kPos = holdActive ? 18 : 36;
+          const cPos = holdActive ? 6 : 8;
+          const kRot = holdActive ? 16 : 30;
+          const cRot = holdActive ? 5 : 7;
 
           // Integrate toward 0 in offset space.
           md._rVelPosX += (-kPos * md._rPosX - cPos * md._rVelPosX) * dt;
@@ -1311,10 +1319,13 @@
         const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
         // Task #1: GUN recoil camera recovery (visual only)
         // Slightly slower return so the kick feels weightier, but still settles fast.
-        const kPitch = 44; // spring strength
-        const cPitch = 13; // damping
-        const kYaw = 40;
-        const cYaw = 12;
+        const now = performance.now();
+        const holdActive = (typeof window.__camKickHoldUntil === 'number') && (now < window.__camKickHoldUntil);
+
+        const kPitch = holdActive ? 22 : 44; // spring strength
+        const cPitch = holdActive ? 10 : 13; // damping
+        const kYaw = holdActive ? 20 : 40;
+        const cYaw = holdActive ? 9 : 12;
 
         window.__camKickVelPitch += (-kPitch * window.__camKickPitch - cPitch * window.__camKickVelPitch) * dt;
         window.__camKickVelYaw   += (-kYaw   * window.__camKickYaw   - cYaw   * window.__camKickVelYaw)   * dt;
@@ -1346,8 +1357,11 @@
           if (typeof window.__hbReticleKickVelY !== 'number') window.__hbReticleKickVelY = 0;
 
           const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
-          const k = 46;
-          const c = 14;
+          const now = performance.now();
+          const holdActive = (typeof window.__hbReticleHoldUntil === 'number') && (now < window.__hbReticleHoldUntil);
+
+          const k = holdActive ? 22 : 46;
+          const c = holdActive ? 10 : 14;
 
           window.__hbReticleKickVelX += (-k * window.__hbReticleKickX - c * window.__hbReticleKickVelX) * dt;
           window.__hbReticleKickVelY += (-k * window.__hbReticleKickY - c * window.__hbReticleKickVelY) * dt;

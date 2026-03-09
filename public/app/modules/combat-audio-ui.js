@@ -209,13 +209,13 @@
       // gunLift: lift viewmodel up (y)
       // gunSide: small sideways shove (x)
       // rollKick: tiny roll torque so the gun feels like it twists in your hands
-      rifle:   { gunKick: 0.440, gunLift: 0.078, gunSide: 0.018, rollKick: 0.060, pitchKick: 0.290, yawKick: 0.0240, flashScale: 1.05 },
-      shotgun: { gunKick: 0.345, gunLift: 0.070, gunSide: 0.022, rollKick: 0.090, pitchKick: 0.185, yawKick: 0.0185, flashScale: 1.90 },
-      sniper:  { gunKick: 0.330, gunLift: 0.052, gunSide: 0.006, rollKick: 0.028, pitchKick: 0.205, yawKick: 0.0048, flashScale: 1.55 },
-      fart:    { gunKick: 0.060, gunLift: 0.017, gunSide: 0.006, rollKick: 0.014, pitchKick: 0.024, yawKick: 0.0070, flashScale: 0.75 },
-      minigun: { gunKick: 0.120, gunLift: 0.030, gunSide: 0.014, rollKick: 0.060, pitchKick: 0.050, yawKick: 0.0115, flashScale: 2.10 },
-      rocket:  { gunKick: 0.250, gunLift: 0.060, gunSide: 0.022, rollKick: 0.082, pitchKick: 0.105, yawKick: 0.0160, flashScale: 2.20 },
-      tank:    { gunKick: 0.340, gunLift: 0.072, gunSide: 0.030, rollKick: 0.094, pitchKick: 0.132, yawKick: 0.0185, flashScale: 4.50 },
+      rifle:   { gunKick: 0.520, gunLift: 0.092, gunSide: 0.020, rollKick: 0.070, pitchKick: 0.340, yawKick: 0.0280, flashScale: 1.05, holdMs: 180 },
+      shotgun: { gunKick: 0.410, gunLift: 0.084, gunSide: 0.024, rollKick: 0.105, pitchKick: 0.230, yawKick: 0.0205, flashScale: 1.90, holdMs: 220 },
+      sniper:  { gunKick: 0.370, gunLift: 0.060, gunSide: 0.007, rollKick: 0.032, pitchKick: 0.235, yawKick: 0.0052, flashScale: 1.55, holdMs: 240 },
+      fart:    { gunKick: 0.070, gunLift: 0.020, gunSide: 0.007, rollKick: 0.016, pitchKick: 0.028, yawKick: 0.0070, flashScale: 0.75, holdMs: 140 },
+      minigun: { gunKick: 0.150, gunLift: 0.038, gunSide: 0.016, rollKick: 0.070, pitchKick: 0.060, yawKick: 0.0125, flashScale: 2.10, holdMs: 90 },
+      rocket:  { gunKick: 0.300, gunLift: 0.072, gunSide: 0.024, rollKick: 0.092, pitchKick: 0.125, yawKick: 0.0170, flashScale: 2.20, holdMs: 240 },
+      tank:    { gunKick: 0.400, gunLift: 0.082, gunSide: 0.032, rollKick: 0.105, pitchKick: 0.150, yawKick: 0.0200, flashScale: 4.50, holdMs: 260 },
     };
 
     // Recoil is rendered client-side only (does NOT affect server aim/look).
@@ -295,6 +295,12 @@
           const sideSign = (weapon === 'rifle' || weapon === 'minigun') ? 1 : -1;
           const sideJitter = (Math.random() - 0.5) * (r.gunSide || 0) * 0.65;
 
+          // Hold recoil in-frame briefly so it reads clearly on iPhone (and in our automated screenshot).
+          // This is still visual-only; server aim stays authoritative.
+          const now = performance.now();
+          const holdMs = (r0 && typeof r0.holdMs === 'number') ? r0.holdMs : 160;
+          md._rHoldUntil = Math.max(md._rHoldUntil || 0, now + holdMs);
+
           // Position kick (offset space)
           md._rPosZ -= (r.gunKick || 0);
           md._rPosY += (r.gunLift || 0);
@@ -318,6 +324,11 @@
         if (typeof window.__camKickPitch !== 'number') window.__camKickPitch = 0;
         if (typeof window.__camKickYaw !== 'number') window.__camKickYaw = 0;
 
+        // Keep camera kick visible for a short beat; decay happens in the render loop.
+        const now = performance.now();
+        const holdMs = (r0 && typeof r0.holdMs === 'number') ? r0.holdMs : 160;
+        window.__camKickHoldUntil = Math.max(window.__camKickHoldUntil || 0, now + holdMs);
+
         // Bias rifle slightly up-right; keep others mostly straight.
         const yawBias = (weapon === 'rifle') ? 0.85 : (weapon === 'minigun') ? 0.15 : 0.0;
         const yawJitter = (Math.random() - 0.5) * r.yawKick * 0.55;
@@ -336,14 +347,18 @@
         if (typeof window.__hbReticleKickX !== 'number') window.__hbReticleKickX = 0;
         if (typeof window.__hbReticleKickY !== 'number') window.__hbReticleKickY = 0;
 
+        const now = performance.now();
+        const holdMs = (r0 && typeof r0.holdMs === 'number') ? r0.holdMs : 160;
+        window.__hbReticleHoldUntil = Math.max(window.__hbReticleHoldUntil || 0, now + holdMs);
+
         // Convert radians-ish kick into pixels. Keep it subtle enough that it doesn't feel
         // like a permanent offset, but strong enough to be obvious in a screenshot.
-        const pxPerRad = 150;
-        const addY = Math.min(36, (r.pitchKick || 0) * pxPerRad);
-        const addX = Math.max(-18, Math.min(18, (yawKick || 0) * pxPerRad));
+        const pxPerRad = 280;
+        const addY = Math.min(70, (r.pitchKick || 0) * pxPerRad);
+        const addX = Math.max(-35, Math.min(35, (yawKick || 0) * pxPerRad));
 
-        window.__hbReticleKickY = Math.min(55, window.__hbReticleKickY + addY);
-        window.__hbReticleKickX = Math.max(-55, Math.min(55, window.__hbReticleKickX + addX));
+        window.__hbReticleKickY = Math.min(95, window.__hbReticleKickY + addY);
+        window.__hbReticleKickX = Math.max(-95, Math.min(95, window.__hbReticleKickX + addX));
       } catch {}
 
       // ── Screen shake impulse (visual only) ──
