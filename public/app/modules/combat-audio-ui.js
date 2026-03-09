@@ -182,12 +182,12 @@
         d.style.top = '50%';
         d.style.transform = 'translate(-50%,-50%) scale(0.85)';
         // Bigger + brighter so recoil reads instantly on iPhone (and in a single still screenshot).
-        d.style.width = '148px';
-        d.style.height = '148px';
+        d.style.width = '176px';
+        d.style.height = '176px';
         d.style.borderRadius = '999px';
         d.style.border = '3px solid rgba(255,255,255,0.30)';
         d.style.background = 'radial-gradient(circle at 50% 50%, rgba(255,240,120,0.14) 0%, rgba(255,240,120,0.06) 32%, rgba(0,0,0,0.0) 64%)';
-        d.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.20), 0 0 34px rgba(255,240,120,0.16)';
+        d.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.26), 0 0 46px rgba(255,240,120,0.22)';
         d.style.pointerEvents = 'none';
         d.style.zIndex = '9997';
         d.style.opacity = '0';
@@ -332,7 +332,7 @@
       // NOTE: Values are tuned to the actual scale of our fpRig (small offsets).
       // The previous values were effectively "mega" units and could push the viewmodel out of frame.
       // These are punchy on iPhone while staying readable + controlled.
-      rifle:   { gunKick: 0.110, gunLift: 0.032, gunSide: 0.020, rollKick: 0.055, pitchKick: 0.060, yawKick: 0.0120, flashScale: 1.05, holdMs: 620 },
+      rifle:   { gunKick: 0.140, gunLift: 0.040, gunSide: 0.022, rollKick: 0.065, pitchKick: 0.075, yawKick: 0.0130, flashScale: 1.05, holdMs: 620 },
       shotgun: { gunKick: 0.165, gunLift: 0.050, gunSide: 0.016, rollKick: 0.070, pitchKick: 0.070, yawKick: 0.0100, flashScale: 1.90, holdMs: 300 },
       sniper:  { gunKick: 0.095, gunLift: 0.028, gunSide: 0.010, rollKick: 0.028, pitchKick: 0.052, yawKick: 0.0055, flashScale: 1.55, holdMs: 280 },
       fart:    { gunKick: 0.042, gunLift: 0.018, gunSide: 0.010, rollKick: 0.020, pitchKick: 0.020, yawKick: 0.0060, flashScale: 0.75, holdMs: 150 },
