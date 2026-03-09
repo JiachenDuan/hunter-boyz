@@ -596,6 +596,49 @@
               try { bar.style.transition = 'none'; bar.style.opacity = '0'; } catch {}
             }, 600);
           } catch {}
+
+          // Task #1 (recoil): recoil vignette pulse.
+          // Adds a brief warm edge-flash that makes shots feel punchier on iPhone
+          // (and shows up reliably in a still screenshot).
+          try {
+            const id4 = '__hbRecoilVignette';
+            let vg = document.getElementById(id4);
+            if (!vg) {
+              vg = document.createElement('div');
+              vg.id = id4;
+              vg.style.position = 'fixed';
+              vg.style.inset = '0';
+              vg.style.pointerEvents = 'none';
+              vg.style.zIndex = '99996';
+              vg.style.opacity = '0';
+              vg.style.willChange = 'opacity, transform';
+              vg.style.mixBlendMode = 'screen';
+              // Edge-only glow (center mostly transparent so it doesn't fight the reticle).
+              vg.style.background = 'radial-gradient(circle at 50% 55%, rgba(255,240,120,0.00) 0%, rgba(255,240,120,0.00) 45%, rgba(255,160,80,0.10) 65%, rgba(255,220,120,0.18) 78%, rgba(255,240,120,0.22) 100%)';
+              document.body.appendChild(vg);
+            }
+
+            const base = (weapon === 'shotgun') ? 1.25
+              : (weapon === 'sniper') ? 1.05
+              : (weapon === 'rocket' || weapon === 'tank') ? 1.35
+              : (weapon === 'minigun') ? 0.85
+              : (weapon === 'fart') ? 0.55
+              : 1.15; // rifle
+            const mag = Math.max(0.55, Math.min(1.55, base * (0.95 + Math.min(0.35, (mult - 1.0) * 0.26))));
+
+            if (vg._t) { clearTimeout(vg._t); vg._t = null; }
+            vg.style.transition = 'none';
+            vg.style.opacity = String(Math.min(0.65, 0.34 * mag));
+            vg.style.transform = `scale(${(1.0 + 0.02 * mag).toFixed(4)})`;
+            requestAnimationFrame(() => {
+              vg.style.transition = 'opacity 620ms ease-out, transform 620ms cubic-bezier(0.15,0.9,0.2,1)';
+              vg.style.opacity = '0';
+              vg.style.transform = `scale(${(1.0 + 0.08 * mag).toFixed(4)})`;
+            });
+            vg._t = setTimeout(() => {
+              try { vg.style.transition = 'none'; vg.style.opacity = '0'; } catch {}
+            }, 700);
+          } catch {}
         } catch {}
 
         // ── Task #2: GUN screen shake (visual-only) ──
