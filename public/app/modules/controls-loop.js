@@ -1213,10 +1213,11 @@
           const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
 
           // Task #1: GUN recoil recovery (visual only)
-          // Loosen the springs a bit so the kick is readable (especially on iPhone)
-          // and lingers into the early reload pose for clear visual proof.
-          const kPos = 54, cPos = 12;
-          const kRot = 42, cRot = 10;
+          // Keep recoil *in the frame* long enough to read on iPhone (and in our
+          // automated capture), while still snapping back quickly for gameplay.
+          // Slightly more under-damped than before so it feels springy instead of mushy.
+          const kPos = 36, cPos = 8;
+          const kRot = 30, cRot = 7;
 
           // Integrate toward 0 in offset space.
           md._rVelPosX += (-kPos * md._rPosX - cPos * md._rVelPosX) * dt;
