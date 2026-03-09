@@ -315,22 +315,45 @@
       } catch {}
 
       // ── Screen shake impulse (visual only) ──
-      // This tick is task #2: give every gunshot a quick, readable jolt.
+      // Task #2: punchy gunshot jolt that reads on iPhone.
+      // We drive it with (A) a trauma/noise bed and (B) a directional kick impulse
+      // that decays over ~150–250ms.
       try {
         if (typeof window.__hbShakeTrauma !== 'number') window.__hbShakeTrauma = 0;
         if (typeof window.__hbShakeSeed !== 'number') window.__hbShakeSeed = 0;
+        if (typeof window.__hbShakeKickPitch !== 'number') window.__hbShakeKickPitch = 0;
+        if (typeof window.__hbShakeKickRoll !== 'number') window.__hbShakeKickRoll = 0;
+        if (typeof window.__hbShakeKickAt !== 'number') window.__hbShakeKickAt = 0;
 
-        // Per-weapon impulse tuning: make the shake read clearly on iPhone
-        // without becoming a constant wobble.
-        const add = (weapon === 'shotgun') ? 0.34
-          : (weapon === 'sniper') ? 0.30
-          : (weapon === 'rocket') ? 0.44
-          : (weapon === 'tank') ? 0.52
-          : (weapon === 'minigun') ? 0.11
+        // Per-weapon tuning: readable without becoming constant wobble.
+        const add = (weapon === 'shotgun') ? 0.32
+          : (weapon === 'sniper') ? 0.28
+          : (weapon === 'rocket') ? 0.40
+          : (weapon === 'tank') ? 0.50
+          : (weapon === 'minigun') ? 0.10
           : (weapon === 'fart') ? 0.05
-          : 0.20; // rifle default
+          : 0.18; // rifle default
+
+        // Directional kick (radians): quick pitch-up + slight roll.
+        // Sign alternates a bit so repeated shots don't always lean the same direction.
+        const sign = ((window.__hbShakeSeed | 0) % 2 === 0) ? 1 : -1;
+        const kickPitch = (weapon === 'rocket' || weapon === 'tank') ? 0.060
+          : (weapon === 'shotgun') ? 0.050
+          : (weapon === 'sniper') ? 0.040
+          : (weapon === 'minigun') ? 0.018
+          : (weapon === 'fart') ? 0.010
+          : 0.032;
+        const kickRoll = (weapon === 'rocket' || weapon === 'tank') ? 0.050
+          : (weapon === 'shotgun') ? 0.040
+          : (weapon === 'sniper') ? 0.028
+          : (weapon === 'minigun') ? 0.014
+          : (weapon === 'fart') ? 0.008
+          : 0.022;
 
         window.__hbShakeTrauma = Math.min(1.0, window.__hbShakeTrauma + add);
+        window.__hbShakeKickPitch = Math.min(0.11, window.__hbShakeKickPitch + kickPitch);
+        window.__hbShakeKickRoll  = Math.max(-0.11, Math.min(0.11, window.__hbShakeKickRoll + sign * kickRoll));
+        window.__hbShakeKickAt = performance.now();
         window.__hbShakeSeed = (window.__hbShakeSeed + 1) % 1000000;
       } catch {}
     }

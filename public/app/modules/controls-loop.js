@@ -1375,16 +1375,43 @@
         const dt = Math.min(0.05, (now - window.__hbShakeLastT) / 1000);
         window.__hbShakeLastT = now;
 
+        // Base camera position should track gameplay camera updates (teleports, respawns, etc).
+        // So we refresh it whenever shake is idle / nearly idle.
+        if (typeof window.__hbShakeBasePosX !== 'number') window.__hbShakeBasePosX = camera.position.x;
+        if (typeof window.__hbShakeBasePosY !== 'number') window.__hbShakeBasePosY = camera.position.y;
+        if (typeof window.__hbShakeBasePosZ !== 'number') window.__hbShakeBasePosZ = camera.position.z;
+
         let trauma = (typeof window.__hbShakeTrauma === 'number') ? window.__hbShakeTrauma : 0;
-        if (trauma > 0) {
-          // Fast decay so the shake reads as a punchy jolt, not a wobble.
-          trauma = Math.max(0, trauma - dt * 3.4);
+        const kickAt = (typeof window.__hbShakeKickAt === 'number') ? window.__hbShakeKickAt : 0;
+        let kickPitch = (typeof window.__hbShakeKickPitch === 'number') ? window.__hbShakeKickPitch : 0;
+        let kickRoll = (typeof window.__hbShakeKickRoll === 'number') ? window.__hbShakeKickRoll : 0;
+
+        const kickAge = (kickAt > 0) ? (now - kickAt) : 999999;
+        const kickActive = (kickAge < 260) && (Math.abs(kickPitch) + Math.abs(kickRoll) > 0.00001);
+
+        // Update base position while we're basically not shaking.
+        if (!kickActive && trauma < 0.02) {
+          window.__hbShakeBasePosX = camera.position.x;
+          window.__hbShakeBasePosY = camera.position.y;
+          window.__hbShakeBasePosZ = camera.position.z;
+        }
+
+        if (trauma > 0 || kickActive) {
+          // Slightly slower decay so it reads as a "jolt" into early reload pose.
+          trauma = Math.max(0, trauma - dt * 2.2);
           window.__hbShakeTrauma = trauma;
+
+          // Directional kick decays quickly (impulse feeling).
+          const kickDecay = Math.exp(-dt * 18.0);
+          kickPitch *= kickDecay;
+          kickRoll *= kickDecay;
+          window.__hbShakeKickPitch = kickPitch;
+          window.__hbShakeKickRoll = kickRoll;
 
           const s = trauma * trauma; // non-linear: small values die quickly
           const seed = (typeof window.__hbShakeSeed === 'number') ? window.__hbShakeSeed : 0;
 
-          // Two-frequency shake for a crisp hit + slight after-jitter.
+          // Two-frequency noise bed for crisp shake + tiny after-jitter.
           const t1 = (now * 0.028) + seed * 0.37;
           const t2 = (now * 0.061) + seed * 0.91;
 
@@ -1392,31 +1419,21 @@
           const ny = Math.cos(t1 * 1.07) * 0.60 + Math.cos(t2 * 0.93) * 0.40;
           const nr = Math.sin(t1 * 0.83 + 1.7) * 0.70 + Math.cos(t2 * 1.11 + 0.4) * 0.30;
 
-          // Capture base camera position once (we apply positional shake on top).
-          if (typeof window.__hbShakeBasePosX !== 'number') window.__hbShakeBasePosX = camera.position.x;
-          if (typeof window.__hbShakeBasePosY !== 'number') window.__hbShakeBasePosY = camera.position.y;
-          if (typeof window.__hbShakeBasePosZ !== 'number') window.__hbShakeBasePosZ = camera.position.z;
+          // Rotation shake (radians): use directional kick + noise.
+          camera.rotation.x += kickPitch + nx * s * 0.030;
+          camera.rotation.y += ny * s * 0.028;
+          camera.rotation.z += kickRoll + nr * s * 0.024;
 
-          // Rotation shake (radians): stronger + snappier so it reads as "punch".
-          camera.rotation.x += nx * s * 0.045;
-          camera.rotation.y += ny * s * 0.045;
-          camera.rotation.z += nr * s * 0.032;
-
-          // Positional shake (meters-ish): tiny camera bob adds weight without messing aim.
-          // Keep Z tiny to avoid motion sickness; bias Y a bit for "kick".
-          camera.position.x = window.__hbShakeBasePosX + nx * s * 0.055;
-          camera.position.y = window.__hbShakeBasePosY + Math.abs(ny) * s * 0.070;
-          camera.position.z = window.__hbShakeBasePosZ + nr * s * 0.010;
+          // Positional shake (meters-ish): small bob adds weight without nausea.
+          camera.position.x = window.__hbShakeBasePosX + nx * s * 0.045;
+          camera.position.y = window.__hbShakeBasePosY + Math.abs(ny) * s * 0.060;
+          camera.position.z = window.__hbShakeBasePosZ + nr * s * 0.008;
         } else {
-          // Clear tiny float drift + restore camera position.
+          // Restore camera position (avoid drift).
           if (trauma !== 0) window.__hbShakeTrauma = 0;
-          try {
-            if (typeof window.__hbShakeBasePosX === 'number') {
-              camera.position.x = window.__hbShakeBasePosX;
-              camera.position.y = window.__hbShakeBasePosY;
-              camera.position.z = window.__hbShakeBasePosZ;
-            }
-          } catch {}
+          camera.position.x = window.__hbShakeBasePosX;
+          camera.position.y = window.__hbShakeBasePosY;
+          camera.position.z = window.__hbShakeBasePosZ;
         }
       } catch {}
 
