@@ -1335,6 +1335,37 @@
         camera.rotation.y = baseYaw + window.__camKickYaw;
       } catch {}
 
+      // ── Reticle recoil (screen-space, visual only) ──
+      // Apply the kick written by applyRecoil() so recoil reads clearly even on mobile.
+      try {
+        const ret = window.__hbReticleControl;
+        if (ret) {
+          if (typeof window.__hbReticleKickX !== 'number') window.__hbReticleKickX = 0;
+          if (typeof window.__hbReticleKickY !== 'number') window.__hbReticleKickY = 0;
+          if (typeof window.__hbReticleKickVelX !== 'number') window.__hbReticleKickVelX = 0;
+          if (typeof window.__hbReticleKickVelY !== 'number') window.__hbReticleKickVelY = 0;
+
+          const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
+          const k = 46;
+          const c = 14;
+
+          window.__hbReticleKickVelX += (-k * window.__hbReticleKickX - c * window.__hbReticleKickVelX) * dt;
+          window.__hbReticleKickVelY += (-k * window.__hbReticleKickY - c * window.__hbReticleKickVelY) * dt;
+          window.__hbReticleKickX += window.__hbReticleKickVelX * dt;
+          window.__hbReticleKickY += window.__hbReticleKickVelY * dt;
+
+          if (Math.abs(window.__hbReticleKickX) < 0.02 && Math.abs(window.__hbReticleKickVelX) < 0.02) { window.__hbReticleKickX = 0; window.__hbReticleKickVelX = 0; }
+          if (Math.abs(window.__hbReticleKickY) < 0.02 && Math.abs(window.__hbReticleKickVelY) < 0.02) { window.__hbReticleKickY = 0; window.__hbReticleKickVelY = 0; }
+
+          // Babylon GUI positions are strings (e.g. '10px') relative to center.
+          // Positive kickY means 'reticle jumps up' (negative top offset).
+          const ox = window.__hbReticleKickX || 0;
+          const oy = window.__hbReticleKickY || 0;
+          ret.left = `${ox.toFixed(1)}px`;
+          ret.top = `${(-oy).toFixed(1)}px`;
+        }
+      } catch {}
+
       // Minigun barrel spin (cosmetic)
       try {
         const eff = (lastServerState && myId) ? (lastServerState.players.find(p=>p.id===myId)?.powerWeapon) : null;

@@ -78,6 +78,8 @@
     ret.color = 'rgba(255,255,255,0.65)';
     ret.background = 'transparent';
     advancedTexture.addControl(ret);
+    // Expose reticle control so the render loop can apply recoil offset (visual only).
+    try { window.__hbReticleControl = ret; } catch {}
 
     // Scope overlay (sniper)
     const scope = new BABYLON.GUI.Ellipse();
@@ -325,6 +327,23 @@
         // Slightly higher cap now that recoil ramps per-shot.
         window.__camKickPitch = Math.min(0.45, window.__camKickPitch + r.pitchKick);
         window.__camKickYaw   = Math.max(-0.24, Math.min(0.24, window.__camKickYaw + yawKick));
+      } catch {}
+
+      // ── Reticle recoil (screen-space, visual only) ──
+      // Give mobile players a clear recoil read without impacting server aim.
+      // This also makes our automated iPhone capture show recoil in a still frame.
+      try {
+        if (typeof window.__hbReticleKickX !== 'number') window.__hbReticleKickX = 0;
+        if (typeof window.__hbReticleKickY !== 'number') window.__hbReticleKickY = 0;
+
+        // Convert radians-ish kick into pixels. Keep it subtle enough that it doesn't feel
+        // like a permanent offset, but strong enough to be obvious in a screenshot.
+        const pxPerRad = 150;
+        const addY = Math.min(36, (r.pitchKick || 0) * pxPerRad);
+        const addX = Math.max(-18, Math.min(18, (yawKick || 0) * pxPerRad));
+
+        window.__hbReticleKickY = Math.min(55, window.__hbReticleKickY + addY);
+        window.__hbReticleKickX = Math.max(-55, Math.min(55, window.__hbReticleKickX + addX));
       } catch {}
 
       // ── Screen shake impulse (visual only) ──
