@@ -228,8 +228,14 @@
       }, 1600);
     }
 
-    // Expose a debug hook for local capture automation only.
+    // Expose debug hooks for local capture automation only.
     try { window.__hbDebugHitmarker = showHitmarker; } catch {}
+    // Task #1 (recoil) capture helper: trigger a big, deterministic recoil pulse.
+    try {
+      window.__hbDebugRecoil = (weapon = 'rifle') => {
+        try { applyRecoil(String(weapon || 'rifle')); } catch {}
+      };
+    } catch {}
 
     const RECOIL = {
       // Kick values are in radians (camera) and meters-ish (gunRoot position).
@@ -351,7 +357,11 @@
           // with spring recovery.
           // Stronger impulses so the kick is visible in a single frame capture (iPhone snap).
           md._rVelPosZ -= (r.gunKick || 0) * 12.0;
+          md._rVelPosY += (r.gunLift || 0) * 10.0;
+          md._rVelPosX += (sideSign * (r.gunSide || 0)) * 10.0;
+
           md._rVelRotX += (r.pitchKick || 0) * 13.0;
+          md._rVelRotZ += (sideSign * (r.rollKick || 0)) * 10.0;
         }
       } catch {}
 

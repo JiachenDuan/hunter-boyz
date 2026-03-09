@@ -139,7 +139,7 @@ async function main(){
       const badge = document.getElementById('__captureBadge') || (() => {
         const d = document.createElement('div');
         d.id = '__captureBadge';
-        d.textContent = 'TASK #6 HIT FEEDBACK PROOF';
+        d.textContent = 'TASK #1 RECOIL PROOF';
         d.style.position = 'fixed';
         d.style.left = '10px';
         d.style.bottom = '10px';
@@ -159,7 +159,7 @@ async function main(){
 
       const log = document.getElementById('log');
       if (log) {
-        log.textContent = '💥 TASK #6: on-hit feedback now has a bright center pulse + bigger hitmarker (iPhone-readable)';
+        log.textContent = '🔫 TASK #1: shots now have strong recoil kick + springy recovery (viewmodel + reticle)';
         log.style.display = 'block';
         log.style.position = 'fixed';
         log.style.left = '10px';
@@ -176,8 +176,9 @@ async function main(){
       }
     });
 
-    // Fire until we see the hitmarker animate (guarantees the still screenshot proves Task #6).
-    for (let i = 0; i < 6; i++) {
+    // Fire a couple shots so recoil + muzzle flash triggers, then force-trigger
+    // a deterministic recoil pulse right before capture.
+    for (let i = 0; i < 2; i++) {
       await page.evaluate(async (viewerId) => {
         const shoot = () => fetch('/debug/shoot', {
           method: 'POST',
@@ -186,29 +187,16 @@ async function main(){
         }).catch(()=>{});
         try { await shoot(); } catch {}
       }, viewerId);
-
-      // Give UI a beat to render hit feedback.
-      await sleep(55);
-
-      const visible = await page.evaluate(() => {
-        const hm = document.getElementById('hitmarker');
-        const hp = document.getElementById('hitPulse');
-        const a = hm ? Number(getComputedStyle(hm).opacity || '0') : 0;
-        const b = hp ? Number(getComputedStyle(hp).opacity || '0') : 0;
-        return (a > 0.15) || (b > 0.10);
-      });
-      if (visible) break;
-
       await sleep(70);
     }
 
-    // Force-trigger the hit feedback right before capture (deterministic proof in a still).
+    // Force-trigger recoil visuals right before capture (deterministic proof in a still).
     await page.evaluate(() => {
-      try { if (typeof window.__hbDebugHitmarker === 'function') window.__hbDebugHitmarker(); } catch {}
+      try { if (typeof window.__hbDebugRecoil === 'function') window.__hbDebugRecoil('rifle'); } catch {}
     });
 
-    // Capture while the hit feedback is visible.
-    await sleep(40);
+    // Capture while the recoil ring/brackets/vignette are visible.
+    await sleep(55);
 
     const ts = Date.now();
     const file = path.join(outDir, `iphone-${ts}.png`);
