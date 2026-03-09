@@ -212,7 +212,7 @@
       // More readable kick across camera + viewmodel (especially on iPhone):
       // - rifle: big satisfying tap-kick
       // - minigun: rapid micro-kicks that still read in a still frame
-      rifle:   { gunKick: 1.120, gunLift: 0.205, gunSide: 0.034, rollKick: 0.120, pitchKick: 0.700, yawKick: 0.0520, flashScale: 1.05, holdMs: 460 },
+      rifle:   { gunKick: 1.350, gunLift: 0.235, gunSide: 0.040, rollKick: 0.135, pitchKick: 0.880, yawKick: 0.0600, flashScale: 1.05, holdMs: 520 },
       shotgun: { gunKick: 0.560, gunLift: 0.112, gunSide: 0.030, rollKick: 0.128, pitchKick: 0.310, yawKick: 0.0250, flashScale: 1.90, holdMs: 280 },
       sniper:  { gunKick: 0.450, gunLift: 0.072, gunSide: 0.009, rollKick: 0.038, pitchKick: 0.285, yawKick: 0.0065, flashScale: 1.55, holdMs: 280 },
       fart:    { gunKick: 0.090, gunLift: 0.024, gunSide: 0.008, rollKick: 0.018, pitchKick: 0.034, yawKick: 0.0080, flashScale: 0.75, holdMs: 150 },
