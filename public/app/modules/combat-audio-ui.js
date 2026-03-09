@@ -247,10 +247,37 @@
       }
     })();
 
+    // Task #1 (recoil): a vertical "muzzle climb" streak so recoil reads unmistakably in a still.
+    // Pure UI, does not affect aim.
+    const _recoilStreakEl = document.getElementById('recoilStreak') || (() => {
+      try {
+        const d = document.createElement('div');
+        d.id = 'recoilStreak';
+        d.style.position = 'fixed';
+        d.style.left = '50%';
+        d.style.top = '50%';
+        d.style.width = '8px';
+        d.style.height = '140px';
+        d.style.transform = 'translate(-50%,-50%) translateY(-54px)';
+        d.style.borderRadius = '999px';
+        d.style.opacity = '0';
+        d.style.pointerEvents = 'none';
+        d.style.zIndex = '9998';
+        d.style.background = 'linear-gradient(to top, rgba(255,240,120,0.0) 0%, rgba(255,240,120,0.20) 20%, rgba(255,255,255,0.62) 55%, rgba(255,255,255,0.0) 100%)';
+        d.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.38), 0 0 22px rgba(255,240,120,0.26)';
+        d.style.mixBlendMode = 'screen';
+        document.body.appendChild(d);
+        return d;
+      } catch {
+        return null;
+      }
+    })();
+
     let _hitmarkerTimer = 0;
     let _hitPulseTimer = 0;
     let _recoilPulseTimer = 0;
     let _recoilBracketsTimer = 0;
+    let _recoilStreakTimer = 0;
 
     function showHitPulse() {
       if (!_hitPulseEl) return;
@@ -336,6 +363,7 @@
       if (!_recoilPulseEl) return;
       clearTimeout(_recoilPulseTimer);
       clearTimeout(_recoilBracketsTimer);
+      clearTimeout(_recoilStreakTimer);
       try { showRecoilBrackets(weapon); } catch {}
 
       // Weapon weight: bigger ring for heavier guns so the punch reads instantly.
@@ -347,6 +375,29 @@
         : (w === 'minigun') ? 0.98
         : (w === 'fart') ? 0.92
         : 1.05;
+
+      // Vertical streak = "muzzle climb" readability in stills.
+      try {
+        if (_recoilStreakEl) {
+          const h = (w === 'tank') ? 180 : (w === 'rocket') ? 170 : (w === 'shotgun') ? 160 : (w === 'sniper') ? 150 : (w === 'minigun') ? 120 : 150;
+          const y0 = Math.round(54 * scale);
+          _recoilStreakEl.style.transition = 'none';
+          _recoilStreakEl.style.opacity = '1';
+          _recoilStreakEl.style.height = `${Math.round(h * scale)}px`;
+          _recoilStreakEl.style.transform = `translate(-50%,-50%) translateY(${-y0}px) scale(${(0.95 * scale).toFixed(3)})`;
+          requestAnimationFrame(() => {
+            try {
+              const y1 = Math.round(110 * scale);
+              _recoilStreakEl.style.transition = 'opacity 820ms ease-out 0ms, transform 820ms ease-out 0ms';
+              _recoilStreakEl.style.opacity = '0';
+              _recoilStreakEl.style.transform = `translate(-50%,-50%) translateY(${-y1}px) scale(${(1.35 * scale).toFixed(3)})`;
+            } catch {}
+          });
+          _recoilStreakTimer = setTimeout(() => {
+            try { _recoilStreakEl.style.transition = 'none'; _recoilStreakEl.style.opacity = '0'; } catch {}
+          }, 900);
+        }
+      } catch {}
 
       try {
         // Recoil should read as an *upward* punch (muzzle climb) even in a single still.
