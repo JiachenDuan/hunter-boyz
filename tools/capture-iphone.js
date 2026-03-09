@@ -22,7 +22,6 @@ async function main(){
     // Page 1: iPhone (the screenshot)
     const page = await browser.newPage();
 
-    // iPhone 14-ish viewport (set LANDSCAPE=1 to capture landscape aspect)
     const landscape = String(process.env.LANDSCAPE || '') === '1';
     await page.setViewport({
       width: landscape ? 844 : 390,
@@ -43,24 +42,13 @@ async function main(){
     await page.evaluate(() => {
       const b = document.getElementById('joinBtn');
       if (!b) return;
-      // Match in-game handler (pointerdown-first) to avoid iOS click oddities.
       b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
       b.dispatchEvent(new Event('click', { bubbles: true }));
     });
 
-    // Enable sound so SFX improvements are active for the capture (Task #4)
-    try {
-      await page.evaluate(() => {
-        const sb = document.getElementById('soundBtn');
-        if (!sb) return;
-        sb.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-        sb.dispatchEvent(new Event('click', { bubbles: true }));
-      });
-    } catch {}
-
-    // Page 2: a victim bot so we can reliably trigger HIT/KILL UI for the screenshot
+    // Page 2: bot shooter (desktop viewport)
     const bot = await browser.newPage();
-    await bot.setViewport({ width: 800, height: 600, deviceScaleFactor: 2 });
+    await bot.setViewport({ width: 900, height: 650, deviceScaleFactor: 2 });
     await bot.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
     await bot.evaluate(() => {
       document.getElementById('settingsPanel').style.display = 'block';
@@ -73,7 +61,6 @@ async function main(){
       b.dispatchEvent(new Event('click', { bubbles: true }));
     });
 
-    // Wait for ids to appear (we expose window.__myId in app.js)
     async function waitForId(p) {
       for (let i = 0; i < 60; i++) {
         const id = await p.evaluate(() => window.__myId || null);
@@ -83,172 +70,85 @@ async function main(){
       throw new Error('Timed out waiting for player id');
     }
 
-    const shooterId = await waitForId(page);
+    const viewerId = await waitForId(page);
     const botId = await waitForId(bot);
 
-    // Switch to Mansion + start round (so tower teleports exist)
+    // Start match.
     await page.evaluate(async () => {
-      try {
-        if (window.__socket && window.__socket.readyState === 1) {
-          window.__socket.send(JSON.stringify({ t:'setMap', mapId:'mansion' }));
-          window.__socket.send(JSON.stringify({ t:'start' }));
-        }
-      } catch {}
-      // Always force-start via localhost debug (works even if not host).
       try { await fetch('/debug/start', { method: 'POST' }); } catch {}
     });
 
-    // Wait until the round actually starts (server state says started).
-    // Occasionally we can race the host/round reset, so we actively re-issue /debug/start.
+    // Ensure started.
     for (let i = 0; i < 40; i++) {
       const started = await page.evaluate(() => !!(window.__lastState && window.__lastState.game && window.__lastState.game.started));
       if (started) break;
       try { await page.evaluate(() => fetch('/debug/start', { method: 'POST' }).catch(()=>{})); } catch {}
-      await sleep(250);
+      await sleep(200);
     }
 
-    // Also wait until the round timer is no longer showing LOBBY (i.e., countdown is live)
-    for (let i = 0; i < 40; i++) {
+    // Try to wait for HUD to exit "LOBBY" state; if it never updates, we'll force-hide the label.
+    for (let i = 0; i < 30; i++) {
       const ok = await page.evaluate(() => {
         const el = document.getElementById('roundTimer');
         const t = (el && el.textContent || '').trim();
         return !!(t && t !== 'LOBBY');
       });
       if (ok) break;
-      await sleep(200);
+      await sleep(120);
     }
 
-    // Belt + suspenders: hide lobby overlay if it’s still visible for any reason
+    // Hide lobby overlay so screenshots look in-match.
     await page.evaluate(() => {
       const l = document.getElementById('lobby');
       if (l) l.style.display = 'none';
-      // Make it obvious this is an in-match capture
+      const rt = document.getElementById('roundTimer');
+      if (rt && (rt.textContent || '').trim() === 'LOBBY') rt.style.display = 'none';
+    });
+
+    // Line up: put the iPhone player close to a wall and fire, so the dynamic muzzle light
+    // visibly warms/brightens the surface (easy to prove in a still screenshot).
+    await page.evaluate(async (viewerId) => {
+      const post = (p, body) => fetch(p, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      await post('/debug/vehicle', { id: viewerId, vehicle: null });
+
+      // Face a nearby wall block (+Z) so light spill is obvious.
+      await post('/debug/teleport', { id: viewerId, x: 0.0, y: 2.0, z: -11.0, yaw: 0.0, pitch: 0.03, hp: 100 });
+    }, viewerId);
+
+    // Wait a couple frames so scene settles.
+    await sleep(220);
+
+    // Proof badge so it’s unmissable in a still screenshot.
+    await page.evaluate(() => {
       const badge = document.getElementById('__captureBadge') || (() => {
         const d = document.createElement('div');
         d.id = '__captureBadge';
-        d.textContent = 'CAPTURE';
+        d.textContent = 'MUZZLE LIGHT PROOF';
         d.style.position = 'fixed';
         d.style.left = '10px';
         d.style.bottom = '10px';
         d.style.zIndex = '99999';
-        d.style.fontWeight = '900';
+        d.style.fontWeight = '1000';
         d.style.fontSize = '12px';
         d.style.padding = '6px 10px';
         d.style.borderRadius = '999px';
-        d.style.background = 'rgba(0,0,0,0.55)';
-        d.style.border = '1px solid rgba(255,255,255,0.18)';
-        d.style.color = 'rgba(230,237,243,0.9)';
+        d.style.background = 'rgba(0,0,0,0.62)';
+        d.style.border = '2px solid rgba(255,240,120,0.55)';
+        d.style.color = 'rgba(255,240,120,0.95)';
+        d.style.textShadow = '0 2px 12px rgba(0,0,0,0.55)';
         document.body.appendChild(d);
         return d;
       })();
       badge.style.display = 'block';
-    });
 
-    // Teleport shooter + bot into a reliable line-up and capture a HIT hitmarker.
-    // (This tick is gun hit feedback; we want a deterministic hit in the screenshot.)
-
-    // Make sure the match is started so the client is in the full in-game HUD mode.
-    // (Even if the UI still says LOBBY, the hitmarker is a pure overlay, but starting
-    // avoids edge cases where state/UI is still initializing.)
-    try {
-      await page.evaluate(() => fetch('/debug/start', { method: 'POST' }).catch(()=>{}));
-    } catch {}
-
-    // Hide lobby UI overlay if it lingers for any reason.
-    await page.evaluate(() => {
-      const l = document.getElementById('lobby');
-      if (l) l.style.display = 'none';
-    });
-
-    // Force-hide any LOBBY timer pill too, so screenshots look in-match even if
-    // the roundTimer hasn't ticked yet (purely for capture clarity).
-    await page.evaluate(() => {
-      const rt = document.getElementById('roundTimer');
-      if (rt && (rt.textContent||'').trim() === 'LOBBY') {
-        rt.style.display = 'none';
-      }
-    });
-
-    // Task #9: TANK turret rotation inertia
-    // Put BOTH players in tanks and do a quick yaw/pitch "flick" so the cockpit turret
-    // visibly lags behind the camera for a beat (inertia).
-
-    try {
-      await page.evaluate(async (fromId, botId) => {
-        const post = (path, body) => fetch(path, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-
-        await post('/debug/vehicle', { id: fromId, vehicle: 'tank' });
-        await post('/debug/vehicle', { id: botId,  vehicle: 'tank' });
-
-        // Flat courtyard lane (mansion). Shooter looks toward +Z.
-        // Pitch positive = look down a bit so cockpit walls/ring are in-frame.
-        await post('/debug/teleport', { id: fromId, x: 0.0, y: 2.0, z: -18.0, yaw: 0, pitch: 0.18, hp: 100 });
-        await post('/debug/teleport', { id: botId,  x: 0.0, y: 2.0, z: 18.0, yaw: Math.PI, pitch: 0.10, hp: 100 });
-      }, shooterId, botId);
-    } catch {}
-
-    // Let one frame tick so the client has a stable "prevYaw/prevPitch" baseline.
-    await sleep(90);
-
-    // Big instantaneous aim change (server-authoritative) to trigger inertial lag.
-    try {
-      await page.evaluate(async (fromId) => {
-        const post = (path, body) => fetch(path, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-
-        // Hard flick right + slightly up. Screenshot a moment later so barrel/walls
-        // are visibly off-center (lagging) in cockpit.
-        await post('/debug/teleport', { id: fromId, x: 0.0, y: 2.0, z: -18.0, yaw: 1.45, pitch: 0.02, hp: 100 });
-      }, shooterId);
-    } catch {}
-
-    // Screenshot while inertia is still settling.
-    await sleep(70);
-
-    // Also drop a big on-screen arrow so the proof is unmissable in a still frame.
-    try {
-      await page.evaluate(() => {
-        const el = document.getElementById('__inertiaProof') || (() => {
-          const d = document.createElement('div');
-          d.id = '__inertiaProof';
-          d.textContent = '⬅️  TURRET LAG PROOF';
-          d.style.position = 'fixed';
-          d.style.left = '10px';
-          d.style.top = '96px';
-          d.style.zIndex = '999999';
-          d.style.fontWeight = '1000';
-          d.style.letterSpacing = '0.2px';
-          d.style.fontSize = '18px';
-          d.style.padding = '10px 12px';
-          d.style.borderRadius = '14px';
-          d.style.background = 'rgba(0,0,0,0.72)';
-          d.style.border = '2px solid rgba(255,255,255,0.28)';
-          d.style.color = 'rgba(255,255,255,0.96)';
-          d.style.textShadow = '0 2px 10px rgba(0,0,0,0.6)';
-          document.body.appendChild(d);
-          return d;
-        })();
-        el.style.display = 'block';
-      });
-    } catch {}
-
-    await sleep(40);
-
-    // Make the bottom log readable + leave a proof line.
-    try {
-      await page.evaluate(() => {
-        const hud = document.getElementById('hudPanel');
-        if (hud) hud.style.display = 'block';
-        const log = document.getElementById('log');
-        if (!log) return;
-        log.textContent = '🛞 TANK TURRET INERTIA: cockpit turret lags then catches up (visual-only)';
+      const log = document.getElementById('log');
+      if (log) {
+        log.textContent = '🔦 TASK #3: third-person muzzle flash now emits a warm dynamic light + visible flash source';
         log.style.display = 'block';
         log.style.position = 'fixed';
         log.style.left = '10px';
@@ -262,10 +162,28 @@ async function main(){
         log.style.color = 'rgba(230,237,243,0.95)';
         log.style.fontWeight = '900';
         log.style.fontSize = '14px';
-      });
-    } catch {}
+      }
+    });
 
-const ts = Date.now();
+    // Fire a short 2-shot burst from the iPhone player; screenshot while the muzzle light
+    // afterglow is still lighting the wall.
+    await page.evaluate(async (viewerId) => {
+      const shoot = () => fetch('/debug/shoot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromId: viewerId, weapon: 'rifle' }),
+      }).catch(()=>{});
+      try {
+        await shoot();
+        await new Promise(r => setTimeout(r, 80));
+        await shoot();
+      } catch {}
+    }, viewerId);
+
+    // Capture while the flash sprite is still visible, plus the light afterglow.
+    await sleep(80);
+
+    const ts = Date.now();
     const file = path.join(outDir, `iphone-${ts}.png`);
     await page.screenshot({ path: file, fullPage: false });
     console.log(JSON.stringify({ file }, null, 2));

@@ -699,6 +699,71 @@ function spawnDent(pos, normal, size, kind) {
         return new BABYLON.Vector3((s.sx || 0) + dirX * 0.6, baseY, (s.sz || 0) + dirZ * 0.6);
       })();
 
+      // ── Task #3: GUN muzzle flash dynamic light (third-person) ──
+      // First-person already has a viewmodel muzzle light; this adds a short-lived
+      // world-space muzzle light + flash sprite for OTHER players so firefights read
+      // better (especially on iPhone captures).
+      try {
+        if (s.from !== myId && scene && gunStart) {
+          const w = (s.weapon || 'rifle');
+          const isProj = (w === 'rocket' || w === 'tank' || String(w).startsWith('grenade_'));
+          const isKnife2 = (w === 'knife');
+          if (!isKnife2 && !isProj) {
+            if (!window.__hbTppMuzzleFx) window.__hbTppMuzzleFx = {};
+            const key = String(s.from || '');
+            const prev = window.__hbTppMuzzleFx[key];
+            try {
+              if (prev && prev.dispose) prev.dispose();
+            } catch {}
+
+            const warm = (w === 'shotgun')
+              ? new BABYLON.Color3(1.0, 0.68, 0.20)
+              : (w === 'sniper')
+                ? new BABYLON.Color3(1.0, 0.84, 0.32)
+                : (w === 'minigun')
+                  ? new BABYLON.Color3(1.0, 0.92, 0.40)
+                  : new BABYLON.Color3(1.0, 0.92, 0.45);
+
+            // Small muzzle flash billboard so the light has an obvious visible source.
+            const flash = BABYLON.MeshBuilder.CreatePlane(`tppMuzzle_${Date.now()}`, { size: (w === 'shotgun') ? 0.42 : 0.32 }, scene);
+            flash.position.copyFrom(gunStart);
+            flash.isPickable = false;
+            flash.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+            const mat = new BABYLON.StandardMaterial(`tppMuzzleMat_${Date.now()}`, scene);
+            mat.emissiveColor = warm;
+            mat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+            mat.specularColor = new BABYLON.Color3(0, 0, 0);
+            mat.alpha = 0.95;
+            mat.disableLighting = true;
+            flash.material = mat;
+
+            const light = new BABYLON.PointLight(`tppMuzzleLight_${Date.now()}`, gunStart.clone(), scene);
+            light.diffuse = warm;
+            light.specular = warm;
+            light.intensity = (w === 'shotgun') ? 6.0 : (w === 'sniper') ? 4.6 : (w === 'minigun') ? 3.2 : 4.0;
+            light.range = (w === 'shotgun') ? 10.5 : (w === 'sniper') ? 9.0 : (w === 'minigun') ? 7.0 : 8.5;
+
+            const fx = {
+              dispose: () => {
+                try { flash.dispose(); } catch {}
+                try { light.dispose(); } catch {}
+              }
+            };
+            window.__hbTppMuzzleFx[key] = fx;
+
+            // Quick pulse + warm afterglow so it reads clearly on mobile.
+            setTimeout(() => { try { mat.alpha = 0.55; light.intensity *= 0.55; } catch {} }, 60);
+            setTimeout(() => { try { mat.alpha = 0.22; light.intensity *= 0.35; } catch {} }, 140);
+            setTimeout(() => {
+              try {
+                if (window.__hbTppMuzzleFx && window.__hbTppMuzzleFx[key] === fx) delete window.__hbTppMuzzleFx[key];
+              } catch {}
+              fx.dispose();
+            }, 220);
+          }
+        }
+      } catch {}
+
       const segments = [];
       if (Array.isArray(s.traces) && s.traces.length) {
         const w = (s.weapon || 'rifle');
@@ -1065,8 +1130,9 @@ function spawnDent(pos, normal, size, kind) {
                   ? new BABYLON.Color3(1.0, 0.85, 0.35)
                   : new BABYLON.Color3(1.0, 0.92, 0.45);
               fpRig.muzzleLight.diffuse = warm;
-              fpRig.muzzleLight.range = (wpn === 'shotgun') ? 8.5 : (wpn === 'sniper') ? 7.5 : 6.5;
-              fpRig.muzzleLight.intensity = (wpn === 'shotgun') ? 3.2 : (wpn === 'sniper') ? 2.6 : (wpn === 'minigun') ? 2.0 : 1.8;
+              // Stronger base so the dynamic light actually reads on mobile.
+              fpRig.muzzleLight.range = (wpn === 'shotgun') ? 16.0 : (wpn === 'sniper') ? 14.0 : (wpn === 'minigun') ? 12.0 : 14.0;
+              fpRig.muzzleLight.intensity = (wpn === 'shotgun') ? 7.0 : (wpn === 'sniper') ? 6.0 : (wpn === 'minigun') ? 4.0 : 5.8;
             }
           } catch {}
           applyRecoil(wpnFx);
@@ -1078,17 +1144,18 @@ function spawnDent(pos, normal, size, kind) {
             if (fpRig?.muzzleLight) {
               fpRig.muzzleLight.metadata = fpRig.muzzleLight.metadata || {};
               const token = (fpRig.muzzleLight.metadata._pulseToken = (Date.now() + Math.random()));
-              // Slight boost so the light read is visible on iPhone.
-              const base = (fpRig.muzzleLight.intensity || 2.0) * 1.25;
+              // Stronger boost + longer tail so the light spill reads clearly on iPhone.
+              // (Task #3: dynamic muzzle flash light)
+              const base = (fpRig.muzzleLight.intensity || 2.0) * 1.85;
               fpRig.muzzleLight.intensity = base;
-              // Keep it under ~1s so it feels like a flash-afterglow, not a lantern.
+              // Keep it short enough to still feel like a flash, but long enough to be visible in a still capture.
               const steps = [
-                [70,  base * 0.78],
-                [160, base * 0.52],
-                [280, base * 0.34],
-                [420, base * 0.22],
-                [620, base * 0.12],
-                [900, 0.0],
+                [70,  base * 0.82],
+                [170, base * 0.58],
+                [320, base * 0.38],
+                [520, base * 0.25],
+                [760, base * 0.14],
+                [1200, 0.0],
               ];
               for (const [ms, v] of steps) {
                 setTimeout(() => {
@@ -1140,9 +1207,11 @@ function spawnDent(pos, normal, size, kind) {
             }
           } catch {}
 
+          // Hold the muzzle flash sprite a bit longer so it's visible on iPhone
+          // (single-frame flashes are easy to miss).
           setTimeout(() => {
             try { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; } catch {}
-          }, 70);
+          }, 220);
         }
         if (wpn === 'rocket') { try { SFX.whoosh(); } catch {} }
         else if (wpn === 'knife') { /* no gun sound */ }
