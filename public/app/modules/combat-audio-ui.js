@@ -212,7 +212,7 @@
       // More readable kick across camera + viewmodel (especially on iPhone):
       // - rifle: big satisfying tap-kick
       // - minigun: rapid micro-kicks that still read in a still frame
-      rifle:   { gunKick: 0.920, gunLift: 0.160, gunSide: 0.030, rollKick: 0.105, pitchKick: 0.580, yawKick: 0.0420, flashScale: 1.05, holdMs: 420 },
+      rifle:   { gunKick: 1.120, gunLift: 0.205, gunSide: 0.034, rollKick: 0.120, pitchKick: 0.700, yawKick: 0.0520, flashScale: 1.05, holdMs: 460 },
       shotgun: { gunKick: 0.560, gunLift: 0.112, gunSide: 0.030, rollKick: 0.128, pitchKick: 0.310, yawKick: 0.0250, flashScale: 1.90, holdMs: 280 },
       sniper:  { gunKick: 0.450, gunLift: 0.072, gunSide: 0.009, rollKick: 0.038, pitchKick: 0.285, yawKick: 0.0065, flashScale: 1.55, holdMs: 280 },
       fart:    { gunKick: 0.090, gunLift: 0.024, gunSide: 0.008, rollKick: 0.018, pitchKick: 0.034, yawKick: 0.0080, flashScale: 0.75, holdMs: 150 },
@@ -248,7 +248,7 @@
         mult = 1.0 + Math.min(0.55, nextStreak * 0.065);
 
         // Keep single-tap rifle satisfying even when not streaking.
-        if (weapon === 'rifle' && nextStreak === 0) mult = 1.55;
+        if (weapon === 'rifle' && nextStreak === 0) mult = 1.75;
       } catch {}
 
       // Copy (so we can scale per-shot without mutating constants)
@@ -360,7 +360,7 @@
 
         // Cap accumulation so burst fire feels punchy without going totally off-screen.
         // Slightly higher cap now that recoil ramps per-shot.
-        window.__camKickPitch = Math.min(0.52, window.__camKickPitch + r.pitchKick);
+        window.__camKickPitch = Math.min(0.62, window.__camKickPitch + r.pitchKick);
         window.__camKickYaw   = Math.max(-0.28, Math.min(0.28, window.__camKickYaw + yawKick));
 
         // Camera position punch (visual only): a tiny backward + upward jolt.
@@ -370,15 +370,15 @@
           : (weapon === 'rocket' || weapon === 'tank') ? 0.26
           : (weapon === 'minigun') ? 0.08
           : (weapon === 'fart') ? 0.04
-          : 0.14; // rifle
+          : 0.18; // rifle (more punch so recoil reads instantly on iPhone)
         const posY = (weapon === 'shotgun') ? 0.07
           : (weapon === 'sniper') ? 0.05
           : (weapon === 'rocket' || weapon === 'tank') ? 0.10
           : (weapon === 'minigun') ? 0.03
           : (weapon === 'fart') ? 0.02
-          : 0.06; // rifle
-        window.__camPosKickZ = Math.min(0.34, window.__camPosKickZ + posZ);
-        window.__camPosKickY = Math.min(0.16, window.__camPosKickY + posY);
+          : 0.075; // rifle
+        window.__camPosKickZ = Math.min(0.42, window.__camPosKickZ + posZ);
+        window.__camPosKickY = Math.min(0.20, window.__camPosKickY + posY);
         // Impulses help the kick read instantly (especially if dt fluctuates).
         window.__camPosKickVelZ -= posZ * 30.0;
         window.__camPosKickVelY += posY * 26.0;
