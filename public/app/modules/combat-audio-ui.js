@@ -209,13 +209,16 @@
       // gunLift: lift viewmodel up (y)
       // gunSide: small sideways shove (x)
       // rollKick: tiny roll torque so the gun feels like it twists in your hands
-      rifle:   { gunKick: 0.600, gunLift: 0.110, gunSide: 0.022, rollKick: 0.080, pitchKick: 0.400, yawKick: 0.0300, flashScale: 1.05, holdMs: 320 },
-      shotgun: { gunKick: 0.410, gunLift: 0.084, gunSide: 0.024, rollKick: 0.105, pitchKick: 0.230, yawKick: 0.0205, flashScale: 1.90, holdMs: 220 },
-      sniper:  { gunKick: 0.370, gunLift: 0.060, gunSide: 0.007, rollKick: 0.032, pitchKick: 0.235, yawKick: 0.0052, flashScale: 1.55, holdMs: 240 },
-      fart:    { gunKick: 0.070, gunLift: 0.020, gunSide: 0.007, rollKick: 0.016, pitchKick: 0.028, yawKick: 0.0070, flashScale: 0.75, holdMs: 140 },
-      minigun: { gunKick: 0.150, gunLift: 0.038, gunSide: 0.016, rollKick: 0.070, pitchKick: 0.060, yawKick: 0.0125, flashScale: 2.10, holdMs: 90 },
-      rocket:  { gunKick: 0.300, gunLift: 0.072, gunSide: 0.024, rollKick: 0.092, pitchKick: 0.125, yawKick: 0.0170, flashScale: 2.20, holdMs: 240 },
-      tank:    { gunKick: 0.400, gunLift: 0.082, gunSide: 0.032, rollKick: 0.105, pitchKick: 0.150, yawKick: 0.0200, flashScale: 4.50, holdMs: 260 },
+      // More readable kick across camera + viewmodel (especially on iPhone):
+      // - rifle: big satisfying tap-kick
+      // - minigun: rapid micro-kicks that still read in a still frame
+      rifle:   { gunKick: 0.760, gunLift: 0.132, gunSide: 0.026, rollKick: 0.090, pitchKick: 0.480, yawKick: 0.0360, flashScale: 1.05, holdMs: 360 },
+      shotgun: { gunKick: 0.520, gunLift: 0.102, gunSide: 0.028, rollKick: 0.120, pitchKick: 0.290, yawKick: 0.0235, flashScale: 1.90, holdMs: 260 },
+      sniper:  { gunKick: 0.420, gunLift: 0.068, gunSide: 0.008, rollKick: 0.036, pitchKick: 0.265, yawKick: 0.0060, flashScale: 1.55, holdMs: 260 },
+      fart:    { gunKick: 0.080, gunLift: 0.022, gunSide: 0.008, rollKick: 0.018, pitchKick: 0.032, yawKick: 0.0080, flashScale: 0.75, holdMs: 150 },
+      minigun: { gunKick: 0.205, gunLift: 0.050, gunSide: 0.018, rollKick: 0.082, pitchKick: 0.078, yawKick: 0.0145, flashScale: 2.10, holdMs: 110 },
+      rocket:  { gunKick: 0.340, gunLift: 0.078, gunSide: 0.026, rollKick: 0.098, pitchKick: 0.140, yawKick: 0.0185, flashScale: 2.20, holdMs: 260 },
+      tank:    { gunKick: 0.440, gunLift: 0.086, gunSide: 0.034, rollKick: 0.110, pitchKick: 0.160, yawKick: 0.0210, flashScale: 4.50, holdMs: 280 },
     };
 
     // Recoil is rendered client-side only (does NOT affect server aim/look).
