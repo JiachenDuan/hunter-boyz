@@ -1263,6 +1263,61 @@
           bottomPlate.parent = tkPivot;
           bottomPlate.position.set(0, -0.32, 0.28);
 
+          // ── Task #11: TANK tracks (first-person cockpit, visual only) ─────────
+          // Add visible tread belts on the lower left/right so the tank feels like
+          // a vehicle (not just a big gun). Texture scroll is driven in controls-loop
+          // based on tank movement speed.
+          const trackTex = new BABYLON.DynamicTexture(`tk_track_tex_${kind}`, { width: 256, height: 64 }, scene, false);
+          try {
+            const ctx = trackTex.getContext();
+            ctx.clearRect(0, 0, 256, 64);
+            // Base rubber
+            ctx.fillStyle = '#1b1e22';
+            ctx.fillRect(0, 0, 256, 64);
+            // Tread pattern: repeating chevrons
+            for (let x = -64; x < 256 + 64; x += 28) {
+              ctx.fillStyle = 'rgba(80, 86, 92, 0.65)';
+              ctx.beginPath();
+              ctx.moveTo(x, 64);
+              ctx.lineTo(x + 18, 0);
+              ctx.lineTo(x + 28, 0);
+              ctx.lineTo(x + 10, 64);
+              ctx.closePath();
+              ctx.fill();
+
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+              ctx.fillRect(x + 6, 6, 2, 52);
+            }
+            // Edge grime
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
+            ctx.fillRect(0, 0, 256, 6);
+            ctx.fillRect(0, 58, 256, 6);
+            trackTex.update(false);
+          } catch {}
+          trackTex.wrapU = BABYLON.Texture.WRAP_ADDRESSMODE;
+          trackTex.wrapV = BABYLON.Texture.WRAP_ADDRESSMODE;
+          trackTex.uScale = 3.0;
+          trackTex.vScale = 1.0;
+
+          const trackMat = new BABYLON.StandardMaterial(`tk_track_mat_${kind}`, scene);
+          trackMat.diffuseTexture = trackTex;
+          trackMat.emissiveColor = new BABYLON.Color3(0.004, 0.004, 0.004);
+          trackMat.specularColor = new BABYLON.Color3(0.06, 0.06, 0.06);
+
+          const trackL = BABYLON.MeshBuilder.CreateBox(`tk_trackL_${kind}`, { width: 0.12, height: 0.14, depth: 0.56 }, scene);
+          trackL.material = trackMat;
+          trackL.parent = tkPivot;
+          trackL.position.set(-0.46, -0.29, 0.30);
+
+          const trackR = BABYLON.MeshBuilder.CreateBox(`tk_trackR_${kind}`, { width: 0.12, height: 0.14, depth: 0.56 }, scene);
+          trackR.material = trackMat;
+          trackR.parent = tkPivot;
+          trackR.position.set(0.46, -0.29, 0.30);
+
+          // Expose to render loop for texture scroll (per-player speed).
+          g.metadata = g.metadata || {};
+          g.metadata._tankTrackTex = trackTex;
+
           // Expose pivot so controls loop can apply turret rotation inertia.
           g.metadata = g.metadata || {};
           g.metadata._tankTurretPivot = tkPivot;

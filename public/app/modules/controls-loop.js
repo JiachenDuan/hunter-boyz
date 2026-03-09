@@ -1658,6 +1658,26 @@
         }
       } catch {}
 
+      // ── Task #11: TANK tracks (visual only) ──
+      // Scroll the tread texture based on tank movement speed so you *feel* motion even
+      // in first-person cockpit view.
+      try {
+        const meState = lastServerState?.players?.find(p => p.id === myId);
+        const inTank = meState?.vehicle === 'tank';
+        if (inTank && fpRig?.guns?.tank?.metadata?._tankTrackTex) {
+          const tex = fpRig.guns.tank.metadata._tankTrackTex;
+          const vx = Number(meState?.vx || 0);
+          const vz = Number(meState?.vz || 0);
+          const speed = Math.min(14, Math.hypot(vx, vz));
+
+          // Base idle crawl + speed scaling. uOffset wraps automatically.
+          const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
+          const dir = (speed > 0.15) ? 1 : 1; // placeholder for future reverse gear
+          const scroll = (0.15 + (speed / 14) * 1.85) * dt * dir;
+          tex.uOffset = (tex.uOffset + scroll) % 1;
+        }
+      } catch {}
+
       // Smooth remote players
       for (const [id, mesh] of players.entries()) {
         if (id === myId) continue;
