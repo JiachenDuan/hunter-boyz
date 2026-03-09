@@ -1391,6 +1391,54 @@
 
         camera.rotation.x = basePitch + window.__camKickPitch;
         camera.rotation.y = baseYaw + window.__camKickYaw;
+
+        // ── Task #2: GUN screen shake (visual-only) ──
+        // Apply a short high-frequency micro-jitter on top of recoil.
+        // (Reticle stays centered; the world shakes under it.)
+        try {
+          const until = (typeof window.__hbGunShakeUntil === 'number') ? window.__hbGunShakeUntil : 0;
+          if (until > now) {
+            const seed = (typeof window.__hbGunShakeSeed === 'number') ? window.__hbGunShakeSeed : 0;
+            const ampP = (typeof window.__hbGunShakePitch === 'number') ? window.__hbGunShakePitch : 0;
+            const ampY = (typeof window.__hbGunShakeYaw === 'number') ? window.__hbGunShakeYaw : 0;
+
+            const t = now * 0.001;
+            // Two-frequency mix so it feels gritty instead of sine-wave smooth.
+            const n1 = Math.sin(t * 68.0 + seed * 1.7);
+            const n2 = Math.sin(t * 121.0 + seed * 0.9 + 2.1);
+            const n = (n1 * 0.65 + n2 * 0.35);
+
+            // Ease out over time.
+            const a = Math.max(0, Math.min(1, (until - now) / 140));
+            const ease = a * a;
+
+            camera.rotation.x += n * ampP * ease;
+            camera.rotation.y += (n2 - n1) * 0.5 * ampY * ease;
+
+            // Screen-space shake: nudge both canvas + HUD a few pixels.
+            // This makes shake instantly *visible* on iPhone and in a still screenshot.
+            try {
+              const canvas = document.getElementById('renderCanvas');
+              const ui = document.getElementById('ui');
+              const px = 220; // radians-ish → pixels (tuned for iPhone @ deviceScaleFactor 3)
+              const dx = Math.max(-10, Math.min(10, (n2 - n1) * 0.5 * ampY * ease * px));
+              const dy = Math.max(-14, Math.min(14, (n) * ampP * ease * px));
+              const tf = `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0)`;
+              if (canvas) canvas.style.transform = tf;
+              if (ui) ui.style.transform = tf;
+            } catch {}
+          } else {
+            // Clear + reset.
+            window.__hbGunShakePitch = 0;
+            window.__hbGunShakeYaw = 0;
+            try {
+              const canvas = document.getElementById('renderCanvas');
+              const ui = document.getElementById('ui');
+              if (canvas) canvas.style.transform = 'none';
+              if (ui) ui.style.transform = 'none';
+            } catch {}
+          }
+        } catch {}
       } catch {}
 
       // FOV recoil punch: apply a tiny springy widen-and-return on top of whatever

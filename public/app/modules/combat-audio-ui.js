@@ -372,6 +372,34 @@
         window.__camKickVelPitch += (r.pitchKick || 0) * velMultPitch;
         window.__camKickVelYaw   += (yawKick || 0) * velMultYaw;
 
+        // ── Task #2: GUN screen shake (visual-only) ──
+        // Separate from recoil: recoil is a *patterned kick*; shake is a short, gritty
+        // micro-jitter that sells power on iPhone (and reads in a still screenshot).
+        try {
+          if (typeof window.__hbGunShakePitch !== 'number') window.__hbGunShakePitch = 0;
+          if (typeof window.__hbGunShakeYaw !== 'number') window.__hbGunShakeYaw = 0;
+
+          const base = (weapon === 'shotgun') ? 0.020
+            : (weapon === 'sniper') ? 0.014
+            : (weapon === 'rocket' || weapon === 'tank') ? 0.028
+            : (weapon === 'minigun') ? 0.010
+            : (weapon === 'fart') ? 0.005
+            : 0.016; // rifle
+
+          // Scale lightly with recoil mult so short bursts feel more violent.
+          const add = Math.min(0.040, base * (0.80 + (mult - 1.0) * 0.40));
+
+          // Accumulate but clamp so it never gets nauseating.
+          window.__hbGunShakePitch = Math.min(0.055, window.__hbGunShakePitch + add);
+          window.__hbGunShakeYaw   = Math.min(0.040, window.__hbGunShakeYaw + add * 0.65);
+
+          const now3 = performance.now();
+          window.__hbGunShakeUntil = Math.max(window.__hbGunShakeUntil || 0, now3 + 140);
+
+          // Nudge a seed so consecutive shots don't look identical.
+          window.__hbGunShakeSeed = ((window.__hbGunShakeSeed || 0) + 1) % 997;
+        } catch {}
+
         // ── FOV punch (visual-only) ──
         // A tiny "lens punch" makes recoil feel weightier on mobile without needing
         // extra screen shake. This does not affect server aim.

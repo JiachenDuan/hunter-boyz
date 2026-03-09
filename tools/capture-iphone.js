@@ -214,7 +214,7 @@ async function main(){
         if (hud) hud.style.display = 'block';
         const log = document.getElementById('log');
         if (!log) return;
-        log.textContent = '💥 TANK DESTROYED: big explosion flash + lingering smoke';
+        log.textContent = '🫨 GUN SCREEN SHAKE: HUD + world jitter on shot (visual-only)';
         log.style.display = 'block';
         log.style.position = 'fixed';
         log.style.left = '10px';
