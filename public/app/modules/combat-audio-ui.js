@@ -237,26 +237,32 @@
         : 1.05;
 
       try {
+        // Recoil should read as an *upward* punch (muzzle climb) even in a single still.
+        // We keep this a UI pulse so it never affects aim; screen shake is task #2.
+        const yKickPx = Math.round(10 * scale);
+
         _recoilPulseEl.style.transition = 'none';
         _recoilPulseEl.style.opacity = '1';
-        _recoilPulseEl.style.transform = `translate(-50%,-50%) scale(${(0.82 * scale).toFixed(3)})`;
-        _recoilPulseEl.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.20), 0 0 30px rgba(255,240,120,0.14)';
-        _recoilPulseEl.style.borderColor = 'rgba(255,255,255,0.30)';
+        _recoilPulseEl.style.transform = `translate(-50%,-50%) translateY(${-yKickPx}px) scale(${(0.80 * scale).toFixed(3)})`;
+        _recoilPulseEl.style.border = '3px solid rgba(255,255,255,0.34)';
+        _recoilPulseEl.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.26), 0 0 40px rgba(255,240,120,0.18)';
+        _recoilPulseEl.style.mixBlendMode = 'screen';
       } catch {}
 
-      // Quick expand + fade (with enough tail to catch in an automated iPhone snap).
+      // Expand + fade (long enough tail so our automated iPhone snap reliably catches it).
       _recoilPulseTimer = setTimeout(() => {
         try {
-          _recoilPulseEl.style.transition = 'opacity 520ms ease-out 0ms, transform 520ms ease-out 0ms, box-shadow 520ms ease-out 0ms';
+          const yTailPx = Math.round(26 * scale);
+          _recoilPulseEl.style.transition = 'opacity 650ms ease-out 0ms, transform 650ms ease-out 0ms, box-shadow 650ms ease-out 0ms';
           _recoilPulseEl.style.opacity = '0';
-          _recoilPulseEl.style.transform = `translate(-50%,-50%) scale(${(1.48 * scale).toFixed(3)})`;
-          _recoilPulseEl.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.06), 0 0 14px rgba(255,240,120,0.06)';
+          _recoilPulseEl.style.transform = `translate(-50%,-50%) translateY(${-yTailPx}px) scale(${(1.62 * scale).toFixed(3)})`;
+          _recoilPulseEl.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.07), 0 0 18px rgba(255,240,120,0.08)';
         } catch {}
-      }, 95);
+      }, 140);
 
       setTimeout(() => {
         try { _recoilPulseEl.style.transition = 'none'; } catch {}
-      }, 700);
+      }, 860);
     }
 
     function showHitmarker() {
