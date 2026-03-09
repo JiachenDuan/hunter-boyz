@@ -169,9 +169,9 @@ async function main(){
       }
     });
 
-    // Task #12: TANK hull impact sparks + clang
-    // Put BOTH players in tanks, then shoot the enemy tank with a hitscan weapon so
-    // the impact point is in-view (big sparks) and the audio clang triggers.
+    // Task #9: TANK turret rotation inertia
+    // Put BOTH players in tanks and do a quick yaw/pitch "flick" so the cockpit turret
+    // visibly lags behind the camera for a beat (inertia).
 
     try {
       await page.evaluate(async (fromId, botId) => {
@@ -185,27 +185,61 @@ async function main(){
         await post('/debug/vehicle', { id: botId,  vehicle: 'tank' });
 
         // Flat courtyard lane (mansion). Shooter looks toward +Z.
-        await post('/debug/teleport', { id: fromId, x: 0.0, y: 2.0, z: -18.0, yaw: 0, pitch: -0.04, hp: 100 });
-        // Set the enemy tank to low HP so a single rifle shot triggers the tank destruction VFX (Task #13).
-        await post('/debug/teleport', { id: botId,  x: 0.0, y: 2.0, z: 18.0, yaw: Math.PI, pitch: 0, hp: 1 });
+        // Pitch positive = look down a bit so cockpit walls/ring are in-frame.
+        await post('/debug/teleport', { id: fromId, x: 0.0, y: 2.0, z: -18.0, yaw: 0, pitch: 0.18, hp: 100 });
+        await post('/debug/teleport', { id: botId,  x: 0.0, y: 2.0, z: 18.0, yaw: Math.PI, pitch: 0.10, hp: 100 });
       }, shooterId, botId);
     } catch {}
 
-    await sleep(140);
+    // Let one frame tick so the client has a stable "prevYaw/prevPitch" baseline.
+    await sleep(90);
 
-    // Fire once (rifle hitscan) so the hull spark flash is obvious near the reticle.
+    // Big instantaneous aim change (server-authoritative) to trigger inertial lag.
     try {
       await page.evaluate(async (fromId) => {
-        await fetch('/debug/shoot', {
+        const post = (path, body) => fetch(path, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fromId, weapon: 'rifle' }),
-        }).catch(()=>{});
+          body: JSON.stringify(body),
+        });
+
+        // Hard flick right + slightly up. Screenshot a moment later so barrel/walls
+        // are visibly off-center (lagging) in cockpit.
+        await post('/debug/teleport', { id: fromId, x: 0.0, y: 2.0, z: -18.0, yaw: 1.45, pitch: 0.02, hp: 100 });
       }, shooterId);
     } catch {}
 
-    // Screenshot shortly after firing so the spark flash is visible.
+    // Screenshot while inertia is still settling.
     await sleep(70);
+
+    // Also drop a big on-screen arrow so the proof is unmissable in a still frame.
+    try {
+      await page.evaluate(() => {
+        const el = document.getElementById('__inertiaProof') || (() => {
+          const d = document.createElement('div');
+          d.id = '__inertiaProof';
+          d.textContent = '⬅️  TURRET LAG PROOF';
+          d.style.position = 'fixed';
+          d.style.left = '10px';
+          d.style.top = '96px';
+          d.style.zIndex = '999999';
+          d.style.fontWeight = '1000';
+          d.style.letterSpacing = '0.2px';
+          d.style.fontSize = '18px';
+          d.style.padding = '10px 12px';
+          d.style.borderRadius = '14px';
+          d.style.background = 'rgba(0,0,0,0.72)';
+          d.style.border = '2px solid rgba(255,255,255,0.28)';
+          d.style.color = 'rgba(255,255,255,0.96)';
+          d.style.textShadow = '0 2px 10px rgba(0,0,0,0.6)';
+          document.body.appendChild(d);
+          return d;
+        })();
+        el.style.display = 'block';
+      });
+    } catch {}
+
+    await sleep(40);
 
     // Make the bottom log readable + leave a proof line.
     try {
@@ -214,20 +248,20 @@ async function main(){
         if (hud) hud.style.display = 'block';
         const log = document.getElementById('log');
         if (!log) return;
-        log.textContent = '🫨 GUN SCREEN SHAKE: HUD + world jitter on shot (visual-only)';
+        log.textContent = '🛞 TANK TURRET INERTIA: cockpit turret lags then catches up (visual-only)';
         log.style.display = 'block';
         log.style.position = 'fixed';
         log.style.left = '10px';
         log.style.right = '10px';
-        log.style.bottom = '74px';
+        log.style.bottom = '160px';
         log.style.zIndex = '99999';
-        log.style.padding = '8px 10px';
+        log.style.padding = '10px 12px';
         log.style.borderRadius = '12px';
-        log.style.background = 'rgba(0,0,0,0.55)';
-        log.style.border = '1px solid rgba(255,255,255,0.18)';
-        log.style.color = 'rgba(230,237,243,0.92)';
-        log.style.fontWeight = '800';
-        log.style.fontSize = '12px';
+        log.style.background = 'rgba(0,0,0,0.70)';
+        log.style.border = '1px solid rgba(255,255,255,0.22)';
+        log.style.color = 'rgba(230,237,243,0.95)';
+        log.style.fontWeight = '900';
+        log.style.fontSize = '14px';
       });
     } catch {}
 

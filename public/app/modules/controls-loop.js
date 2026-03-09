@@ -1319,16 +1319,18 @@
 
           // ── Task #9: TANK turret rotation inertia (visual only) ──
           // When in the tank, give the visible turret/cannon a springy "weight" when
-          // flick-aiming left/right. This is purely cockpit feel (server aim stays 1:1).
+          // flick-aiming left/right *and* up/down. This is purely cockpit feel (server aim stays 1:1).
           try {
             const meVehicle = lastServerState?.players?.find(p => p.id === myId)?.vehicle;
             const tankGun = fpRig?.guns?.tank;
-            const pivot = tankGun?.metadata?._tankTurretPivot;
-            if (meVehicle === 'tank' && pivot) {
-              const s = pivot.metadata || (pivot.metadata = {});
+            const yawPivot = tankGun?.metadata?._tankTurretYawPivot || tankGun?.metadata?._tankTurretPivot;
+            const pitchPivot = tankGun?.metadata?._tankTurretPitchPivot;
+
+            if (meVehicle === 'tank' && yawPivot) {
+              const s = yawPivot.metadata || (yawPivot.metadata = {});
               if (typeof s._prevYaw !== 'number') s._prevYaw = state.look?.yaw || 0;
-              if (typeof s._off !== 'number') s._off = 0;
-              if (typeof s._vel !== 'number') s._vel = 0;
+              if (typeof s._yawOff !== 'number') s._yawOff = 0;
+              if (typeof s._yawVel !== 'number') s._yawVel = 0;
 
               const yawNow = state.look?.yaw || 0;
               let dy = yawNow - s._prevYaw;
@@ -1338,29 +1340,68 @@
 
               // Convert yaw delta into an inertial offset impulse.
               // Negative sign = turret lags behind your camera turn.
-              const impulse = -dy * 0.85;
-              s._vel += impulse * 24.0;
+              const impulse = -dy * 1.15;
+              s._yawVel += impulse * 30.0;
 
               // Spring back to center (0) with damping.
-              const k = 58.0;
-              const c = 12.5;
-              s._vel += (-k * s._off - c * s._vel) * dt;
-              s._off += s._vel * dt;
+              const k = 72.0;
+              const c = 14.5;
+              s._yawVel += (-k * s._yawOff - c * s._yawVel) * dt;
+              s._yawOff += s._yawVel * dt;
 
-              // Clamp so it reads but never gets silly.
-              const maxOff = 0.22;
-              if (s._off > maxOff) { s._off = maxOff; s._vel *= 0.35; }
-              if (s._off < -maxOff) { s._off = -maxOff; s._vel *= 0.35; }
+              // Clamp so it reads clearly on iPhone without getting silly.
+              const maxYawOff = 0.32;
+              if (s._yawOff > maxYawOff) { s._yawOff = maxYawOff; s._yawVel *= 0.35; }
+              if (s._yawOff < -maxYawOff) { s._yawOff = -maxYawOff; s._yawVel *= 0.35; }
 
-              pivot.rotation.y = s._off;
-            } else if (pivot) {
-              // Ensure we don't carry offset when leaving the tank.
-              pivot.rotation.y = 0;
-              try {
-                const s = pivot.metadata || (pivot.metadata = {});
-                s._off = 0; s._vel = 0;
-                s._prevYaw = state.look?.yaw || 0;
-              } catch {}
+              yawPivot.rotation.y = s._yawOff;
+
+              // Barrel pitch inertia (if pitch pivot exists)
+              if (pitchPivot) {
+                const ps = pitchPivot.metadata || (pitchPivot.metadata = {});
+                if (typeof ps._prevPitch !== 'number') ps._prevPitch = state.look?.pitch || 0;
+                if (typeof ps._pitchOff !== 'number') ps._pitchOff = 0;
+                if (typeof ps._pitchVel !== 'number') ps._pitchVel = 0;
+
+                const pitchNow = state.look?.pitch || 0;
+                let dp = pitchNow - ps._prevPitch;
+                while (dp > Math.PI) dp -= Math.PI * 2;
+                while (dp < -Math.PI) dp += Math.PI * 2;
+                ps._prevPitch = pitchNow;
+
+                // Positive pitch delta (look down) should make the barrel lag (feel heavy).
+                const pImpulse = -dp * 0.95;
+                ps._pitchVel += pImpulse * 26.0;
+
+                const pk = 66.0;
+                const pc = 13.0;
+                ps._pitchVel += (-pk * ps._pitchOff - pc * ps._pitchVel) * dt;
+                ps._pitchOff += ps._pitchVel * dt;
+
+                const maxPitchOff = 0.16;
+                if (ps._pitchOff > maxPitchOff) { ps._pitchOff = maxPitchOff; ps._pitchVel *= 0.35; }
+                if (ps._pitchOff < -maxPitchOff) { ps._pitchOff = -maxPitchOff; ps._pitchVel *= 0.35; }
+
+                pitchPivot.rotation.x = ps._pitchOff;
+              }
+            } else {
+              // Ensure we don't carry offsets when leaving the tank.
+              if (yawPivot) {
+                yawPivot.rotation.y = 0;
+                try {
+                  const s = yawPivot.metadata || (yawPivot.metadata = {});
+                  s._yawOff = 0; s._yawVel = 0;
+                  s._prevYaw = state.look?.yaw || 0;
+                } catch {}
+              }
+              if (pitchPivot) {
+                pitchPivot.rotation.x = 0;
+                try {
+                  const ps = pitchPivot.metadata || (pitchPivot.metadata = {});
+                  ps._pitchOff = 0; ps._pitchVel = 0;
+                  ps._prevPitch = state.look?.pitch || 0;
+                } catch {}
+              }
             }
           } catch {}
         }
