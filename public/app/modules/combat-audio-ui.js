@@ -181,11 +181,13 @@
         d.style.left = '50%';
         d.style.top = '50%';
         d.style.transform = 'translate(-50%,-50%) scale(0.85)';
-        d.style.width = '118px';
-        d.style.height = '118px';
+        // Bigger + brighter so recoil reads instantly on iPhone (and in a single still screenshot).
+        d.style.width = '148px';
+        d.style.height = '148px';
         d.style.borderRadius = '999px';
-        d.style.border = '2px solid rgba(255,255,255,0.28)';
-        d.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.18), 0 0 26px rgba(255,240,120,0.12)';
+        d.style.border = '3px solid rgba(255,255,255,0.30)';
+        d.style.background = 'radial-gradient(circle at 50% 50%, rgba(255,240,120,0.14) 0%, rgba(255,240,120,0.06) 32%, rgba(0,0,0,0.0) 64%)';
+        d.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.20), 0 0 34px rgba(255,240,120,0.16)';
         d.style.pointerEvents = 'none';
         d.style.zIndex = '9997';
         d.style.opacity = '0';
@@ -249,20 +251,21 @@
         _recoilPulseEl.style.mixBlendMode = 'screen';
       } catch {}
 
-      // Expand + fade (long enough tail so our automated iPhone snap reliably catches it).
+      // Expand + fade (extra-long tail so our automated iPhone snap reliably catches it).
       _recoilPulseTimer = setTimeout(() => {
         try {
-          const yTailPx = Math.round(26 * scale);
-          _recoilPulseEl.style.transition = 'opacity 650ms ease-out 0ms, transform 650ms ease-out 0ms, box-shadow 650ms ease-out 0ms';
+          const yTailPx = Math.round(30 * scale);
+          _recoilPulseEl.style.transition = 'opacity 980ms ease-out 0ms, transform 980ms ease-out 0ms, box-shadow 980ms ease-out 0ms, filter 980ms ease-out 0ms';
           _recoilPulseEl.style.opacity = '0';
-          _recoilPulseEl.style.transform = `translate(-50%,-50%) translateY(${-yTailPx}px) scale(${(1.62 * scale).toFixed(3)})`;
-          _recoilPulseEl.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.07), 0 0 18px rgba(255,240,120,0.08)';
+          _recoilPulseEl.style.transform = `translate(-50%,-50%) translateY(${-yTailPx}px) scale(${(1.78 * scale).toFixed(3)})`;
+          _recoilPulseEl.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.06), 0 0 22px rgba(255,240,120,0.10)';
+          _recoilPulseEl.style.filter = 'blur(0.2px)';
         } catch {}
       }, 140);
 
       setTimeout(() => {
-        try { _recoilPulseEl.style.transition = 'none'; } catch {}
-      }, 860);
+        try { _recoilPulseEl.style.transition = 'none'; _recoilPulseEl.style.filter = 'none'; } catch {}
+      }, 1180);
     }
 
     function showHitmarker() {
