@@ -212,7 +212,7 @@
       // More readable kick across camera + viewmodel (especially on iPhone):
       // - rifle: big satisfying tap-kick
       // - minigun: rapid micro-kicks that still read in a still frame
-      rifle:   { gunKick: 1.350, gunLift: 0.235, gunSide: 0.040, rollKick: 0.135, pitchKick: 0.880, yawKick: 0.0600, flashScale: 1.05, holdMs: 520 },
+      rifle:   { gunKick: 1.650, gunLift: 0.270, gunSide: 0.045, rollKick: 0.160, pitchKick: 1.020, yawKick: 0.0650, flashScale: 1.05, holdMs: 620 },
       shotgun: { gunKick: 0.560, gunLift: 0.112, gunSide: 0.030, rollKick: 0.128, pitchKick: 0.310, yawKick: 0.0250, flashScale: 1.90, holdMs: 280 },
       sniper:  { gunKick: 0.450, gunLift: 0.072, gunSide: 0.009, rollKick: 0.038, pitchKick: 0.285, yawKick: 0.0065, flashScale: 1.55, holdMs: 280 },
       fart:    { gunKick: 0.090, gunLift: 0.024, gunSide: 0.008, rollKick: 0.018, pitchKick: 0.034, yawKick: 0.0080, flashScale: 0.75, holdMs: 150 },
@@ -417,7 +417,7 @@
               : (weapon === 'rocket' || weapon === 'tank') ? 60
               : (weapon === 'minigun') ? 22
               : (weapon === 'fart') ? 12
-              : 44; // rifle
+              : 52; // rifle (more bloom so a single tap reads clearly on iPhone)
             const add = bloom + Math.round((mult - 1.0) * 18);
             window.__hbReticleBloom = Math.min(64, (window.__hbReticleBloom || 0) + add);
             window.__hbReticleBloomVel += add * 28.0;
