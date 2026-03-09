@@ -563,13 +563,13 @@
               bar.style.left = '0';
               bar.style.top = '0';
               bar.style.right = '0';
-              bar.style.height = '18px';
+              bar.style.height = '24px';
               bar.style.zIndex = '99999';
               bar.style.pointerEvents = 'none';
               bar.style.opacity = '0';
               // Hot muzzle-ish gradient, center-weighted.
               bar.style.background = 'linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(255,220,120,0.00) 15%, rgba(255,240,120,0.92) 50%, rgba(255,220,120,0.00) 85%, rgba(0,0,0,0) 100%)';
-              bar.style.filter = 'drop-shadow(0 2px 10px rgba(255,200,90,0.45))';
+              bar.style.filter = 'drop-shadow(0 3px 14px rgba(255,200,90,0.55))';
               bar.style.mixBlendMode = 'screen';
               bar.style.willChange = 'transform, opacity';
               document.body.appendChild(bar);
@@ -614,7 +614,7 @@
               vg.style.willChange = 'opacity, transform';
               vg.style.mixBlendMode = 'screen';
               // Edge-only glow (center mostly transparent so it doesn't fight the reticle).
-              vg.style.background = 'radial-gradient(circle at 50% 55%, rgba(255,240,120,0.00) 0%, rgba(255,240,120,0.00) 45%, rgba(255,160,80,0.10) 65%, rgba(255,220,120,0.18) 78%, rgba(255,240,120,0.22) 100%)';
+              vg.style.background = 'radial-gradient(circle at 50% 55%, rgba(255,240,120,0.00) 0%, rgba(255,240,120,0.00) 42%, rgba(255,160,80,0.14) 62%, rgba(255,220,120,0.26) 78%, rgba(255,240,120,0.34) 100%)';
               document.body.appendChild(vg);
             }
 
@@ -628,7 +628,7 @@
 
             if (vg._t) { clearTimeout(vg._t); vg._t = null; }
             vg.style.transition = 'none';
-            vg.style.opacity = String(Math.min(0.65, 0.34 * mag));
+            vg.style.opacity = String(Math.min(0.82, 0.42 * mag));
             vg.style.transform = `scale(${(1.0 + 0.02 * mag).toFixed(4)})`;
             requestAnimationFrame(() => {
               vg.style.transition = 'opacity 620ms ease-out, transform 620ms cubic-bezier(0.15,0.9,0.2,1)';
