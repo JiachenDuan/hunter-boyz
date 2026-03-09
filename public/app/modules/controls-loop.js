@@ -1212,9 +1212,11 @@
 
           const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
 
-          // Stiffer spring for position, slightly softer for rotation.
-          const kPos = 120, cPos = 22;
-          const kRot = 92,  cRot = 18;
+          // Task #1: GUN recoil recovery (visual only)
+          // Loosen the springs a bit so the kick is readable (especially on iPhone)
+          // and lingers into the early reload pose for clear visual proof.
+          const kPos = 78, cPos = 15;
+          const kRot = 60, cRot = 13;
 
           // Integrate toward 0 in offset space.
           md._rVelPosX += (-kPos * md._rPosX - cPos * md._rVelPosX) * dt;
@@ -1306,10 +1308,12 @@
 
         // Integrate spring toward 0 (recovery). Clamp dt so tab hitches don't explode.
         const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
-        const kPitch = 62; // spring strength
-        const cPitch = 16; // damping
-        const kYaw = 55;
-        const cYaw = 15;
+        // Task #1: GUN recoil camera recovery (visual only)
+        // Slightly slower return so the kick feels weightier, but still settles fast.
+        const kPitch = 44; // spring strength
+        const cPitch = 13; // damping
+        const kYaw = 40;
+        const cYaw = 12;
 
         window.__camKickVelPitch += (-kPitch * window.__camKickPitch - cPitch * window.__camKickVelPitch) * dt;
         window.__camKickVelYaw   += (-kYaw   * window.__camKickYaw   - cYaw   * window.__camKickVelYaw)   * dt;
