@@ -704,54 +704,87 @@ function spawnDent(pos, normal, size, kind) {
         // or fast weapon-switching never accumulates multiple lines.
         try {
           if (!window.__lastTracerByWeapon) window.__lastTracerByWeapon = {};
-          // Dispose ALL active tracers (any weapon) before drawing new one
+          // Dispose ALL active tracers (any weapon) before drawing a new one.
+          // Task #7: GUN bullet tracers (major + readable on iPhone)
           for (const k of Object.keys(window.__lastTracerByWeapon)) {
             const prev = window.__lastTracerByWeapon[k];
-            if (prev && !prev.isDisposed?.()) { try { prev.dispose(); } catch {} }
+            const list = Array.isArray(prev) ? prev : [prev];
+            for (const m of list) {
+              if (m && !m.isDisposed?.()) { try { m.dispose(); } catch {} }
+            }
             delete window.__lastTracerByWeapon[k];
           }
         } catch {}
 
         const pts = segments[0];
         if (pts) {
-          // CreateLines renders as a ~1px line, which can get lost on iPhone captures.
-          // Switch to a thin emissive tube so tracers have real "body" and read clearly.
-          const radius = (wpn0 === 'sniper') ? 0.075 : (wpn0 === 'shotgun') ? 0.060 : (wpn0 === 'minigun') ? 0.050 : 0.055;
-          const tube = BABYLON.MeshBuilder.CreateTube('shot', {
-            path: pts,
-            radius,
-            cap: BABYLON.Mesh.CAP_ALL,
-            tessellation: 6,
-            updatable: false,
-          }, scene);
-          tube.isPickable = false;
+          // Two-layer tracer so it reads as a bright "core" with a softer halo.
+          // (Still cheap: two low-tess tubes, short TTL.)
+          const baseRadius = (wpn0 === 'sniper') ? 0.080 : (wpn0 === 'shotgun') ? 0.065 : (wpn0 === 'minigun') ? 0.052 : 0.058;
+          const coreRadius = Math.max(0.028, baseRadius * 0.55);
+          const haloRadius = baseRadius * 1.28;
 
-          const mat = new BABYLON.StandardMaterial('shotMat', scene);
-          // Emissive makes the tracer pop even in darker areas.
-          mat.emissiveColor = color.clone ? color.clone() : color;
-          mat.diffuseColor = new BABYLON.Color3(color.r * 0.25, color.g * 0.25, color.b * 0.25);
-          mat.specularColor = new BABYLON.Color3(0, 0, 0);
-          mat.alpha = (wpn0 === 'sniper') ? 0.95 : 0.90;
-          tube.material = mat;
+          const makeTube = (name, radius) => {
+            const t = BABYLON.MeshBuilder.CreateTube(name, {
+              path: pts,
+              radius,
+              cap: BABYLON.Mesh.CAP_ALL,
+              tessellation: 6,
+              updatable: false,
+            }, scene);
+            t.isPickable = false;
+            return t;
+          };
 
+          const core = makeTube('shotCore', coreRadius);
+          const halo = makeTube('shotHalo', haloRadius);
+
+          const coreMat = new BABYLON.StandardMaterial('shotCoreMat', scene);
+          coreMat.emissiveColor = color.clone ? color.clone() : color;
+          coreMat.diffuseColor = new BABYLON.Color3(color.r * 0.18, color.g * 0.18, color.b * 0.18);
+          coreMat.specularColor = new BABYLON.Color3(0, 0, 0);
+          coreMat.alpha = (wpn0 === 'sniper') ? 0.98 : 0.94;
+          core.material = coreMat;
+
+          const haloMat = new BABYLON.StandardMaterial('shotHaloMat', scene);
+          haloMat.emissiveColor = new BABYLON.Color3(
+            Math.min(1.0, color.r * 1.05),
+            Math.min(1.0, color.g * 1.05),
+            Math.min(1.0, color.b * 1.05)
+          );
+          haloMat.diffuseColor = new BABYLON.Color3(color.r * 0.08, color.g * 0.08, color.b * 0.08);
+          haloMat.specularColor = new BABYLON.Color3(0, 0, 0);
+          haloMat.alpha = (wpn0 === 'sniper') ? 0.38 : 0.32;
+          halo.material = haloMat;
+
+          // Keep strict "one tracer" policy by storing both meshes under the weapon key.
           try {
             if (!window.__lastTracerByWeapon) window.__lastTracerByWeapon = {};
-            window.__lastTracerByWeapon[wpn0] = tube;
+            window.__lastTracerByWeapon[wpn0] = [core, halo];
           } catch {}
 
           // Keep tracers around long enough to reliably show up in iPhone captures
           // (our capture script screenshots ~90ms after firing).
-          const ttl = (wpn0 === 'rifle') ? 240 : (wpn0 === 'minigun') ? 190 : (wpn0 === 'shotgun') ? 280 : (wpn0 === 'sniper') ? 360 : 240;
-          // Quick fade so it feels like a flash of velocity, not a lingering laser.
+          const ttl = (wpn0 === 'rifle') ? 260 : (wpn0 === 'minigun') ? 200 : (wpn0 === 'shotgun') ? 300 : (wpn0 === 'sniper') ? 380 : 260;
+
+          // Quick fade so it feels like a velocity streak, not a laser.
           const fade = [
-            [Math.max(20, Math.floor(ttl * 0.45)), mat.alpha * 0.70],
-            [Math.max(40, Math.floor(ttl * 0.70)), mat.alpha * 0.42],
+            [Math.max(20, Math.floor(ttl * 0.45)), 0.70],
+            [Math.max(50, Math.floor(ttl * 0.72)), 0.38],
             [ttl, 0.0],
           ];
           for (const [ms, a] of fade) {
-            setTimeout(() => { try { if (mat) mat.alpha = a; } catch {} }, ms);
+            setTimeout(() => {
+              try {
+                coreMat.alpha = ((wpn0 === 'sniper') ? 0.98 : 0.94) * a;
+                haloMat.alpha = ((wpn0 === 'sniper') ? 0.38 : 0.32) * a;
+              } catch {}
+            }, ms);
           }
-          setTimeout(() => { try { tube.dispose(); } catch {} }, ttl + 20);
+          setTimeout(() => {
+            try { core.dispose(); } catch {}
+            try { halo.dispose(); } catch {}
+          }, ttl + 20);
         }
       } else if (wpn0.startsWith('grenade_')) {
         // Grenade throw arc (visual only): curved line, not hitscan.
