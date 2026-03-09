@@ -400,6 +400,79 @@
         window.__camKickVelPitch += (r.pitchKick || 0) * velMultPitch;
         window.__camKickVelYaw   += (yawKick || 0) * velMultYaw;
 
+        // Task #1 (recoil): reticle bloom pulse so recoil reads even in a still frame.
+        // IMPORTANT: controls-loop owns reticle sizing every frame, so we drive the
+        // bloom via window.__hbReticleBloom impulses (not by setting ret.width directly).
+        // (Keeps aim honest; purely visual.)
+        try {
+          const scoped = (state?.scope === true) && (weapon === 'sniper');
+          if (!scoped) {
+            // Size bloom impulse (readable on iPhone)
+            if (typeof window.__hbReticleBloom !== 'number') window.__hbReticleBloom = 0;
+            if (typeof window.__hbReticleBloomVel !== 'number') window.__hbReticleBloomVel = 0;
+            const bloom = (weapon === 'shotgun') ? 54
+              : (weapon === 'sniper') ? 36
+              : (weapon === 'rocket' || weapon === 'tank') ? 60
+              : (weapon === 'minigun') ? 22
+              : (weapon === 'fart') ? 12
+              : 44; // rifle
+            const add = bloom + Math.round((mult - 1.0) * 18);
+            window.__hbReticleBloom = Math.min(64, (window.__hbReticleBloom || 0) + add);
+            window.__hbReticleBloomVel += add * 28.0;
+
+            // Hold the recoil/bloom for a beat so it shows up in automated iPhone capture.
+            const nowR = performance.now();
+            window.__hbReticleHoldUntil = Math.max(window.__hbReticleHoldUntil || 0, nowR + 520);
+
+            // Color pulse (optional but very visible). We reset after a short beat.
+            if (ret) {
+              clearTimeout(ret._hbBloomTimer);
+              ret.color = 'rgba(255,240,120,0.92)';
+              ret._hbBloomTimer = setTimeout(() => {
+                try { ret.color = 'rgba(255,255,255,0.65)'; } catch {}
+              }, 520);
+            }
+
+            // Extra-visible recoil cue for iPhone captures: a brief expanding ring overlay
+            // centered on the crosshair. (Still visual-only; does not affect aim.)
+            try {
+              const id = '__hbRecoilRing';
+              let el = document.getElementById(id);
+              if (!el) {
+                el = document.createElement('div');
+                el.id = id;
+                el.style.position = 'fixed';
+                el.style.left = '50%';
+                el.style.top = '50%';
+                el.style.width = '72px';
+                el.style.height = '72px';
+                el.style.marginLeft = '-36px';
+                el.style.marginTop = '-36px';
+                el.style.borderRadius = '999px';
+                el.style.border = '3px solid rgba(255,240,120,0.85)';
+                el.style.boxShadow = '0 0 18px rgba(255,240,120,0.35)';
+                el.style.pointerEvents = 'none';
+                el.style.zIndex = '99997';
+                el.style.opacity = '0';
+                document.body.appendChild(el);
+              }
+
+              if (el._t) { clearTimeout(el._t); el._t = null; }
+              el.style.transition = 'none';
+              el.style.opacity = '1';
+              el.style.transform = 'translate(-50%,-50%) scale(0.72)';
+              requestAnimationFrame(() => {
+                el.style.transition = 'transform 520ms cubic-bezier(0.2,0.9,0.2,1), opacity 520ms ease-out';
+                el.style.transform = 'translate(-50%,-50%) scale(1.20)';
+                el.style.opacity = '0';
+              });
+              el._t = setTimeout(() => {
+                try { el.style.transition = 'none'; el.style.opacity = '0'; } catch {}
+              }, 580);
+            } catch {}
+          }
+        } catch {}
+
         // ── Task #2: GUN screen shake (visual-only) ──
         // Separate from recoil: recoil is a *patterned kick*; shake is a short, gritty
         // micro-jitter that sells power on iPhone (and reads in a still screenshot).
