@@ -1222,10 +1222,24 @@
           // While recoil is on "hold", we intentionally recover a bit slower so the kick
           // is readable on mobile (and in our automated iPhone screenshot). Once hold expires,
           // we snap back quickly so the gun doesn't feel floaty.
-          const kPos = holdActive ? 18 : 36;
-          const cPos = holdActive ? 6 : 8;
-          const kRot = holdActive ? 16 : 30;
-          const cRot = holdActive ? 5 : 7;
+          //
+          // Major recoil feel upgrade (Task #1): weapon-specific spring tuning so each gun has
+          // a distinct weight + snap:
+          // - rifle: snappy return (CS-ish) with a tiny bit of bounce
+          // - minigun: tighter, high-frequency micro-recovery (doesn't smear)
+          // - rocket/tank: heavier, slower settle (big punch)
+          const w = String(window.__hbRecoilWeapon || 'rifle');
+          const tuned = (w === 'minigun') ? { kPos: 42, cPos: 10, kRot: 38, cRot: 9 }
+            : (w === 'shotgun') ? { kPos: 32, cPos: 9, kRot: 30, cRot: 8 }
+            : (w === 'sniper')  ? { kPos: 34, cPos: 9, kRot: 32, cRot: 8 }
+            : (w === 'rocket' || w === 'tank') ? { kPos: 24, cPos: 8, kRot: 22, cRot: 7 }
+            : (w === 'fart')    ? { kPos: 44, cPos: 11, kRot: 40, cRot: 10 }
+            : { kPos: 36, cPos: 9, kRot: 34, cRot: 8 }; // rifle
+
+          const kPos = holdActive ? Math.max(14, tuned.kPos * 0.55) : tuned.kPos;
+          const cPos = holdActive ? Math.max(5, tuned.cPos * 0.75) : tuned.cPos;
+          const kRot = holdActive ? Math.max(12, tuned.kRot * 0.55) : tuned.kRot;
+          const cRot = holdActive ? Math.max(4, tuned.cRot * 0.75) : tuned.cRot;
 
           // Integrate toward 0 in offset space.
           md._rVelPosX += (-kPos * md._rPosX - cPos * md._rVelPosX) * dt;

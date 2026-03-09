@@ -224,6 +224,8 @@
     // Recoil is rendered client-side only (does NOT affect server aim/look).
     // Stored on window so the render loop can apply/decay it every frame.
     function applyRecoil(weapon) {
+      // Remember last weapon that generated recoil so the render loop can tune spring recovery.
+      try { window.__hbRecoilWeapon = weapon; } catch {}
       const r0 = RECOIL[weapon] || RECOIL.rifle;
 
       // Recoil ramp: consecutive shots feel punchier (especially on auto weapons),
