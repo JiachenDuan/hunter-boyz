@@ -493,7 +493,8 @@
       // NOTE: Values are tuned to the actual scale of our fpRig (small offsets).
       // The previous values were effectively "mega" units and could push the viewmodel out of frame.
       // These are punchy on iPhone while staying readable + controlled.
-      rifle:   { gunKick: 0.235, gunLift: 0.070, gunSide: 0.032, rollKick: 0.100, pitchKick: 0.120, yawKick: 0.0180, flashScale: 1.05, holdMs: 760 },
+      // 2026-03-09 (Task #1 recoil): bump rifle kick so a single tap feels punchy + unmistakable on iPhone.
+      rifle:   { gunKick: 0.285, gunLift: 0.085, gunSide: 0.034, rollKick: 0.115, pitchKick: 0.155, yawKick: 0.0200, flashScale: 1.05, holdMs: 780 },
       shotgun: { gunKick: 0.185, gunLift: 0.056, gunSide: 0.018, rollKick: 0.078, pitchKick: 0.078, yawKick: 0.0105, flashScale: 1.90, holdMs: 320 },
       sniper:  { gunKick: 0.108, gunLift: 0.032, gunSide: 0.011, rollKick: 0.032, pitchKick: 0.058, yawKick: 0.0058, flashScale: 1.55, holdMs: 300 },
       fart:    { gunKick: 0.042, gunLift: 0.018, gunSide: 0.010, rollKick: 0.020, pitchKick: 0.020, yawKick: 0.0060, flashScale: 0.75, holdMs: 150 },
