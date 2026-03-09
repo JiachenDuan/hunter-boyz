@@ -1665,11 +1665,13 @@
         if (typeof window.__hbShakeBaseRotX !== 'number') window.__hbShakeBaseRotX = camera.rotation.x;
         if (typeof window.__hbShakeBaseRotY !== 'number') window.__hbShakeBaseRotY = camera.rotation.y;
         if (typeof window.__hbShakeBaseRotZ !== 'number') window.__hbShakeBaseRotZ = camera.rotation.z;
+        if (typeof window.__hbShakeBaseFov !== 'number') window.__hbShakeBaseFov = camera.fov;
 
         let trauma = (typeof window.__hbShakeTrauma === 'number') ? window.__hbShakeTrauma : 0;
         const kickAt = (typeof window.__hbShakeKickAt === 'number') ? window.__hbShakeKickAt : 0;
         let kickPitch = (typeof window.__hbShakeKickPitch === 'number') ? window.__hbShakeKickPitch : 0;
         let kickRoll = (typeof window.__hbShakeKickRoll === 'number') ? window.__hbShakeKickRoll : 0;
+        let kickFov = (typeof window.__hbShakeKickFov === 'number') ? window.__hbShakeKickFov : 0;
 
         const kickAge = (kickAt > 0) ? (now - kickAt) : 999999;
         // Keep the kick alive long enough to be visible in our automated iPhone capture
@@ -1684,6 +1686,7 @@
           window.__hbShakeBaseRotX = camera.rotation.x;
           window.__hbShakeBaseRotY = camera.rotation.y;
           window.__hbShakeBaseRotZ = camera.rotation.z;
+          window.__hbShakeBaseFov = camera.fov;
         }
 
         if (trauma > 0 || kickActive) {
@@ -1697,8 +1700,10 @@
           const kickDecay = Math.exp(-dt * 9.0);
           kickPitch *= kickDecay;
           kickRoll *= kickDecay;
+          kickFov *= Math.exp(-dt * 11.0);
           window.__hbShakeKickPitch = kickPitch;
           window.__hbShakeKickRoll = kickRoll;
+          window.__hbShakeKickFov = kickFov;
 
           const s = trauma * trauma; // non-linear: small values die quickly
           const seed = (typeof window.__hbShakeSeed === 'number') ? window.__hbShakeSeed : 0;
@@ -1724,6 +1729,10 @@
           camera.position.x = window.__hbShakeBasePosX + nx * s * 0.070;
           camera.position.y = window.__hbShakeBasePosY + Math.abs(ny) * s * 0.095;
           camera.position.z = window.__hbShakeBasePosZ + nr * s * 0.014;
+
+          // NEW (Task #2: screen shake): tiny FOV punch that decays with the kick.
+          // Makes gunshots feel heavier without increasing rotation amplitude (less nausea).
+          camera.fov = window.__hbShakeBaseFov + kickFov + s * 0.010;
         } else {
           // Restore camera pose (avoid drift).
           if (trauma !== 0) window.__hbShakeTrauma = 0;
@@ -1733,6 +1742,7 @@
           camera.rotation.x = window.__hbShakeBaseRotX;
           camera.rotation.y = window.__hbShakeBaseRotY;
           camera.rotation.z = window.__hbShakeBaseRotZ;
+          camera.fov = window.__hbShakeBaseFov;
         }
       } catch {}
 

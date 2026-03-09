@@ -699,6 +699,7 @@
         if (typeof window.__hbShakeSeed !== 'number') window.__hbShakeSeed = 0;
         if (typeof window.__hbShakeKickPitch !== 'number') window.__hbShakeKickPitch = 0;
         if (typeof window.__hbShakeKickRoll !== 'number') window.__hbShakeKickRoll = 0;
+        if (typeof window.__hbShakeKickFov !== 'number') window.__hbShakeKickFov = 0;
         if (typeof window.__hbShakeKickAt !== 'number') window.__hbShakeKickAt = 0;
 
         // Per-weapon tuning: readable without becoming constant wobble.
@@ -726,9 +727,20 @@
           : (weapon === 'fart') ? 0.009
           : 0.032;
 
+        // Quick FOV punch (radians-ish): reads as a visceral jolt even if the camera rotation
+        // shake gets damped by low sensitivity or motion blur. Visual-only.
+        const kickFov = (weapon === 'tank') ? 0.085
+          : (weapon === 'rocket') ? 0.070
+          : (weapon === 'shotgun') ? 0.060
+          : (weapon === 'sniper') ? 0.050
+          : (weapon === 'minigun') ? 0.020
+          : (weapon === 'fart') ? 0.010
+          : 0.040;
+
         window.__hbShakeTrauma = Math.min(1.0, window.__hbShakeTrauma + add);
         window.__hbShakeKickPitch = Math.min(0.11, window.__hbShakeKickPitch + kickPitch);
         window.__hbShakeKickRoll  = Math.max(-0.11, Math.min(0.11, window.__hbShakeKickRoll + sign * kickRoll));
+        window.__hbShakeKickFov   = Math.min(0.12, window.__hbShakeKickFov + kickFov);
         window.__hbShakeKickAt = performance.now();
         window.__hbShakeSeed = (window.__hbShakeSeed + 1) % 1000000;
       } catch {}
