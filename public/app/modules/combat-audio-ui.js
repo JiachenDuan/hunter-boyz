@@ -194,13 +194,13 @@
       // gunLift: lift viewmodel up (y)
       // gunSide: small sideways shove (x)
       // rollKick: tiny roll torque so the gun feels like it twists in your hands
-      rifle:   { gunKick: 0.290, gunLift: 0.062, gunSide: 0.014, rollKick: 0.045, pitchKick: 0.175, yawKick: 0.0190, flashScale: 1.05 },
-      shotgun: { gunKick: 0.280, gunLift: 0.060, gunSide: 0.018, rollKick: 0.072, pitchKick: 0.145, yawKick: 0.0160, flashScale: 1.90 },
-      sniper:  { gunKick: 0.310, gunLift: 0.048, gunSide: 0.005, rollKick: 0.024, pitchKick: 0.185, yawKick: 0.0045, flashScale: 1.55 },
-      fart:    { gunKick: 0.055, gunLift: 0.016, gunSide: 0.005, rollKick: 0.013, pitchKick: 0.022, yawKick: 0.0070, flashScale: 0.75 },
-      minigun: { gunKick: 0.095, gunLift: 0.024, gunSide: 0.012, rollKick: 0.050, pitchKick: 0.038, yawKick: 0.0110, flashScale: 2.10 },
-      rocket:  { gunKick: 0.230, gunLift: 0.058, gunSide: 0.020, rollKick: 0.078, pitchKick: 0.095, yawKick: 0.0155, flashScale: 2.20 },
-      tank:    { gunKick: 0.320, gunLift: 0.070, gunSide: 0.028, rollKick: 0.090, pitchKick: 0.120, yawKick: 0.0180, flashScale: 4.50 },
+      rifle:   { gunKick: 0.360, gunLift: 0.070, gunSide: 0.016, rollKick: 0.055, pitchKick: 0.235, yawKick: 0.0210, flashScale: 1.05 },
+      shotgun: { gunKick: 0.305, gunLift: 0.066, gunSide: 0.020, rollKick: 0.080, pitchKick: 0.165, yawKick: 0.0170, flashScale: 1.90 },
+      sniper:  { gunKick: 0.330, gunLift: 0.052, gunSide: 0.006, rollKick: 0.028, pitchKick: 0.205, yawKick: 0.0048, flashScale: 1.55 },
+      fart:    { gunKick: 0.060, gunLift: 0.017, gunSide: 0.006, rollKick: 0.014, pitchKick: 0.024, yawKick: 0.0070, flashScale: 0.75 },
+      minigun: { gunKick: 0.120, gunLift: 0.030, gunSide: 0.014, rollKick: 0.060, pitchKick: 0.050, yawKick: 0.0115, flashScale: 2.10 },
+      rocket:  { gunKick: 0.250, gunLift: 0.060, gunSide: 0.022, rollKick: 0.082, pitchKick: 0.105, yawKick: 0.0160, flashScale: 2.20 },
+      tank:    { gunKick: 0.340, gunLift: 0.072, gunSide: 0.030, rollKick: 0.094, pitchKick: 0.132, yawKick: 0.0185, flashScale: 4.50 },
     };
 
     // Recoil is rendered client-side only (does NOT affect server aim/look).

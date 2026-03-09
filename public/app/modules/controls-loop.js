@@ -1215,8 +1215,8 @@
           // Task #1: GUN recoil recovery (visual only)
           // Loosen the springs a bit so the kick is readable (especially on iPhone)
           // and lingers into the early reload pose for clear visual proof.
-          const kPos = 78, cPos = 15;
-          const kRot = 60, cRot = 13;
+          const kPos = 54, cPos = 12;
+          const kRot = 42, cRot = 10;
 
           // Integrate toward 0 in offset space.
           md._rVelPosX += (-kPos * md._rPosX - cPos * md._rVelPosX) * dt;
