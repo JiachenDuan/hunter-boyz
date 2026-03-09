@@ -576,7 +576,10 @@ function spawnDent(pos, normal, size, kind) {
         flashReticle(s.hit ? 'hit' : 'shoot');
         const wpn = s.weapon || 'rifle';
         try { window.__lastShotWeapon = wpn; } catch {}
-        const rc = RECOIL[wpn] || RECOIL.rifle;
+        // Some legacy/alt weapon ids can arrive (e.g. "pistol"); normalize FX to a known profile
+        // so muzzle flash + recoil visuals always fire.
+        const wpnFx = (RECOIL[wpn] && fpRig?.guns?.[wpn]) ? wpn : (RECOIL[wpn] ? wpn : 'rifle');
+        const rc = RECOIL[wpnFx] || RECOIL.rifle;
         if (wpn === 'knife') {
           // Knife: animate swing instead of muzzle flash/tracers.
           try {
@@ -618,10 +621,79 @@ function spawnDent(pos, normal, size, kind) {
               fpRig.muzzleLight.intensity = (wpn === 'shotgun') ? 3.2 : (wpn === 'sniper') ? 2.6 : (wpn === 'minigun') ? 2.0 : 1.8;
             }
           } catch {}
-          applyRecoil(wpn);
+          applyRecoil(wpnFx);
+          // Task #3 (muzzle flash dynamic light): keep a *brief* warm afterglow so the
+          // flash actually lights the scene on mobile captures (single-frame flashes
+          // are easy to miss at 60fps, and our iPhone capture grabs a frame during reload).
+          try {
+            // (A) The actual dynamic light pulse (lights the scene).
+            if (fpRig?.muzzleLight) {
+              fpRig.muzzleLight.metadata = fpRig.muzzleLight.metadata || {};
+              const token = (fpRig.muzzleLight.metadata._pulseToken = (Date.now() + Math.random()));
+              // Slight boost so the light read is visible on iPhone.
+              const base = (fpRig.muzzleLight.intensity || 2.0) * 1.25;
+              fpRig.muzzleLight.intensity = base;
+              // Keep it under ~1s so it feels like a flash-afterglow, not a lantern.
+              const steps = [
+                [70,  base * 0.78],
+                [160, base * 0.52],
+                [280, base * 0.34],
+                [420, base * 0.22],
+                [620, base * 0.12],
+                [900, 0.0],
+              ];
+              for (const [ms, v] of steps) {
+                setTimeout(() => {
+                  try {
+                    if (!fpRig?.muzzleLight) return;
+                    if (fpRig.muzzleLight.metadata?._pulseToken !== token) return;
+                    fpRig.muzzleLight.intensity = v;
+                  } catch {}
+                }, ms);
+              }
+            }
+
+            // (B) Also warm-glow the viewmodel materials briefly so the muzzle light
+            // is *obviously* reading in iPhone captures even if the scene is bright.
+            const root = fpRig?.guns?.[wpnFx];
+            if (root && root.getChildMeshes) {
+              root.metadata = root.metadata || {};
+              const token = (root.metadata._muzzleGlowToken = (Date.now() + Math.random()));
+              const meshes = root.getChildMeshes(false);
+              const touched = [];
+              for (const m of meshes) {
+                const mat = m?.material;
+                if (!mat) continue;
+                if (!('emissiveColor' in mat)) continue;
+                const prev = mat.emissiveColor && mat.emissiveColor.clone ? mat.emissiveColor.clone() : null;
+                // Warm flash tint.
+                try { mat.emissiveColor = new BABYLON.Color3(0.9, 0.55, 0.15); } catch {}
+                touched.push([mat, prev]);
+              }
+              const decay = [
+                [120, new BABYLON.Color3(0.55, 0.28, 0.08)],
+                [260, new BABYLON.Color3(0.28, 0.14, 0.04)],
+                [520, null],
+              ];
+              for (const [ms, c] of decay) {
+                setTimeout(() => {
+                  try {
+                    if (!fpRig?.guns?.[wpnFx]) return;
+                    if (fpRig.guns[wpnFx].metadata?._muzzleGlowToken !== token) return;
+                    for (const [mat, prev] of touched) {
+                      if (!mat) continue;
+                      if (c) mat.emissiveColor = c;
+                      else if (prev) mat.emissiveColor = prev;
+                      else mat.emissiveColor = new BABYLON.Color3(0,0,0);
+                    }
+                  } catch {}
+                }, ms);
+              }
+            }
+          } catch {}
+
           setTimeout(() => {
             try { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; } catch {}
-            try { if (fpRig?.muzzleLight) fpRig.muzzleLight.intensity = 0.0; } catch {}
           }, 70);
         }
         if (wpn === 'rocket') { try { SFX.whoosh(); } catch {} }
