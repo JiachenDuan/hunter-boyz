@@ -334,10 +334,21 @@
         const holdMs = (r0 && typeof r0.holdMs === 'number') ? r0.holdMs : 160;
         window.__camKickHoldUntil = Math.max(window.__camKickHoldUntil || 0, now + holdMs);
 
+        // Rifle recoil should feel like it has a *pattern* (not pure RNG), so burst firing
+        // produces a readable climb + slight left/right walk. Visual-only.
+        const streak = (typeof window.__hbRecoilStreak === 'number') ? window.__hbRecoilStreak : 0;
+
         // Bias rifle slightly up-right; keep others mostly straight.
-        const yawBias = (weapon === 'rifle') ? 0.85 : (weapon === 'minigun') ? 0.15 : 0.0;
-        const yawJitter = (Math.random() - 0.5) * r.yawKick * 0.55;
-        const yawKick = yawBias * r.yawKick + yawJitter;
+        const yawBias = (weapon === 'rifle') ? 0.65 : (weapon === 'minigun') ? 0.15 : 0.0;
+
+        // Deterministic rifle pattern: alternate sign each shot, and ramp gently with streak.
+        // Keeps the first tap readable, while giving sustained fire some sideways walk.
+        const patSign = (weapon === 'rifle') ? (((streak | 0) % 2 === 0) ? 1 : -1) : 0;
+        const patMag = (weapon === 'rifle') ? Math.min(1.0, 0.35 + streak * 0.10) : 0;
+
+        // Small jitter on top so it doesn't feel robotic.
+        const yawJitter = (Math.random() - 0.5) * r.yawKick * 0.30;
+        const yawKick = yawBias * r.yawKick + patSign * r.yawKick * 0.55 * patMag + yawJitter;
 
         // Cap accumulation so burst fire feels punchy without going totally off-screen.
         // Slightly higher cap now that recoil ramps per-shot.
@@ -375,7 +386,7 @@
 
         // Convert radians-ish kick into pixels. Keep it subtle enough that it doesn't feel
         // like a permanent offset, but strong enough to be obvious in a screenshot.
-        const pxPerRad = 480;
+        const pxPerRad = 560;
         const addY = Math.min(92, (r.pitchKick || 0) * pxPerRad * 1.05);
         const addX = Math.max(-48, Math.min(48, (yawKick || 0) * pxPerRad));
 
@@ -391,7 +402,7 @@
           : (weapon === 'tank') ? 20
           : (weapon === 'minigun') ? 6
           : (weapon === 'fart') ? 3
-          : 9; // rifle
+          : 14; // rifle
         // Scale with the recoil multiplier so burst fire blooms a bit more.
         const bloomAdd = Math.min(34, bloomBase * (0.9 + (mult - 1.0) * 0.65));
         window.__hbReticleBloom = Math.min(52, window.__hbReticleBloom + bloomAdd);
