@@ -999,6 +999,16 @@ function spawnDent(pos, normal, size, kind) {
         // so muzzle flash + recoil visuals always fire.
         const wpnFx = (RECOIL[wpn] && fpRig?.guns?.[wpn]) ? wpn : (RECOIL[wpn] ? wpn : 'rifle');
         const rc = RECOIL[wpnFx] || RECOIL.rifle;
+
+        // Task #1: GUN recoil
+        // Trigger the client-side recoil kick + spring recovery (viewmodel + reticle UI).
+        // Keep this strictly visual (no aim perturbation).
+        try {
+          if (wpn !== 'knife' && typeof window.__hbApplyRecoil === 'function') {
+            window.__hbApplyRecoil(wpnFx);
+          }
+        } catch {}
+
         if (wpn === 'knife') {
           // Knife: animate swing instead of muzzle flash/tracers.
           try {

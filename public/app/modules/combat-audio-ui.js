@@ -299,6 +299,15 @@
       };
     } catch {}
 
+    // Task #1 (recoil): expose a safe global hook so the main shoot FX pipeline
+    // can trigger recoil visuals without importing this module directly.
+    // (This keeps the change localized + avoids circular deps.)
+    try {
+      window.__hbApplyRecoil = (weapon = 'rifle') => {
+        try { applyRecoil(String(weapon || 'rifle')); } catch {}
+      };
+    } catch {}
+
     const RECOIL = {
       // Kick values are in radians (camera) and meters-ish (gunRoot position).
       // This tick is "GUN recoil" (task #1): strong, readable kick + springy recovery.
