@@ -549,6 +549,53 @@
               }, 620);
             } catch {}
           }
+
+          // Task #1 (recoil): add a quick "kick bar" at the top edge.
+          // This is a very readable recoil cue on iPhone (instant proof in a still screenshot),
+          // but it's still purely visual and short-lived.
+          try {
+            const id3 = '__hbRecoilKickBar';
+            let bar = document.getElementById(id3);
+            if (!bar) {
+              bar = document.createElement('div');
+              bar.id = id3;
+              bar.style.position = 'fixed';
+              bar.style.left = '0';
+              bar.style.top = '0';
+              bar.style.right = '0';
+              bar.style.height = '18px';
+              bar.style.zIndex = '99999';
+              bar.style.pointerEvents = 'none';
+              bar.style.opacity = '0';
+              // Hot muzzle-ish gradient, center-weighted.
+              bar.style.background = 'linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(255,220,120,0.00) 15%, rgba(255,240,120,0.92) 50%, rgba(255,220,120,0.00) 85%, rgba(0,0,0,0) 100%)';
+              bar.style.filter = 'drop-shadow(0 2px 10px rgba(255,200,90,0.45))';
+              bar.style.mixBlendMode = 'screen';
+              bar.style.willChange = 'transform, opacity';
+              document.body.appendChild(bar);
+            }
+
+            const base = (weapon === 'shotgun') ? 1.15
+              : (weapon === 'sniper') ? 0.95
+              : (weapon === 'rocket' || weapon === 'tank') ? 1.35
+              : (weapon === 'minigun') ? 0.70
+              : (weapon === 'fart') ? 0.55
+              : 1.05; // rifle
+            const mag = Math.max(0.65, Math.min(1.55, base * (0.95 + Math.min(0.30, (mult - 1.0) * 0.22))));
+
+            if (bar._t) { clearTimeout(bar._t); bar._t = null; }
+            bar.style.transition = 'none';
+            bar.style.opacity = '1';
+            bar.style.transform = `translate3d(0, ${Math.round(10 * mag)}px, 0) scaleX(${mag.toFixed(3)})`;
+            requestAnimationFrame(() => {
+              bar.style.transition = 'transform 420ms cubic-bezier(0.15,0.9,0.2,1), opacity 520ms ease-out';
+              bar.style.transform = `translate3d(0, 0px, 0) scaleX(${(0.92 * mag).toFixed(3)})`;
+              bar.style.opacity = '0';
+            });
+            bar._t = setTimeout(() => {
+              try { bar.style.transition = 'none'; bar.style.opacity = '0'; } catch {}
+            }, 600);
+          } catch {}
         } catch {}
 
         // ── Task #2: GUN screen shake (visual-only) ──
