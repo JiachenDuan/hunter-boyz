@@ -618,20 +618,114 @@ function spawnDent(pos, normal, size, kind) {
             }
           } catch {}
         } else if (wpn === 'tank') {
-          // Tank cannon: big muzzle fireball + heavy recoil
+          // Task #10: TANK cannon blast
+          // Make the cannon shot feel *huge*: bright fireball + expanding shockwave ring + warm light afterglow.
           if (fpRig?.muzzleFlash && fpRig._flashBaseSize) {
-            fpRig.muzzleFlash.scaling.setAll(4.5);
+            fpRig.muzzleFlash.scaling.setAll(6.4);
             fpRig.muzzleFlash.isVisible = true;
+
+            // UI flash overlay (guaranteed visible in a still iPhone screenshot)
+            // This is part of the cannon blast feel: a brief hot flash + afterglow.
             try {
-              if (fpRig?.muzzleLight) {
-                fpRig.muzzleLight.diffuse = new BABYLON.Color3(1.0, 0.65, 0.20);
-                fpRig.muzzleLight.range = 14;
-                fpRig.muzzleLight.intensity = 5.0;
+              const id = '__hbTankBlastFlash';
+              let el = document.getElementById(id);
+              if (!el) {
+                el = document.createElement('div');
+                el.id = id;
+                el.style.position = 'fixed';
+                el.style.left = '0';
+                el.style.top = '0';
+                el.style.right = '0';
+                el.style.bottom = '0';
+                el.style.zIndex = '99998';
+                el.style.pointerEvents = 'none';
+                el.style.opacity = '0';
+                el.style.background = 'radial-gradient(circle at 50% 50%, rgba(255,205,120,0.70) 0%, rgba(255,140,60,0.35) 28%, rgba(0,0,0,0.0) 62%)';
+                el.style.mixBlendMode = 'screen';
+                document.body.appendChild(el);
+              }
+              // Cancel any in-flight fade.
+              if (el._fadeT) { clearTimeout(el._fadeT); el._fadeT = null; }
+              el.style.transition = 'none';
+              el.style.opacity = '1';
+              requestAnimationFrame(() => {
+                el.style.transition = 'opacity 520ms ease-out';
+                el.style.opacity = '0';
+              });
+              el._fadeT = setTimeout(() => { try { el.style.transition = 'none'; el.style.opacity = '0'; } catch {} }, 600);
+            } catch {}
+
+            // Spawn a short-lived shockwave ring so the blast reads clearly in 3D.
+            try {
+              const mpos = fpRig?.muzzleFlash?.getAbsolutePosition?.() || null;
+              if (mpos && scene) {
+                const ring = BABYLON.MeshBuilder.CreateTorus('tankShock', { diameter: 0.55, thickness: 0.08, tessellation: 64 }, scene);
+                ring.position.copyFrom(mpos);
+                ring.position.addInPlace(new BABYLON.Vector3(0, 0, 0.55));
+                ring.rotation.x = Math.PI / 2;
+
+                const mat = new BABYLON.StandardMaterial('tankShockMat', scene);
+                mat.emissiveColor = new BABYLON.Color3(1.0, 0.82, 0.40);
+                mat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+                mat.specularColor = new BABYLON.Color3(0, 0, 0);
+                mat.alpha = 0.95;
+                ring.material = mat;
+
+                const tStart = performance.now();
+                const dur = 320;
+                const tick = () => {
+                  try {
+                    const t = performance.now();
+                    const a = Math.min(1, Math.max(0, (t - tStart) / dur));
+                    const s = 0.8 + a * 9.0;
+                    ring.scaling.setAll(s);
+                    mat.alpha = (1 - a) * 0.95;
+                    if (a >= 1) {
+                      ring.dispose();
+                      return;
+                    }
+                    requestAnimationFrame(tick);
+                  } catch {
+                    try { ring.dispose(); } catch {}
+                  }
+                };
+                requestAnimationFrame(tick);
+                setTimeout(() => { try { ring.dispose(); } catch {} }, dur + 160);
               }
             } catch {}
+
+            try {
+              if (fpRig?.muzzleLight) {
+                fpRig.muzzleLight.diffuse = new BABYLON.Color3(1.0, 0.62, 0.20);
+                fpRig.muzzleLight.range = 22;
+
+                // Big pulse + warm afterglow.
+                fpRig.muzzleLight.metadata = fpRig.muzzleLight.metadata || {};
+                const token = (fpRig.muzzleLight.metadata._pulseToken = (Date.now() + Math.random()));
+                const base = 8.0;
+                fpRig.muzzleLight.intensity = base;
+                const steps = [
+                  [70,  base * 0.78],
+                  [170, base * 0.52],
+                  [320, base * 0.34],
+                  [520, base * 0.20],
+                  [760, base * 0.10],
+                  [1100, 0.0],
+                ];
+                for (const [ms, v] of steps) {
+                  setTimeout(() => {
+                    try {
+                      if (!fpRig?.muzzleLight) return;
+                      if (fpRig.muzzleLight.metadata?._pulseToken !== token) return;
+                      fpRig.muzzleLight.intensity = v;
+                    } catch {}
+                  }, ms);
+                }
+              }
+            } catch {}
+
             applyRecoil('rocket');
-            setTimeout(() => { try { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; } catch {} }, 180);
-            setTimeout(() => { try { if (fpRig?.muzzleLight) fpRig.muzzleLight.intensity = 0.0; } catch {} }, 220);
+            setTimeout(() => { try { if (fpRig?.muzzleFlash) fpRig.muzzleFlash.isVisible = false; } catch {} }, 300);
           }
         } else if (fpRig?.muzzleFlash && fpRig._flashBaseSize) {
           fpRig.muzzleFlash.scaling.setAll(rc.flashScale);

@@ -183,7 +183,9 @@ async function main(){
         });
 
         // Flat courtyard lane (mansion). Shooter looks toward +Z.
-        // Use a longer lane so bullet tracers are clearly visible in a still iPhone capture.
+        // Put shooter in a tank so the FP rig switches to the tank cannon profile.
+        await post('/debug/vehicle', { id: fromId, vehicle: 'tank' });
+
         await post('/debug/teleport', { id: fromId, x: 0.0, y: 2.0, z: -18.0, yaw: 0, pitch: -0.04, hp: 100 });
         await post('/debug/teleport', { id: botId,  x: 0.0, y: 2.0, z: 18.0, yaw: Math.PI, pitch: 0, hp: 100 });
       }, shooterId, botId);
@@ -197,14 +199,14 @@ async function main(){
         await fetch('/debug/shoot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fromId }),
+          body: JSON.stringify({ fromId, weapon: 'tank' }),
         }).catch(()=>{});
       }, shooterId);
     } catch {}
 
-    // Task #7: GUN bullet tracers
-    // Give it a beat so the tracer tube exists when we screenshot.
-    await sleep(120);
+    // Task #10: TANK cannon blast
+    // Screenshot shortly after firing so the UI flash + shockwave are visible.
+    await sleep(90);
 
     // Make the bottom log readable + leave a proof line.
     try {
@@ -213,7 +215,7 @@ async function main(){
         if (hud) hud.style.display = 'block';
         const log = document.getElementById('log');
         if (!log) return;
-        log.textContent = '✨ BULLET TRACERS: now thick + emissive (iPhone-readable)';
+        log.textContent = '💥 TANK CANNON BLAST: shockwave ring + brighter afterglow light';
         log.style.display = 'block';
         log.style.position = 'fixed';
         log.style.left = '10px';

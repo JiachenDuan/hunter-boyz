@@ -68,13 +68,26 @@ app.post('/debug/teleport', express.json(), (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/debug/vehicle', express.json(), (req, res) => {
+  if (!isLocalReq(req)) return res.status(403).send('forbidden');
+  const { id, vehicle } = req.body || {};
+  const p = players.get(String(id));
+  if (!p) return res.status(404).json({ ok: false, error: 'no-player' });
+  p.vehicle = vehicle ? String(vehicle) : null;
+  broadcast({ t: 'state', state: serializeState() });
+  res.json({ ok: true });
+});
+
 app.post('/debug/shoot', express.json(), (req, res) => {
   if (!isLocalReq(req)) return res.status(403).send('forbidden');
-  const { fromId } = req.body || {};
+  const { fromId, weapon } = req.body || {};
   const shooter = players.get(String(fromId));
   if (!shooter) return res.status(404).json({ ok: false, error: 'no-shooter' });
   if (!GAME.started) GAME.started = true;
   if (shooter.hp <= 0) return res.json({ ok: false, error: 'dead' });
+
+  // Allow tests/captures to force a weapon id (e.g. tank cannon blast VFX).
+  const wpn = weapon ? String(weapon) : (shooter.vehicle === 'tank') ? 'tank' : (shooter.powerWeapon === 'minigun') ? 'minigun' : (shooter.weapon || 'rifle');
 
   const hit = rayHit(shooter);
   const target = hit.target;
@@ -94,10 +107,13 @@ app.post('/debug/shoot', express.json(), (req, res) => {
 
   broadcast({
     t: 'shot',
+    weapon: wpn,
     from: shooter.id,
     sx: shooter.x,
     sy: shooter.y,
     sz: shooter.z,
+    yaw: shooter.yaw,
+    pitch: shooter.pitch,
     ex: hit.endX,
     ey: shooter.y,
     ez: hit.endZ,
@@ -106,7 +122,7 @@ app.post('/debug/shoot', express.json(), (req, res) => {
   });
 
   broadcast({ t: 'state', state: serializeState() });
-  res.json({ ok: true, hit: hitId, hitHp });
+  res.json({ ok: true, hit: hitId, hitHp, weapon: wpn });
 });
 
 const server = http.createServer(app);
