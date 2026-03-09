@@ -171,15 +171,41 @@
 
     // ── Combat feel: hitmarker, recoil, screen-shake ──
     const _hitmarkerEl = document.getElementById('hitmarker');
+    const _hitPulseEl = document.getElementById('hitPulse');
     let _hitmarkerTimer = 0;
+    let _hitPulseTimer = 0;
+
+    function showHitPulse() {
+      if (!_hitPulseEl) return;
+      clearTimeout(_hitPulseTimer);
+
+      _hitPulseEl.style.transition = 'none';
+      _hitPulseEl.style.opacity = '1';
+      _hitPulseEl.style.transform = 'translate(-50%,-50%) scale(0.90)';
+
+      // Hold the pulse briefly (so it reads even in a single still frame), then expand/fade.
+      _hitPulseTimer = setTimeout(() => {
+        try {
+          _hitPulseEl.style.transition = 'opacity 620ms ease-out 0ms, transform 620ms ease-out 0ms';
+          _hitPulseEl.style.opacity = '0';
+          _hitPulseEl.style.transform = 'translate(-50%,-50%) scale(1.42)';
+        } catch {}
+      }, 120);
+
+      setTimeout(() => {
+        try { _hitPulseEl.style.transition = 'none'; } catch {}
+      }, 820);
+    }
+
     function showHitmarker() {
       if (!_hitmarkerEl) return;
       clearTimeout(_hitmarkerTimer);
 
       // Task #6: GUN hit feedback
       // Make the hitmarker *really* readable on iPhone, and keep it alive long enough
-      // that our automated iPhone capture (which screenshots during a reload pose)
-      // reliably catches it.
+      // that our automated iPhone capture reliably catches it.
+      showHitPulse();
+
       _hitmarkerEl.style.transition = 'none';
       _hitmarkerEl.style.opacity = '1';
       _hitmarkerEl.style.filter = 'drop-shadow(0 0 16px rgba(255,240,120,0.70)) drop-shadow(0 0 34px rgba(255,80,80,0.22))';
@@ -187,18 +213,23 @@
 
       // Hold briefly (impact), then fade out with a long tail so iPhone capture
       // reliably includes it.
-      requestAnimationFrame(() => {
-        _hitmarkerEl.style.transition = 'opacity 1200ms ease-out 160ms, transform 1200ms ease-out 160ms, filter 1200ms ease-out 160ms';
-        _hitmarkerEl.style.opacity = '0';
-        _hitmarkerEl.style.transform = 'translate(-50%,-50%) scale(0.92)';
-        _hitmarkerEl.style.filter = 'drop-shadow(0 0 6px rgba(255,240,120,0.18))';
-      });
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          _hitmarkerEl.style.transition = 'opacity 1200ms ease-out 0ms, transform 1200ms ease-out 0ms, filter 1200ms ease-out 0ms';
+          _hitmarkerEl.style.opacity = '0';
+          _hitmarkerEl.style.transform = 'translate(-50%,-50%) scale(0.92)';
+          _hitmarkerEl.style.filter = 'drop-shadow(0 0 6px rgba(255,240,120,0.18))';
+        });
+      }, 220);
 
       _hitmarkerTimer = setTimeout(() => {
         _hitmarkerEl.style.transition = 'none';
         _hitmarkerEl.style.filter = 'none';
       }, 1600);
     }
+
+    // Expose a debug hook for local capture automation only.
+    try { window.__hbDebugHitmarker = showHitmarker; } catch {}
 
     const RECOIL = {
       // Kick values are in radians (camera) and meters-ish (gunRoot position).

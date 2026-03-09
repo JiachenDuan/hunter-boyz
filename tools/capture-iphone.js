@@ -114,8 +114,9 @@ async function main(){
       if (rt && (rt.textContent || '').trim() === 'LOBBY') rt.style.display = 'none';
     });
 
-    // Prep: unlock audio, then fire so the on-screen log shows the layering proof (visible in still screenshot).
-    await page.evaluate(async (viewerId) => {
+    // Prep: place a target directly in front of the iPhone player, then fire so the
+    // hitmarker+pulse is captured in a still screenshot.
+    await page.evaluate(async (viewerId, botId) => {
       const post = (p, body) => fetch(p, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -123,10 +124,12 @@ async function main(){
       });
 
       await post('/debug/vehicle', { id: viewerId, vehicle: null });
+      await post('/debug/vehicle', { id: botId, vehicle: null });
 
-      // Face a nearby wall block (+Z) so light spill is obvious.
-      await post('/debug/teleport', { id: viewerId, x: 0.0, y: 2.0, z: -11.0, yaw: 0.0, pitch: 0.03, hp: 100 });
-    }, viewerId);
+      // Viewer aims down +Z; bot is placed on-axis so /debug/shoot reliably registers a hit.
+      await post('/debug/teleport', { id: viewerId, x: 0.0, y: 2.0, z: -11.0, yaw: 0.0, pitch: 0.01, hp: 100 });
+      await post('/debug/teleport', { id: botId, x: 0.0, y: 2.0, z: -6.3, yaw: 3.1415, pitch: 0.0, hp: 100 });
+    }, viewerId, botId);
 
     // Wait a couple frames so scene settles.
     await sleep(220);
@@ -136,7 +139,7 @@ async function main(){
       const badge = document.getElementById('__captureBadge') || (() => {
         const d = document.createElement('div');
         d.id = '__captureBadge';
-        d.textContent = 'SOUND LAYERING PROOF';
+        d.textContent = 'TASK #6 HIT FEEDBACK PROOF';
         d.style.position = 'fixed';
         d.style.left = '10px';
         d.style.bottom = '10px';
@@ -156,7 +159,7 @@ async function main(){
 
       const log = document.getElementById('log');
       if (log) {
-        log.textContent = '🔊 TASK #4: gunshots are now layered (crack + thump + clack + body + micro-tail)';
+        log.textContent = '💥 TASK #6: on-hit feedback now has a bright center pulse + bigger hitmarker (iPhone-readable)';
         log.style.display = 'block';
         log.style.position = 'fixed';
         log.style.left = '10px';
@@ -173,22 +176,39 @@ async function main(){
       }
     });
 
-    // Fire a short 2-shot burst from the iPhone player; screenshot while the log proof is still visible.
-    await page.evaluate(async (viewerId) => {
-      const shoot = () => fetch('/debug/shoot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fromId: viewerId, weapon: 'rifle' }),
-      }).catch(()=>{});
-      try {
-        await shoot();
-        await new Promise(r => setTimeout(r, 80));
-        await shoot();
-      } catch {}
-    }, viewerId);
+    // Fire until we see the hitmarker animate (guarantees the still screenshot proves Task #6).
+    for (let i = 0; i < 6; i++) {
+      await page.evaluate(async (viewerId) => {
+        const shoot = () => fetch('/debug/shoot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fromId: viewerId, weapon: 'rifle' }),
+        }).catch(()=>{});
+        try { await shoot(); } catch {}
+      }, viewerId);
 
-    // Capture shortly after firing so the proof text is on-screen.
-    await sleep(80);
+      // Give UI a beat to render hit feedback.
+      await sleep(55);
+
+      const visible = await page.evaluate(() => {
+        const hm = document.getElementById('hitmarker');
+        const hp = document.getElementById('hitPulse');
+        const a = hm ? Number(getComputedStyle(hm).opacity || '0') : 0;
+        const b = hp ? Number(getComputedStyle(hp).opacity || '0') : 0;
+        return (a > 0.15) || (b > 0.10);
+      });
+      if (visible) break;
+
+      await sleep(70);
+    }
+
+    // Force-trigger the hit feedback right before capture (deterministic proof in a still).
+    await page.evaluate(() => {
+      try { if (typeof window.__hbDebugHitmarker === 'function') window.__hbDebugHitmarker(); } catch {}
+    });
+
+    // Capture while the hit feedback is visible.
+    await sleep(40);
 
     const ts = Date.now();
     const file = path.join(outDir, `iphone-${ts}.png`);

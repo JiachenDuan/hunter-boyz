@@ -762,6 +762,30 @@
       box-shadow: 0 0 0 2px rgba(255,80,80,0.12), 0 0 28px rgba(255,80,80,0.12);
       animation: timerPulse 0.7s ease-in-out infinite;
     }
+    /* Task #6: GUN hit feedback */
+    #hitPulse {
+      position:fixed;
+      top:50%;
+      left:50%;
+      width:140px;
+      height:140px;
+      transform:translate(-50%,-50%) scale(0.85);
+      border-radius:999px;
+      pointer-events:none;
+      opacity:0;
+      z-index:119;
+      background: radial-gradient(circle at center,
+        rgba(255,240,120,0.26) 0%,
+        rgba(255,240,120,0.18) 22%,
+        rgba(255,80,80,0.12) 44%,
+        rgba(0,0,0,0.0) 68%);
+      box-shadow:
+        0 0 0 2px rgba(255,240,120,0.35),
+        0 0 28px rgba(255,240,120,0.16),
+        0 0 46px rgba(255,80,80,0.10);
+      filter: blur(0.2px);
+    }
+
     #hitmarker {
       position:fixed;
       top:50%;
@@ -772,7 +796,7 @@
       z-index:120;
     }
 
-    /* Task #6: GUN hit feedback (iPhone-readable hitmarker) */
+    /* iPhone-readable hitmarker */
     #hitmarker svg {
       width:82px;
       height:82px;
