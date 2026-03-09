@@ -1540,6 +1540,49 @@
         }
       } catch {}
 
+      // ── Task #8: TANK engine rumble (visual only) ──
+      // A low-frequency vibration that scales with tank movement speed.
+      // Implemented as a non-drifting additive offset + a CSS intensity var.
+      try {
+        const meState = lastServerState?.players?.find(p => p.id === myId);
+        const inTank = meState?.vehicle === 'tank';
+
+        // Base intensity: idle rumble is subtle but present.
+        let intensity = inTank ? 0.28 : 0;
+        if (inTank) {
+          const vx = Number(meState?.vx || 0);
+          const vz = Number(meState?.vz || 0);
+          const speed = Math.min(12, Math.hypot(vx, vz));
+          intensity += Math.min(0.55, speed / 12 * 0.55);
+        }
+        if (!Number.isFinite(intensity)) intensity = 0;
+
+        // Expose to CSS so overlay can respond.
+        try {
+          document?.documentElement?.style?.setProperty('--tank-rumble', String(intensity.toFixed(3)));
+        } catch {}
+
+        // Additive camera vibration: apply around current pose (post gun shake), no drift.
+        if (inTank && intensity > 0.001) {
+          const now = performance.now();
+          // Two bands: slow thump + faster engine buzz.
+          const tSlow = now * 0.0022;
+          const tFast = now * 0.0105;
+
+          const s = intensity;
+          const nx = Math.sin(tFast) * 0.70 + Math.sin(tSlow * 0.9) * 0.30;
+          const ny = Math.cos(tFast * 1.13) * 0.65 + Math.sin(tSlow * 1.1) * 0.35;
+
+          // Rotation (radians): tiny, readable, not nauseating.
+          camera.rotation.x += nx * 0.010 * s;
+          camera.rotation.z += ny * 0.012 * s;
+
+          // Position (meters-ish): subtle micro-bob.
+          camera.position.y += Math.abs(ny) * 0.020 * s;
+          camera.position.x += nx * 0.010 * s;
+        }
+      } catch {}
+
       // Smooth remote players
       for (const [id, mesh] of players.entries()) {
         if (id === myId) continue;

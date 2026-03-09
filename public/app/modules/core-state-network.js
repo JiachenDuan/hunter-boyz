@@ -597,8 +597,15 @@
 
         // EXIT TANK button: show when riding a tank
         try {
+          const inTank = !!(meP && meP.vehicle === 'tank');
           const btnExit = document.getElementById('btnExitTank');
-          if (btnExit) btnExit.style.display = (meP && meP.vehicle === 'tank') ? 'block' : 'none';
+          if (btnExit) btnExit.style.display = inTank ? 'block' : 'none';
+
+          // Task #8: TANK engine rumble (visual): drive a body class so CSS overlays can
+          // make the tank feel heavy without affecting gameplay/aim.
+          if (document && document.body) {
+            document.body.classList.toggle('in-tank', inTank);
+          }
         } catch {}
 
         // Pickup prompt (with sticky holdover so pickId doesn't flicker between ticks)
