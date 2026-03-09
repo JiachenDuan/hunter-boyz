@@ -198,9 +198,59 @@
       }
     })();
 
+    // Task #1 (recoil): add *brackets* so recoil reads as a punchy muzzle-climb even in a single still.
+    // (This is pure UI; screen shake is task #2.)
+    const _recoilBracketsEl = document.getElementById('recoilBrackets') || (() => {
+      try {
+        const root = document.createElement('div');
+        root.id = 'recoilBrackets';
+        root.style.position = 'fixed';
+        root.style.left = '50%';
+        root.style.top = '50%';
+        root.style.transform = 'translate(-50%,-50%)';
+        root.style.width = '1px';
+        root.style.height = '1px';
+        root.style.pointerEvents = 'none';
+        root.style.zIndex = '9998';
+        root.style.opacity = '0';
+
+        const mk = () => {
+          const b = document.createElement('div');
+          b.style.position = 'absolute';
+          b.style.width = '22px';
+          b.style.height = '22px';
+          b.style.border = '3px solid rgba(255,240,120,0.78)';
+          // Make it look like a bracket (missing inner edges).
+          b.style.borderRight = 'none';
+          b.style.borderBottom = 'none';
+          b.style.borderRadius = '4px';
+          b.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.45), 0 0 22px rgba(255,240,120,0.30)';
+          return b;
+        };
+
+        const tl = mk();
+        const tr = mk(); tr.style.transform = 'scaleX(-1)';
+        const bl = mk(); bl.style.transform = 'scaleY(-1)';
+        const br = mk(); br.style.transform = 'scale(-1,-1)';
+
+        root.appendChild(tl);
+        root.appendChild(tr);
+        root.appendChild(bl);
+        root.appendChild(br);
+
+        root._tl = tl; root._tr = tr; root._bl = bl; root._br = br;
+
+        document.body.appendChild(root);
+        return root;
+      } catch {
+        return null;
+      }
+    })();
+
     let _hitmarkerTimer = 0;
     let _hitPulseTimer = 0;
     let _recoilPulseTimer = 0;
+    let _recoilBracketsTimer = 0;
 
     function showHitPulse() {
       if (!_hitPulseEl) return;
@@ -224,9 +274,69 @@
       }, 820);
     }
 
+    function showRecoilBrackets(weapon = 'rifle') {
+      if (!_recoilBracketsEl) return;
+
+      const w = String(weapon || 'rifle');
+      const scale = (w === 'tank') ? 1.25
+        : (w === 'rocket') ? 1.18
+        : (w === 'shotgun') ? 1.14
+        : (w === 'sniper') ? 1.10
+        : (w === 'minigun') ? 0.95
+        : (w === 'fart') ? 0.92
+        : 1.06;
+
+      // Start close-in and slightly *below* center, then snap upward/outward.
+      // This reads like muzzle climb in a single still, without shaking the camera.
+      const baseR = Math.round(18 * scale);
+      const kickR = Math.round(34 * scale);
+      const yKick = Math.round(14 * scale);
+
+      try {
+        _recoilBracketsEl.style.transition = 'none';
+        _recoilBracketsEl.style.opacity = '1';
+        _recoilBracketsEl.style.filter = 'drop-shadow(0 0 14px rgba(255,240,120,0.28))';
+
+        const tl = _recoilBracketsEl._tl;
+        const tr = _recoilBracketsEl._tr;
+        const bl = _recoilBracketsEl._bl;
+        const br = _recoilBracketsEl._br;
+
+        if (tl) { tl.style.left = `${-baseR}px`; tl.style.top = `${-baseR + 6}px`; }
+        if (tr) { tr.style.left = `${baseR}px`;  tr.style.top = `${-baseR + 6}px`; }
+        if (bl) { bl.style.left = `${-baseR}px`; bl.style.top = `${baseR + 6}px`; }
+        if (br) { br.style.left = `${baseR}px`;  br.style.top = `${baseR + 6}px`; }
+
+        requestAnimationFrame(() => {
+          try {
+            _recoilBracketsEl.style.transition = 'opacity 920ms ease-out 0ms, filter 920ms ease-out 0ms';
+            _recoilBracketsEl.style.filter = 'drop-shadow(0 0 6px rgba(255,240,120,0.12))';
+
+            // Move upward (muzzle climb) + expand outward.
+            if (tl) { tl.style.transition = 'left 920ms ease-out, top 920ms ease-out'; tl.style.left = `${-kickR}px`; tl.style.top = `${-kickR - yKick}px`; }
+            if (tr) { tr.style.transition = 'left 920ms ease-out, top 920ms ease-out'; tr.style.left = `${kickR}px`;  tr.style.top = `${-kickR - yKick}px`; }
+            if (bl) { bl.style.transition = 'left 920ms ease-out, top 920ms ease-out'; bl.style.left = `${-kickR}px`; bl.style.top = `${kickR - yKick}px`; }
+            if (br) { br.style.transition = 'left 920ms ease-out, top 920ms ease-out'; br.style.left = `${kickR}px`;  br.style.top = `${kickR - yKick}px`; }
+
+            _recoilBracketsEl.style.opacity = '0';
+          } catch {}
+        });
+      } catch {}
+
+      _recoilBracketsTimer = setTimeout(() => {
+        try {
+          _recoilBracketsEl.style.transition = 'none';
+          _recoilBracketsEl.style.opacity = '0';
+          _recoilBracketsEl.style.filter = 'none';
+        } catch {}
+      }, 980);
+    }
+
     function showRecoilPulse(weapon = 'rifle') {
       if (!_recoilPulseEl) return;
       clearTimeout(_recoilPulseTimer);
+      clearTimeout(_recoilBracketsTimer);
+      try { showRecoilBrackets(weapon); } catch {}
 
       // Weapon weight: bigger ring for heavier guns so the punch reads instantly.
       const w = String(weapon || 'rifle');
