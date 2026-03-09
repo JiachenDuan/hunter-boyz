@@ -603,6 +603,31 @@
           const mix = c.createGain();
           mix.gain.value = 0.78;
 
+          // Master bus: add light compression + slight stereo spread so shots feel
+          // punchier and less flat on iPhone speakers (Task #4: sound layering).
+          const master = c.createGain();
+          master.gain.value = 0.98;
+
+          let comp = null;
+          try {
+            comp = c.createDynamicsCompressor();
+            comp.threshold.setValueAtTime(-18, t0);
+            comp.knee.setValueAtTime(18, t0);
+            comp.ratio.setValueAtTime(4, t0);
+            comp.attack.setValueAtTime(0.003, t0);
+            comp.release.setValueAtTime(0.12, t0);
+          } catch {}
+
+          let pan = null;
+          try {
+            if (typeof c.createStereoPanner === 'function') {
+              pan = c.createStereoPanner();
+              // Small random width; keep subtle to avoid nausea with repeated shots.
+              const width = (w === 'minigun') ? 0.10 : (w === 'fart') ? 0.05 : 0.18;
+              pan.pan.setValueAtTime((Math.random() * 2 - 1) * width, t0);
+            }
+          } catch {}
+
           src.connect(bp).connect(shaper).connect(lp).connect(g).connect(mix);
           o.connect(og).connect(mix);
 
@@ -619,7 +644,25 @@
             clickOsc.stop(t0 + (cfg.clickMs || 12) / 1000);
           }
 
-          // ── Task #4: Gun sound layering ──
+          // High 'crack' transient: a tiny pitched blip that makes shots read on
+          // small speakers without just increasing volume.
+          try {
+            const crackHz = (w === 'shotgun') ? 2200 : (w === 'sniper') ? 2800 : (w === 'rocket' || w === 'tank') ? 1800 : (w === 'minigun') ? 2600 : 2400;
+            const crack = c.createOscillator();
+            crack.type = 'triangle';
+            crack.frequency.setValueAtTime(crackHz, t0);
+            crack.frequency.exponentialRampToValueAtTime(crackHz * 0.72, t0 + 0.020);
+            const cg = c.createGain();
+            const crackGain = (w === 'minigun') ? 0.006 : (w === 'fart') ? 0.0 : 0.010;
+            cg.gain.setValueAtTime(0.0001, t0);
+            cg.gain.exponentialRampToValueAtTime(crackGain, t0 + 0.002);
+            cg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.030);
+            crack.connect(cg).connect(mix);
+            crack.start(t0);
+            crack.stop(t0 + 0.035);
+          } catch {}
+
+          // ── Task #4: Gun sound layering
           // Add a subtle "mechanical clack" transient + a very short tail.
           // This makes shots feel less like pure noise and more like a gun (mechanism + space).
           // Keep it tiny so it doesn't fatigue on auto weapons.
@@ -662,7 +705,7 @@
               tg.gain.value = tailGainVal;
               // route: mix -> delay -> (tail out) + feedback
               mix.connect(d);
-              d.connect(tg).connect(c.destination);
+              d.connect(tg).connect(master);
               d.connect(fb).connect(d);
 
               // Auto-fade tail bus so it doesn't keep ringing if browser keeps nodes alive.
@@ -671,7 +714,19 @@
             }
           } catch {}
 
-          mix.connect(c.destination);
+          // Route through master bus (compression + panner if available).
+          try {
+            if (comp) {
+              if (pan) mix.connect(comp).connect(pan).connect(master).connect(c.destination);
+              else mix.connect(comp).connect(master).connect(c.destination);
+            } else {
+              if (pan) mix.connect(pan).connect(master).connect(c.destination);
+              else mix.connect(master).connect(c.destination);
+            }
+          } catch {
+            // Fallback: direct
+            try { mix.connect(c.destination); } catch {}
+          }
 
           src.start(t0);
           src.stop(t0 + cfg.gainEndAt);
@@ -756,6 +811,15 @@
         },
         shoot: (weapon) => {
           if (!unlocked) { try { log('Tap Enable sound'); } catch {} }
+          // Proof/debug: log once when layered gun SFX is active so iPhone captures
+          // can show the change in a screenshot (Task #4).
+          try {
+            if (unlocked && !window.__hbLoggedLayeredGunSfx) {
+              window.__hbLoggedLayeredGunSfx = true;
+              log('🔊 Layered gunshot SFX: crack + thump + clack + tail');
+            }
+          } catch {}
+
           if (String(weapon) === 'fart') return fart();
           return gunshot(weapon);
         },
