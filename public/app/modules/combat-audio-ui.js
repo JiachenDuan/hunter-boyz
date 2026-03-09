@@ -469,8 +469,11 @@
 
               el.style.width = `${size}px`;
               el.style.height = `${size}px`;
-              el.style.marginLeft = `${-size / 2}px`;
-              el.style.marginTop = `${-size / 2}px`;
+              // IMPORTANT: don't combine margin centering with translate centering.
+              // On iPhone this can push the ring off-center (or even off-screen).
+              el.style.marginLeft = '0px';
+              el.style.marginTop = '0px';
+              el.style.willChange = 'transform, opacity';
 
               if (el._t) { clearTimeout(el._t); el._t = null; }
               el.style.transition = 'none';
@@ -500,11 +503,13 @@
                 box.style.top = '50%';
                 box.style.width = '140px';
                 box.style.height = '140px';
-                box.style.marginLeft = '-70px';
-                box.style.marginTop = '-70px';
+                // Center using translate only (avoid double-centering via margins).
+                box.style.marginLeft = '0px';
+                box.style.marginTop = '0px';
                 box.style.pointerEvents = 'none';
                 box.style.zIndex = '99998';
                 box.style.opacity = '0';
+                box.style.willChange = 'transform, opacity';
                 box.style.transform = 'translate(-50%,-50%) scale(0.9)';
 
                 const mk = (x, y, rot) => {
