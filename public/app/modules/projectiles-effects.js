@@ -358,43 +358,88 @@ function showKill(text) {
 
         window.__lastTankHullFlash = flash;
 
-        // Optional tiny secondary flash offset a bit (feels like multiple sparks)
+        // NEW: a brief impact light so the whole tank hull "pops" on iPhone.
+        // (This is the major visible part of Task #12.)
+        let light = null;
+        try {
+          light = new BABYLON.PointLight('tankHullImpactLight', pos.clone(), scene);
+          light.diffuse = new BABYLON.Color3(0.78, 0.90, 1.0);
+          light.specular = new BABYLON.Color3(0.9, 0.95, 1.0);
+          light.range = 10 + 8 * k;
+          light.intensity = 6.0 * k;
+          light.metadata = { _hbTankHull: true };
+        } catch {}
+
+        // Optional tiny secondary flashes + streak so it reads as "sparks" not just a blob.
         let flash2 = null;
         let mat2 = null;
+        let flash3 = null;
+        let mat3 = null;
         try {
-          flash2 = BABYLON.MeshBuilder.CreatePlane('tankHullFlash2', { size: sz * 0.65 }, scene);
+          flash2 = BABYLON.MeshBuilder.CreatePlane('tankHullFlash2', { size: sz * 0.75 }, scene);
           flash2.position = pos.clone();
           flash2.position.y += 0.10;
-          flash2.position.x += (Math.random() - 0.5) * 0.22;
-          flash2.position.z += (Math.random() - 0.5) * 0.22;
+          flash2.position.x += (Math.random() - 0.5) * 0.28;
+          flash2.position.z += (Math.random() - 0.5) * 0.28;
           flash2.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
           flash2.isPickable = false;
           mat2 = new BABYLON.StandardMaterial('tankHullFlashMat2', scene);
           mat2.diffuseColor = new BABYLON.Color3(1.0, 0.92, 0.70);
-          mat2.emissiveColor = new BABYLON.Color3(1.0, 0.84, 0.45);
+          mat2.emissiveColor = new BABYLON.Color3(1.0, 0.86, 0.50);
           mat2.specularColor = new BABYLON.Color3(0,0,0);
-          mat2.alpha = 0.85;
+          mat2.alpha = 0.92;
           mat2.disableLighting = true;
           mat2.backFaceCulling = false;
           flash2.material = mat2;
+
+          // A thin "streak" that scales outward quickly.
+          flash3 = BABYLON.MeshBuilder.CreatePlane('tankHullFlash3', { width: sz * 1.25, height: sz * 0.22 }, scene);
+          flash3.position = pos.clone();
+          flash3.position.y += 0.11;
+          flash3.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+          flash3.rotation.z = (Math.random() - 0.5) * Math.PI;
+          flash3.isPickable = false;
+          mat3 = new BABYLON.StandardMaterial('tankHullFlashMat3', scene);
+          mat3.diffuseColor = new BABYLON.Color3(0.95, 0.98, 1.0);
+          mat3.emissiveColor = new BABYLON.Color3(0.80, 0.92, 1.0);
+          mat3.specularColor = new BABYLON.Color3(0,0,0);
+          mat3.alpha = 0.80;
+          mat3.disableLighting = true;
+          mat3.backFaceCulling = false;
+          flash3.material = mat3;
         } catch {}
 
         const start = performance.now();
-        const dur = 380;
+        const dur = 420;
         const tick = () => {
           const t = performance.now() - start;
           const kk = Math.min(1, t / dur);
           try {
             // Fast initial pop, then long tail.
-            const tail = Math.pow(1 - kk, 1.6);
-            mat.alpha = 0.95 * tail;
-            flash.scaling.setAll(1.0 + kk * 0.55);
+            const tail = Math.pow(1 - kk, 1.55);
+            mat.alpha = 0.98 * tail;
+            flash.scaling.setAll(1.0 + kk * 0.70);
           } catch {}
           try {
             if (flash2 && mat2) {
-              const tail2 = Math.pow(1 - kk, 1.9);
-              mat2.alpha = 0.85 * tail2;
-              flash2.scaling.setAll(1.0 + kk * 0.85);
+              const tail2 = Math.pow(1 - kk, 1.75);
+              mat2.alpha = 0.92 * tail2;
+              flash2.scaling.setAll(1.0 + kk * 1.10);
+            }
+          } catch {}
+          try {
+            if (flash3 && mat3) {
+              const tail3 = Math.pow(1 - kk, 2.1);
+              mat3.alpha = 0.80 * tail3;
+              flash3.scaling.x = 1.0 + kk * 1.9;
+              flash3.scaling.y = 1.0 + kk * 0.25;
+            }
+          } catch {}
+          try {
+            if (light) {
+              // Very bright for the first ~2 frames, then decay quickly.
+              const pop = (kk < 0.10) ? 1.0 : Math.pow(1 - kk, 2.6);
+              light.intensity = (6.0 * k) * pop;
             }
           } catch {}
 
@@ -404,6 +449,9 @@ function showKill(text) {
             try { mat.dispose(); } catch {}
             try { if (flash2) flash2.dispose(); } catch {}
             try { if (mat2) mat2.dispose(); } catch {}
+            try { if (flash3) flash3.dispose(); } catch {}
+            try { if (mat3) mat3.dispose(); } catch {}
+            try { if (light) light.dispose(); } catch {}
             if (window.__lastTankHullFlash === flash) window.__lastTankHullFlash = null;
           }
         };
