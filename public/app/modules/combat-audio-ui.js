@@ -359,6 +359,20 @@
 
         window.__hbReticleKickY = Math.min(130, window.__hbReticleKickY + addY);
         window.__hbReticleKickX = Math.max(-130, Math.min(130, window.__hbReticleKickX + addX));
+
+        // Reticle bloom (size expansion) so recoil reads as both a *kick* and a
+        // temporary *loss of precision* (classic arcade/CS feedback). Visual only.
+        if (typeof window.__hbReticleBloom !== 'number') window.__hbReticleBloom = 0;
+        const bloomBase = (weapon === 'shotgun') ? 14
+          : (weapon === 'sniper') ? 10
+          : (weapon === 'rocket') ? 16
+          : (weapon === 'tank') ? 20
+          : (weapon === 'minigun') ? 6
+          : (weapon === 'fart') ? 3
+          : 9; // rifle
+        // Scale with the recoil multiplier so burst fire blooms a bit more.
+        const bloomAdd = Math.min(34, bloomBase * (0.9 + (mult - 1.0) * 0.65));
+        window.__hbReticleBloom = Math.min(52, window.__hbReticleBloom + bloomAdd);
       } catch {}
 
       // ── Screen shake impulse (visual only) ──

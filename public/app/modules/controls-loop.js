@@ -1404,7 +1404,6 @@
           if (typeof window.__hbReticleKickVelY !== 'number') window.__hbReticleKickVelY = 0;
 
           const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
-          const now = performance.now();
           const holdActive = (typeof window.__hbReticleHoldUntil === 'number') && (now < window.__hbReticleHoldUntil);
 
           const k = holdActive ? 22 : 46;
@@ -1424,6 +1423,35 @@
           const oy = window.__hbReticleKickY || 0;
           ret.left = `${ox.toFixed(1)}px`;
           ret.top = `${(-oy).toFixed(1)}px`;
+
+          // Reticle bloom (size) driven by applyRecoil() so recoil feels like
+          // both a kick and a brief accuracy loss. Visual only.
+          if (typeof window.__hbReticleBloom !== 'number') window.__hbReticleBloom = 0;
+          if (typeof window.__hbReticleBloomVel !== 'number') window.__hbReticleBloomVel = 0;
+
+          const now = performance.now();
+          // Reuse the existing holdActive computed above in the reticle kick section.
+          const kB = holdActive ? 18 : 46;
+          const cB = holdActive ? 8 : 14;
+          window.__hbReticleBloomVel += (-kB * window.__hbReticleBloom - cB * window.__hbReticleBloomVel) * dt;
+          window.__hbReticleBloom += window.__hbReticleBloomVel * dt;
+          if (window.__hbReticleBloom < 0.02 && Math.abs(window.__hbReticleBloomVel) < 0.02) { window.__hbReticleBloom = 0; window.__hbReticleBloomVel = 0; }
+
+          // Base is 10px (combat-audio-ui.js). We'll cache it to keep any future
+          // reticle skin changes safe.
+          try {
+            ret.metadata = ret.metadata || {};
+            if (typeof ret.metadata._basePx !== 'number') {
+              const w = String(ret.width || '10px');
+              const n = parseFloat(w);
+              ret.metadata._basePx = Number.isFinite(n) ? n : 10;
+            }
+            const base = ret.metadata._basePx || 10;
+            const b = Math.max(0, window.__hbReticleBloom || 0);
+            const px = Math.max(6, Math.min(64, base + b));
+            ret.width = `${px.toFixed(1)}px`;
+            ret.height = `${px.toFixed(1)}px`;
+          } catch {}
         }
       } catch {}
 

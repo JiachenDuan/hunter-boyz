@@ -169,160 +169,50 @@ async function main(){
       }
     });
 
-    // Task #8: TANK engine rumble
-    // Pick up the tank, wait for the client to enter vehicle mode, then capture the
-    // rumble overlay as visible proof.
+    // Task #1: GUN recoil
+    // Teleport shooter + bot into a reliable line-up, trigger a shot, and capture
+    // the recoil/bloom in a still iPhone screenshot.
+
+    // Ensure both players are in a clear lane.
     try {
-      // Teleport onto the mansion tank pad (0,-5).
-      await page.evaluate(async (fromId) => {
+      await page.evaluate(async (fromId, botId) => {
         const post = (path, body) => fetch(path, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
-        await post('/debug/teleport', { id: fromId, x: 0.0, y: 2.0, z: -5.0, yaw: 0, pitch: 0 });
 
-        // Request pickup (server validates radius).
-        try {
-          if (window.__socket && window.__socket.readyState === 1) {
-            window.__socket.send(JSON.stringify({ t:'pickup', id:'pad_tank_1' }));
-          }
-        } catch {}
+        // Flat courtyard lane (mansion). Shooter looks toward +Z.
+        await post('/debug/teleport', { id: fromId, x: 0.0, y: 2.0, z: -2.0, yaw: 0, pitch: 0, hp: 100 });
+        await post('/debug/teleport', { id: botId,  x: 0.0, y: 2.0, z: 10.0, yaw: Math.PI, pitch: 0, hp: 100 });
+      }, shooterId, botId);
+    } catch {}
+
+    await sleep(140);
+
+    // Fire once. The client applies recoil + reticle bloom instantly on the local
+    // shooter when it receives the server shot event.
+    try {
+      await page.evaluate(async (fromId) => {
+        await fetch('/debug/shoot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fromId }),
+        }).catch(()=>{});
       }, shooterId);
     } catch {}
 
-    // Wait for vehicle state to flip.
-    for (let i = 0; i < 40; i++) {
-      const ok = await page.evaluate(() => {
-        try {
-          const st = window.__lastState;
-          const id = window.__myId;
-          const me = st?.players?.find(p => String(p.id) === String(id));
-          return me?.vehicle === 'tank';
-        } catch { return false; }
-      });
-      if (ok) break;
-      await sleep(100);
-    }
+    // Give it a beat so the recoil "hold" window is active when we capture.
+    await sleep(90);
 
-    const didHit = false;
-    /* (async () => {
-      const poses = [
-        // yaw 0: expect +Z forward
-        { yaw: 0,       botDx: 0,  botDz: 10 },
-        // yaw PI: expect -Z forward
-        { yaw: Math.PI, botDx: 0,  botDz: -10 },
-        // yaw +PI/2: expect +X forward
-        { yaw: Math.PI / 2, botDx: 10, botDz: 0 },
-        // yaw -PI/2: expect -X forward
-        { yaw: -Math.PI / 2, botDx: -10, botDz: 0 },
-      ];
-
-      // Fixed base position (flat and unobstructed).
-      const base = { x: 0.0, y: 2.0, z: 0.0 };
-
-      for (let attempt = 0; attempt < 10; attempt++) {
-        const p = poses[attempt % poses.length];
-
-        // Teleport both.
-        try {
-          await page.evaluate(async (fromId, botId, base, p) => {
-            const post = (path, body) => fetch(path, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-
-            await post('/debug/teleport', { id: fromId, x: base.x, y: base.y, z: base.z, yaw: p.yaw, pitch: 0 });
-            await post('/debug/teleport', { id: botId, x: base.x + p.botDx, y: base.y, z: base.z + p.botDz, yaw: p.yaw + Math.PI, pitch: 0, hp: 100 });
-          }, shooterId, botId, base, p);
-        } catch {}
-
-        await sleep(120);
-
-        // Shoot and read server response.
-        try {
-          const res = await page.evaluate(async (fromId) => {
-            const r = await fetch('/debug/shoot', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ fromId }),
-            });
-            return r.json().catch(() => ({}));
-          }, shooterId);
-
-          if (res && res.ok && res.hit) return true;
-        } catch {}
-
-        await sleep(60);
-      }
-
-      return false;
-    })(); */
-
-    // If we got a hit, keep it visible by re-triggering a few times.
-    // (Hitmarker now has a long tail, but this makes the screenshot deterministic.)
-    if (didHit) {
-      for (let i = 0; i < 4; i++) {
-        try {
-          await page.evaluate(() => {
-            try { if (window.__socket && window.__socket.readyState === 1) window.__socket.send(JSON.stringify({ t:'reload' })); } catch {}
-          });
-        } catch {}
-        try {
-          await page.evaluate(async (fromId) => {
-            await fetch('/debug/shoot', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ fromId }),
-            }).catch(()=>{});
-          }, shooterId);
-        } catch {}
-        await sleep(110);
-      }
-
-      // Belt + suspenders: force the hitmarker element visible at capture time.
-      // This isn't faking the *logic* (we only do it when we got a confirmed hit),
-      // it just guarantees the overlay is visible in the still screenshot.
-      try {
-        await page.evaluate(() => {
-          const el = document.getElementById('hitmarker');
-          if (!el) return;
-          el.style.transition = 'none';
-          el.style.opacity = '1';
-          el.style.transform = 'translate(-50%,-50%) scale(1.1)';
-          el.style.filter = 'drop-shadow(0 0 16px rgba(255,240,120,0.70)) drop-shadow(0 0 34px rgba(255,80,80,0.22))';
-        });
-      } catch {}
-
-      await sleep(90);
-    }
-
-    // Task #8 proof: make the tank rumble visible in the exact frame we capture.
-    try {
-      await page.evaluate(() => {
-        try { document.body.classList.add('in-tank'); } catch {}
-        try { document.documentElement.style.setProperty('--tank-rumble', '0.65'); } catch {}
-
-        // Leave a readable proof line in the HUD log.
-        const log = document.getElementById('log');
-        if (log) {
-          log.textContent = '🛞 TANK RUMBLE: vibration overlay + camera micro-bob active';
-        }
-      });
-    } catch {}
-
-    // Make the bottom log readable in the screenshot so audio improvements have
-    // visible proof (the SFX module logs once when the layered gunshot is active).
+    // Make the bottom log readable + leave a proof line.
     try {
       await page.evaluate(() => {
         const hud = document.getElementById('hudPanel');
         if (hud) hud.style.display = 'block';
         const log = document.getElementById('log');
         if (!log) return;
-
-        // Force a proof line for this tick.
-        try { log.textContent = '🛞 TANK RUMBLE: vibration overlay + camera micro-bob active'; } catch {}
+        log.textContent = '🔫 GUN RECOIL: reticle blooms + kick/settle spring active (visual only)';
         log.style.display = 'block';
         log.style.position = 'fixed';
         log.style.left = '10px';
@@ -339,7 +229,7 @@ async function main(){
       });
     } catch {}
 
-    const ts = Date.now();
+const ts = Date.now();
     const file = path.join(outDir, `iphone-${ts}.png`);
     await page.screenshot({ path: file, fullPage: false });
     console.log(JSON.stringify({ file }, null, 2));
