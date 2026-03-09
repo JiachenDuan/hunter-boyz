@@ -1306,6 +1306,63 @@
               const seat = Math.exp(-Math.pow((t - 0.92) / 0.05, 2));
               rlRotX += (-0.20 * seat) * weight;
               rlPosZ += (0.035 * seat) * weight;
+
+              // ── Task #5: Visible mag "out/in" motion (rifle + sniper) ──
+              // We built a dedicated magNode in scene-rig.js; drive it here so reload reads
+              // clearly even in a single iPhone screenshot.
+              try {
+                const gun = fpRig?.guns?.[w];
+                const magNode = gun?.metadata?._reloadMag;
+                if (magNode) {
+                  magNode.metadata = magNode.metadata || {};
+                  const mm = magNode.metadata;
+                  if (typeof mm._basePosX !== 'number') mm._basePosX = magNode.position.x;
+                  if (typeof mm._basePosY !== 'number') mm._basePosY = magNode.position.y;
+                  if (typeof mm._basePosZ !== 'number') mm._basePosZ = magNode.position.z;
+                  if (typeof mm._baseRotX !== 'number') mm._baseRotX = magNode.rotation.x;
+                  if (typeof mm._baseRotY !== 'number') mm._baseRotY = magNode.rotation.y;
+                  if (typeof mm._baseRotZ !== 'number') mm._baseRotZ = magNode.rotation.z;
+
+                  const clamp01 = (x) => Math.max(0, Math.min(1, x));
+                  const smooth = (a, b, x) => {
+                    x = clamp01((x - a) / Math.max(0.0001, (b - a)));
+                    return x * x * (3 - 2 * x);
+                  };
+
+                  // Eject during first half, reinsert during second half.
+                  const eject = smooth(0.08, 0.55, t);
+                  const insert = smooth(0.55, 0.96, t);
+                  const out = eject * (1 - insert);
+
+                  // Slight wobble while "handling" the mag.
+                  const wob = Math.sin(Math.PI * t * 2) * 0.08 * out;
+
+                  magNode.position.x = mm._basePosX + (0.11 * out);
+                  magNode.position.y = mm._basePosY + (-0.22 * out);
+                  magNode.position.z = mm._basePosZ + (-0.06 * out);
+
+                  magNode.rotation.x = mm._baseRotX + (0.55 * out);
+                  magNode.rotation.y = mm._baseRotY + (0.22 * out) + wob;
+                  magNode.rotation.z = mm._baseRotZ + (-0.35 * out);
+                }
+              } catch {}
+            } else {
+              // Not reloading: ensure any detachable mag node is back at its base pose
+              // (otherwise it could get stuck mid-animation if reload state snaps).
+              try {
+                const w = String(window.__hbReloadWeapon || window.__hbRecoilWeapon || 'rifle');
+                const gun = fpRig?.guns?.[w];
+                const magNode = gun?.metadata?._reloadMag;
+                if (magNode?.metadata && (typeof magNode.metadata._basePosX === 'number')) {
+                  const mm = magNode.metadata;
+                  magNode.position.x = mm._basePosX;
+                  magNode.position.y = mm._basePosY;
+                  magNode.position.z = mm._basePosZ;
+                  magNode.rotation.x = (typeof mm._baseRotX === 'number') ? mm._baseRotX : 0;
+                  magNode.rotation.y = (typeof mm._baseRotY === 'number') ? mm._baseRotY : 0;
+                  magNode.rotation.z = (typeof mm._baseRotZ === 'number') ? mm._baseRotZ : 0;
+                }
+              } catch {}
             }
           } catch {}
 

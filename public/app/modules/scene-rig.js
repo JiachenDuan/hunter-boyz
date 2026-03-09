@@ -824,6 +824,22 @@
           boltRoot.parent = g;
           boltRoot.position.set(0.06, 0.005, 0.12);
 
+          // Detachable box magazine (Task #5: reload animation can visibly "drop" the mag)
+          const magNode = new BABYLON.TransformNode(`magNode_${kind}`, scene);
+          magNode.parent = g;
+          magNode.position.set(0, 0, 0);
+          magNode.rotation.set(0, 0, 0);
+          try {
+            g.metadata = g.metadata || {};
+            g.metadata._reloadMag = magNode;
+          } catch {}
+
+          const mag = BABYLON.MeshBuilder.CreateBox(`snMag_${kind}`, { width:0.052, height:0.11, depth:0.075 }, scene);
+          mag.material = sniperDarkMat;
+          mag.parent = magNode;
+          mag.position.set(0.03, -0.095, 0.16);
+          mag.rotation.x = 0.08;
+
           // Bipod (folding-style, two legs with feet)
           const bipodMount = BABYLON.MeshBuilder.CreateBox(`bpm_${kind}`, { width:0.04, height:0.02, depth:0.04 }, scene);
           bipodMount.material = sniperDarkMat;
@@ -903,10 +919,21 @@
           })();
 
           // Curved magazine (rounded segments instead of boxes — less Minecraft-y)
+          // Task #5 (Reload animation): parent the mag under its own node so we can
+          // animate a clear "mag out / mag in" motion during reload.
+          const magNode = new BABYLON.TransformNode(`magNode_${kind}`, scene);
+          magNode.parent = g;
+          magNode.position.set(0, 0, 0);
+          magNode.rotation.set(0, 0, 0);
+          try {
+            g.metadata = g.metadata || {};
+            g.metadata._reloadMag = magNode;
+          } catch {}
+
           const mkSeg = (name, y, z, rx) => {
             const seg = BABYLON.MeshBuilder.CreateCylinder(name, { height: 0.11, diameterTop: 0.062, diameterBottom: 0.066, tessellation: 18 }, scene);
             seg.material = akMetalMat;
-            seg.parent = g;
+            seg.parent = magNode;
             seg.rotation.x = Math.PI / 2 + rx;
             seg.position.set(0.03, y, z);
             return seg;
