@@ -437,6 +437,9 @@
 
             // Extra-visible recoil cue for iPhone captures: a brief expanding ring overlay
             // centered on the crosshair. (Still visual-only; does not affect aim.)
+            //
+            // 2026-03-09 tick (Task #1 recoil): make the ring *weapon-scaled* and add a
+            // slight upward "kick" motion so recoil is obvious in a still screenshot.
             try {
               const id = '__hbRecoilRing';
               let el = document.getElementById(id);
@@ -446,11 +449,6 @@
                 el.style.position = 'fixed';
                 el.style.left = '50%';
                 el.style.top = '50%';
-                // Bigger + thicker so recoil reads instantly on iPhone.
-                el.style.width = '120px';
-                el.style.height = '120px';
-                el.style.marginLeft = '-60px';
-                el.style.marginTop = '-60px';
                 el.style.borderRadius = '999px';
                 el.style.border = '4px solid rgba(255,240,120,0.92)';
                 el.style.boxShadow = '0 0 26px rgba(255,240,120,0.40), 0 0 52px rgba(255,120,80,0.18)';
@@ -460,18 +458,33 @@
                 document.body.appendChild(el);
               }
 
+              // Size scales by weapon + streak multiplier so bursts feel punchier.
+              const baseSize = (weapon === 'shotgun') ? 150
+                : (weapon === 'sniper') ? 132
+                : (weapon === 'rocket' || weapon === 'tank') ? 172
+                : (weapon === 'minigun') ? 118
+                : (weapon === 'fart') ? 96
+                : 142; // rifle
+              const size = Math.round(baseSize * (0.92 + Math.min(0.22, (mult - 1.0) * 0.22)));
+
+              el.style.width = `${size}px`;
+              el.style.height = `${size}px`;
+              el.style.marginLeft = `${-size / 2}px`;
+              el.style.marginTop = `${-size / 2}px`;
+
               if (el._t) { clearTimeout(el._t); el._t = null; }
               el.style.transition = 'none';
               el.style.opacity = '1';
-              el.style.transform = 'translate(-50%,-50%) scale(0.65)';
+              // Start slightly lower + smaller (then kick upward while expanding).
+              el.style.transform = 'translate(-50%,-46%) scale(0.62)';
               requestAnimationFrame(() => {
-                el.style.transition = 'transform 560ms cubic-bezier(0.15,0.9,0.2,1), opacity 560ms ease-out';
-                el.style.transform = 'translate(-50%,-50%) scale(1.18)';
+                el.style.transition = 'transform 640ms cubic-bezier(0.15,0.9,0.2,1), opacity 640ms ease-out';
+                el.style.transform = 'translate(-50%,-52%) scale(1.22)';
                 el.style.opacity = '0';
               });
               el._t = setTimeout(() => {
                 try { el.style.transition = 'none'; el.style.opacity = '0'; } catch {}
-              }, 620);
+              }, 720);
             } catch {}
 
             // NEW (Task #1 recoil): "chevron" recoil brackets around the crosshair.
