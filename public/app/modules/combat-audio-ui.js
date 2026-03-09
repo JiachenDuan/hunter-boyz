@@ -329,6 +329,14 @@
         if (typeof window.__camKickVelPitch !== 'number') window.__camKickVelPitch = 0;
         if (typeof window.__camKickVelYaw !== 'number') window.__camKickVelYaw = 0;
 
+        // NEW (Task #1: recoil): also kick camera *position* slightly so the punch reads
+        // even when the server is frequently updating authoritative look.
+        // Visual-only: we apply this as a spring offset in the render loop.
+        if (typeof window.__camPosKickZ !== 'number') window.__camPosKickZ = 0;
+        if (typeof window.__camPosKickY !== 'number') window.__camPosKickY = 0;
+        if (typeof window.__camPosKickVelZ !== 'number') window.__camPosKickVelZ = 0;
+        if (typeof window.__camPosKickVelY !== 'number') window.__camPosKickVelY = 0;
+
         // Keep camera kick visible for a short beat; decay happens in the render loop.
         const now = performance.now();
         const holdMs = (r0 && typeof r0.holdMs === 'number') ? r0.holdMs : 160;
@@ -354,6 +362,26 @@
         // Slightly higher cap now that recoil ramps per-shot.
         window.__camKickPitch = Math.min(0.52, window.__camKickPitch + r.pitchKick);
         window.__camKickYaw   = Math.max(-0.28, Math.min(0.28, window.__camKickYaw + yawKick));
+
+        // Camera position punch (visual only): a tiny backward + upward jolt.
+        // Tuned so it reads in a still iPhone capture but doesn't feel like nausea.
+        const posZ = (weapon === 'shotgun') ? 0.18
+          : (weapon === 'sniper') ? 0.12
+          : (weapon === 'rocket' || weapon === 'tank') ? 0.26
+          : (weapon === 'minigun') ? 0.08
+          : (weapon === 'fart') ? 0.04
+          : 0.14; // rifle
+        const posY = (weapon === 'shotgun') ? 0.07
+          : (weapon === 'sniper') ? 0.05
+          : (weapon === 'rocket' || weapon === 'tank') ? 0.10
+          : (weapon === 'minigun') ? 0.03
+          : (weapon === 'fart') ? 0.02
+          : 0.06; // rifle
+        window.__camPosKickZ = Math.min(0.34, window.__camPosKickZ + posZ);
+        window.__camPosKickY = Math.min(0.16, window.__camPosKickY + posY);
+        // Impulses help the kick read instantly (especially if dt fluctuates).
+        window.__camPosKickVelZ -= posZ * 30.0;
+        window.__camPosKickVelY += posY * 26.0;
 
         // NEW: add an impulse to the recoil spring velocity so the kick reads instantly,
         // even if the spring integration is running at a low/variable frame rate.

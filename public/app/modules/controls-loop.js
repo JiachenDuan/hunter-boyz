@@ -1392,6 +1392,35 @@
         camera.rotation.x = basePitch + window.__camKickPitch;
         camera.rotation.y = baseYaw + window.__camKickYaw;
 
+        // Camera position recoil (visual only): apply a small spring kick in/out so recoil
+        // reads as a "punch" even in a single still screenshot.
+        try {
+          if (typeof window.__camPosKickZ !== 'number') window.__camPosKickZ = 0;
+          if (typeof window.__camPosKickY !== 'number') window.__camPosKickY = 0;
+          if (typeof window.__camPosKickVelZ !== 'number') window.__camPosKickVelZ = 0;
+          if (typeof window.__camPosKickVelY !== 'number') window.__camPosKickVelY = 0;
+
+          const kPos = holdActive ? 20 : 54;
+          const cPos = holdActive ? 10 : 16;
+          window.__camPosKickVelZ += (-kPos * window.__camPosKickZ - cPos * window.__camPosKickVelZ) * dt;
+          window.__camPosKickVelY += (-kPos * window.__camPosKickY - cPos * window.__camPosKickVelY) * dt;
+          window.__camPosKickZ += window.__camPosKickVelZ * dt;
+          window.__camPosKickY += window.__camPosKickVelY * dt;
+
+          if (Math.abs(window.__camPosKickZ) < 0.0002 && Math.abs(window.__camPosKickVelZ) < 0.0002) { window.__camPosKickZ = 0; window.__camPosKickVelZ = 0; }
+          if (Math.abs(window.__camPosKickY) < 0.0002 && Math.abs(window.__camPosKickVelY) < 0.0002) { window.__camPosKickY = 0; window.__camPosKickVelY = 0; }
+
+          // Apply without drift: subtract last applied offset, then add current.
+          const prevZ = (typeof window.__hbAppliedCamPosKickZ === 'number') ? window.__hbAppliedCamPosKickZ : 0;
+          const prevY = (typeof window.__hbAppliedCamPosKickY === 'number') ? window.__hbAppliedCamPosKickY : 0;
+          const baseZ = camera.position.z - prevZ;
+          const baseY = camera.position.y - prevY;
+          camera.position.z = baseZ + (window.__camPosKickZ || 0);
+          camera.position.y = baseY + (window.__camPosKickY || 0);
+          window.__hbAppliedCamPosKickZ = (window.__camPosKickZ || 0);
+          window.__hbAppliedCamPosKickY = (window.__camPosKickY || 0);
+        } catch {}
+
         // ── Task #2: GUN screen shake (visual-only) ──
         // Apply a short high-frequency micro-jitter on top of recoil.
         // (Reticle stays centered; the world shakes under it.)
