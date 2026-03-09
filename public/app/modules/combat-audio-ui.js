@@ -326,6 +326,8 @@
       try {
         if (typeof window.__camKickPitch !== 'number') window.__camKickPitch = 0;
         if (typeof window.__camKickYaw !== 'number') window.__camKickYaw = 0;
+        if (typeof window.__camKickVelPitch !== 'number') window.__camKickVelPitch = 0;
+        if (typeof window.__camKickVelYaw !== 'number') window.__camKickVelYaw = 0;
 
         // Keep camera kick visible for a short beat; decay happens in the render loop.
         const now = performance.now();
@@ -341,6 +343,23 @@
         // Slightly higher cap now that recoil ramps per-shot.
         window.__camKickPitch = Math.min(0.45, window.__camKickPitch + r.pitchKick);
         window.__camKickYaw   = Math.max(-0.24, Math.min(0.24, window.__camKickYaw + yawKick));
+
+        // NEW: add an impulse to the recoil spring velocity so the kick reads instantly,
+        // even if the spring integration is running at a low/variable frame rate.
+        // This is purely visual (authoritative aim remains server-controlled).
+        const velMultPitch = (weapon === 'rifle') ? 26
+          : (weapon === 'shotgun') ? 24
+          : (weapon === 'sniper') ? 22
+          : (weapon === 'rocket' || weapon === 'tank') ? 28
+          : (weapon === 'minigun') ? 10
+          : 14;
+        const velMultYaw = (weapon === 'rifle') ? 18
+          : (weapon === 'rocket' || weapon === 'tank') ? 16
+          : (weapon === 'minigun') ? 6
+          : 10;
+
+        window.__camKickVelPitch += (r.pitchKick || 0) * velMultPitch;
+        window.__camKickVelYaw   += (yawKick || 0) * velMultYaw;
       } catch {}
 
       // ── Reticle recoil (screen-space, visual only) ──
