@@ -194,8 +194,8 @@
       // gunLift: lift viewmodel up (y)
       // gunSide: small sideways shove (x)
       // rollKick: tiny roll torque so the gun feels like it twists in your hands
-      rifle:   { gunKick: 0.360, gunLift: 0.070, gunSide: 0.016, rollKick: 0.055, pitchKick: 0.235, yawKick: 0.0210, flashScale: 1.05 },
-      shotgun: { gunKick: 0.305, gunLift: 0.066, gunSide: 0.020, rollKick: 0.080, pitchKick: 0.165, yawKick: 0.0170, flashScale: 1.90 },
+      rifle:   { gunKick: 0.440, gunLift: 0.078, gunSide: 0.018, rollKick: 0.060, pitchKick: 0.290, yawKick: 0.0240, flashScale: 1.05 },
+      shotgun: { gunKick: 0.345, gunLift: 0.070, gunSide: 0.022, rollKick: 0.090, pitchKick: 0.185, yawKick: 0.0185, flashScale: 1.90 },
       sniper:  { gunKick: 0.330, gunLift: 0.052, gunSide: 0.006, rollKick: 0.028, pitchKick: 0.205, yawKick: 0.0048, flashScale: 1.55 },
       fart:    { gunKick: 0.060, gunLift: 0.017, gunSide: 0.006, rollKick: 0.014, pitchKick: 0.024, yawKick: 0.0070, flashScale: 0.75 },
       minigun: { gunKick: 0.120, gunLift: 0.030, gunSide: 0.014, rollKick: 0.060, pitchKick: 0.050, yawKick: 0.0115, flashScale: 2.10 },
@@ -230,7 +230,7 @@
         mult = 1.0 + Math.min(0.55, nextStreak * 0.065);
 
         // Keep single-tap rifle satisfying even when not streaking.
-        if (weapon === 'rifle' && nextStreak === 0) mult = 1.25;
+        if (weapon === 'rifle' && nextStreak === 0) mult = 1.55;
       } catch {}
 
       // Copy (so we can scale per-shot without mutating constants)
@@ -293,8 +293,8 @@
           // Extra snap: small impulse to velocity so recoil feels instantaneous even
           // with spring recovery.
           // Stronger impulses so the kick is visible in a single frame capture (iPhone snap).
-          md._rVelPosZ -= (r.gunKick || 0) * 9.0;
-          md._rVelRotX += (r.pitchKick || 0) * 10.0;
+          md._rVelPosZ -= (r.gunKick || 0) * 12.0;
+          md._rVelRotX += (r.pitchKick || 0) * 13.0;
         }
       } catch {}
 
