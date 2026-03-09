@@ -442,9 +442,9 @@
       // NOTE: Values are tuned to the actual scale of our fpRig (small offsets).
       // The previous values were effectively "mega" units and could push the viewmodel out of frame.
       // These are punchy on iPhone while staying readable + controlled.
-      rifle:   { gunKick: 0.180, gunLift: 0.055, gunSide: 0.028, rollKick: 0.080, pitchKick: 0.095, yawKick: 0.0160, flashScale: 1.05, holdMs: 700 },
-      shotgun: { gunKick: 0.165, gunLift: 0.050, gunSide: 0.016, rollKick: 0.070, pitchKick: 0.070, yawKick: 0.0100, flashScale: 1.90, holdMs: 300 },
-      sniper:  { gunKick: 0.095, gunLift: 0.028, gunSide: 0.010, rollKick: 0.028, pitchKick: 0.052, yawKick: 0.0055, flashScale: 1.55, holdMs: 280 },
+      rifle:   { gunKick: 0.235, gunLift: 0.070, gunSide: 0.032, rollKick: 0.100, pitchKick: 0.120, yawKick: 0.0180, flashScale: 1.05, holdMs: 760 },
+      shotgun: { gunKick: 0.185, gunLift: 0.056, gunSide: 0.018, rollKick: 0.078, pitchKick: 0.078, yawKick: 0.0105, flashScale: 1.90, holdMs: 320 },
+      sniper:  { gunKick: 0.108, gunLift: 0.032, gunSide: 0.011, rollKick: 0.032, pitchKick: 0.058, yawKick: 0.0058, flashScale: 1.55, holdMs: 300 },
       fart:    { gunKick: 0.042, gunLift: 0.018, gunSide: 0.010, rollKick: 0.020, pitchKick: 0.020, yawKick: 0.0060, flashScale: 0.75, holdMs: 150 },
       minigun: { gunKick: 0.055, gunLift: 0.020, gunSide: 0.012, rollKick: 0.040, pitchKick: 0.030, yawKick: 0.0065, flashScale: 2.10, holdMs: 140 },
       rocket:  { gunKick: 0.145, gunLift: 0.044, gunSide: 0.020, rollKick: 0.060, pitchKick: 0.065, yawKick: 0.0100, flashScale: 2.20, holdMs: 320 },
@@ -483,7 +483,7 @@
         mult = 1.0 + Math.min(0.55, nextStreak * 0.065);
 
         // Keep single-tap rifle satisfying even when not streaking.
-        if (weapon === 'rifle' && nextStreak === 0) mult = 1.75;
+        if (weapon === 'rifle' && nextStreak === 0) mult = 2.05;
       } catch {}
 
       // Copy (so we can scale per-shot without mutating constants)
@@ -1047,11 +1047,11 @@
           : (weapon === 'minigun') ? 520
           : (weapon === 'fart') ? 420
           : 620;
-        const addY = Math.min(118, (r.pitchKick || 0) * pxPerRad * ((weapon === 'rifle') ? 1.18 : 1.05));
-        const addX = Math.max(-58, Math.min(58, (yawKick || 0) * pxPerRad));
+        const addY = Math.min(132, (r.pitchKick || 0) * pxPerRad * ((weapon === 'rifle') ? 1.32 : 1.08));
+        const addX = Math.max(-66, Math.min(66, (yawKick || 0) * pxPerRad));
 
-        window.__hbReticleKickY = Math.min(130, window.__hbReticleKickY + addY);
-        window.__hbReticleKickX = Math.max(-130, Math.min(130, window.__hbReticleKickX + addX));
+        window.__hbReticleKickY = Math.min(150, window.__hbReticleKickY + addY);
+        window.__hbReticleKickX = Math.max(-150, Math.min(150, window.__hbReticleKickX + addX));
 
         // Reticle bloom (size expansion) so recoil reads as both a *kick* and a
         // temporary *loss of precision* (classic arcade/CS feedback). Visual only.
