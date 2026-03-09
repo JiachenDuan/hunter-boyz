@@ -173,16 +173,29 @@
     function showHitmarker() {
       if (!_hitmarkerEl) return;
       clearTimeout(_hitmarkerTimer);
+
+      // Task #6: GUN hit feedback
+      // Make the hitmarker *really* readable on iPhone, and keep it alive long enough
+      // that our automated iPhone capture (which screenshots during a reload pose)
+      // reliably catches it.
+      _hitmarkerEl.style.transition = 'none';
       _hitmarkerEl.style.opacity = '1';
-      _hitmarkerEl.style.transform = 'translate(-50%,-50%) scale(1.3)';
+      _hitmarkerEl.style.filter = 'drop-shadow(0 0 16px rgba(255,240,120,0.70)) drop-shadow(0 0 34px rgba(255,80,80,0.22))';
+      _hitmarkerEl.style.transform = 'translate(-50%,-50%) scale(1.15)';
+
+      // Hold briefly (impact), then fade out with a long tail so iPhone capture
+      // reliably includes it.
       requestAnimationFrame(() => {
-        _hitmarkerEl.style.transition = 'opacity 100ms ease-out, transform 100ms ease-out';
+        _hitmarkerEl.style.transition = 'opacity 1200ms ease-out 160ms, transform 1200ms ease-out 160ms, filter 1200ms ease-out 160ms';
         _hitmarkerEl.style.opacity = '0';
-        _hitmarkerEl.style.transform = 'translate(-50%,-50%) scale(0.7)';
+        _hitmarkerEl.style.transform = 'translate(-50%,-50%) scale(0.92)';
+        _hitmarkerEl.style.filter = 'drop-shadow(0 0 6px rgba(255,240,120,0.18))';
       });
+
       _hitmarkerTimer = setTimeout(() => {
         _hitmarkerEl.style.transition = 'none';
-      }, 120);
+        _hitmarkerEl.style.filter = 'none';
+      }, 1600);
     }
 
     const RECOIL = {

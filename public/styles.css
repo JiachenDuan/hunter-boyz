@@ -727,7 +727,17 @@
       transform:translate(-50%,-50%);
       pointer-events:none;
       opacity:0;
-      z-index:90;
+      z-index:120;
+    }
+
+    /* Task #6: GUN hit feedback (iPhone-readable hitmarker) */
+    #hitmarker svg {
+      width:82px;
+      height:82px;
+    }
+    #hitmarker line {
+      stroke: rgba(255,240,120,0.98);
+      stroke-width: 4.2;
     }
 
     #btnScope {
