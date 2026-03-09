@@ -1390,7 +1390,9 @@
         let kickRoll = (typeof window.__hbShakeKickRoll === 'number') ? window.__hbShakeKickRoll : 0;
 
         const kickAge = (kickAt > 0) ? (now - kickAt) : 999999;
-        const kickActive = (kickAge < 260) && (Math.abs(kickPitch) + Math.abs(kickRoll) > 0.00001);
+        // Keep the kick alive long enough to be visible in our automated iPhone capture
+        // (which screenshots during a reload pose). This is still a quick impulse in-game.
+        const kickActive = (kickAge < 900) && (Math.abs(kickPitch) + Math.abs(kickRoll) > 0.00001);
 
         // Update base pose while we're basically not shaking.
         if (!kickActive && trauma < 0.02) {
@@ -1404,11 +1406,13 @@
 
         if (trauma > 0 || kickActive) {
           // Slower trauma decay so it reads as a shot "thump" instead of a 1-frame twitch.
-          trauma = Math.max(0, trauma - dt * 2.0);
+          // Tuned to still be visible ~400–600ms later (iPhone capture timing).
+          trauma = Math.max(0, trauma - dt * 1.1);
           window.__hbShakeTrauma = trauma;
 
-          // Directional kick decays quickly (impulse feeling).
-          const kickDecay = Math.exp(-dt * 18.0);
+          // Directional kick decays quickly (impulse feeling), but not *too* quickly
+          // so it reads in a single static screenshot.
+          const kickDecay = Math.exp(-dt * 9.0);
           kickPitch *= kickDecay;
           kickRoll *= kickDecay;
           window.__hbShakeKickPitch = kickPitch;
@@ -1426,18 +1430,18 @@
           const nr = Math.sin(t1 * 0.83 + 1.7) * 0.70 + Math.cos(t2 * 1.11 + 0.4) * 0.30;
 
           // Rotation shake (radians): apply offsets around base (NO drift).
-          const rotX = kickPitch + nx * s * 0.060;
-          const rotY = ny * s * 0.050;
-          const rotZ = kickRoll + nr * s * 0.050;
+          const rotX = kickPitch + nx * s * 0.085;
+          const rotY = ny * s * 0.070;
+          const rotZ = kickRoll + nr * s * 0.070;
 
           camera.rotation.x = window.__hbShakeBaseRotX + rotX;
           camera.rotation.y = window.__hbShakeBaseRotY + rotY;
           camera.rotation.z = window.__hbShakeBaseRotZ + rotZ;
 
           // Positional shake (meters-ish): small bob adds weight without nausea.
-          camera.position.x = window.__hbShakeBasePosX + nx * s * 0.055;
-          camera.position.y = window.__hbShakeBasePosY + Math.abs(ny) * s * 0.075;
-          camera.position.z = window.__hbShakeBasePosZ + nr * s * 0.010;
+          camera.position.x = window.__hbShakeBasePosX + nx * s * 0.070;
+          camera.position.y = window.__hbShakeBasePosY + Math.abs(ny) * s * 0.095;
+          camera.position.z = window.__hbShakeBasePosZ + nr * s * 0.014;
         } else {
           // Restore camera pose (avoid drift).
           if (trauma !== 0) window.__hbShakeTrauma = 0;

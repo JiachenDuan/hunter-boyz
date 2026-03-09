@@ -337,18 +337,18 @@
         // Directional kick (radians): quick pitch-up + slight roll.
         // Sign alternates a bit so repeated shots don't always lean the same direction.
         const sign = ((window.__hbShakeSeed | 0) % 2 === 0) ? 1 : -1;
-        const kickPitch = (weapon === 'rocket' || weapon === 'tank') ? 0.060
-          : (weapon === 'shotgun') ? 0.050
-          : (weapon === 'sniper') ? 0.040
-          : (weapon === 'minigun') ? 0.018
-          : (weapon === 'fart') ? 0.010
+        const kickPitch = (weapon === 'rocket' || weapon === 'tank') ? 0.075
+          : (weapon === 'shotgun') ? 0.060
+          : (weapon === 'sniper') ? 0.050
+          : (weapon === 'minigun') ? 0.020
+          : (weapon === 'fart') ? 0.012
+          : 0.045;
+        const kickRoll = (weapon === 'rocket' || weapon === 'tank') ? 0.062
+          : (weapon === 'shotgun') ? 0.052
+          : (weapon === 'sniper') ? 0.036
+          : (weapon === 'minigun') ? 0.016
+          : (weapon === 'fart') ? 0.009
           : 0.032;
-        const kickRoll = (weapon === 'rocket' || weapon === 'tank') ? 0.050
-          : (weapon === 'shotgun') ? 0.040
-          : (weapon === 'sniper') ? 0.028
-          : (weapon === 'minigun') ? 0.014
-          : (weapon === 'fart') ? 0.008
-          : 0.022;
 
         window.__hbShakeTrauma = Math.min(1.0, window.__hbShakeTrauma + add);
         window.__hbShakeKickPitch = Math.min(0.11, window.__hbShakeKickPitch + kickPitch);
