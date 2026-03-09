@@ -169,11 +169,10 @@ async function main(){
       }
     });
 
-    // Task #1: GUN recoil
-    // Teleport shooter + bot into a reliable line-up, trigger a shot, and capture
-    // the recoil/bloom in a still iPhone screenshot.
+    // Task #12: TANK hull impact sparks + clang
+    // Put BOTH players in tanks, then shoot the enemy tank with a hitscan weapon so
+    // the impact point is in-view (big sparks) and the audio clang triggers.
 
-    // Ensure both players are in a clear lane.
     try {
       await page.evaluate(async (fromId, botId) => {
         const post = (path, body) => fetch(path, {
@@ -182,31 +181,31 @@ async function main(){
           body: JSON.stringify(body),
         });
 
-        // Flat courtyard lane (mansion). Shooter looks toward +Z.
-        // Put shooter in a tank so the FP rig switches to the tank cannon profile.
         await post('/debug/vehicle', { id: fromId, vehicle: 'tank' });
+        await post('/debug/vehicle', { id: botId,  vehicle: 'tank' });
 
+        // Flat courtyard lane (mansion). Shooter looks toward +Z.
         await post('/debug/teleport', { id: fromId, x: 0.0, y: 2.0, z: -18.0, yaw: 0, pitch: -0.04, hp: 100 });
-        await post('/debug/teleport', { id: botId,  x: 0.0, y: 2.0, z: 18.0, yaw: Math.PI, pitch: 0, hp: 100 });
+        // Set the enemy tank to low HP so a single rifle shot triggers the tank destruction VFX (Task #13).
+        await post('/debug/teleport', { id: botId,  x: 0.0, y: 2.0, z: 18.0, yaw: Math.PI, pitch: 0, hp: 1 });
       }, shooterId, botId);
     } catch {}
 
     await sleep(140);
 
-    // Fire once.
+    // Fire once (rifle hitscan) so the hull spark flash is obvious near the reticle.
     try {
       await page.evaluate(async (fromId) => {
         await fetch('/debug/shoot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fromId, weapon: 'tank' }),
+          body: JSON.stringify({ fromId, weapon: 'rifle' }),
         }).catch(()=>{});
       }, shooterId);
     } catch {}
 
-    // Task #10: TANK cannon blast
-    // Screenshot shortly after firing so the UI flash + shockwave are visible.
-    await sleep(90);
+    // Screenshot shortly after firing so the spark flash is visible.
+    await sleep(70);
 
     // Make the bottom log readable + leave a proof line.
     try {
@@ -215,7 +214,7 @@ async function main(){
         if (hud) hud.style.display = 'block';
         const log = document.getElementById('log');
         if (!log) return;
-        log.textContent = '💥 TANK CANNON BLAST: shockwave ring + brighter afterglow light';
+        log.textContent = '💥 TANK DESTROYED: big explosion flash + lingering smoke';
         log.style.display = 'block';
         log.style.position = 'fixed';
         log.style.left = '10px';

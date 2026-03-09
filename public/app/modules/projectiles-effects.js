@@ -326,6 +326,222 @@ function showKill(text) {
       } catch {}
     }
 
+    // Task #12: TANK hull impact sparks (bigger + longer than regular bullet pings).
+    // Still lightweight: a couple of emissive flashes, capped to ONE at a time.
+    function spawnTankHullSparks(pos, intensity = 1) {
+      try {
+        if (!scene || !pos) return;
+
+        if (window.__lastTankHullFlash) {
+          try { window.__lastTankHullFlash.dispose(); } catch {}
+          window.__lastTankHullFlash = null;
+        }
+
+        const k = Math.max(0.7, Math.min(2.0, +intensity || 1));
+        const sz = 0.42 + 0.18 * k;
+
+        const flash = BABYLON.MeshBuilder.CreatePlane('tankHullFlash', { size: sz }, scene);
+        flash.position = pos.clone();
+        flash.position.y += 0.12;
+        flash.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+        flash.isPickable = false;
+
+        const mat = new BABYLON.StandardMaterial('tankHullFlashMat', scene);
+        // Hot-white with a blue-ish metal edge so it reads as "sparks" vs muzzle flash.
+        mat.diffuseColor  = new BABYLON.Color3(0.92, 0.96, 1.0);
+        mat.emissiveColor = new BABYLON.Color3(0.75, 0.90, 1.0);
+        mat.specularColor = new BABYLON.Color3(0, 0, 0);
+        mat.alpha = 0.95;
+        mat.disableLighting = true;
+        mat.backFaceCulling = false;
+        flash.material = mat;
+
+        window.__lastTankHullFlash = flash;
+
+        // Optional tiny secondary flash offset a bit (feels like multiple sparks)
+        let flash2 = null;
+        let mat2 = null;
+        try {
+          flash2 = BABYLON.MeshBuilder.CreatePlane('tankHullFlash2', { size: sz * 0.65 }, scene);
+          flash2.position = pos.clone();
+          flash2.position.y += 0.10;
+          flash2.position.x += (Math.random() - 0.5) * 0.22;
+          flash2.position.z += (Math.random() - 0.5) * 0.22;
+          flash2.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+          flash2.isPickable = false;
+          mat2 = new BABYLON.StandardMaterial('tankHullFlashMat2', scene);
+          mat2.diffuseColor = new BABYLON.Color3(1.0, 0.92, 0.70);
+          mat2.emissiveColor = new BABYLON.Color3(1.0, 0.84, 0.45);
+          mat2.specularColor = new BABYLON.Color3(0,0,0);
+          mat2.alpha = 0.85;
+          mat2.disableLighting = true;
+          mat2.backFaceCulling = false;
+          flash2.material = mat2;
+        } catch {}
+
+        const start = performance.now();
+        const dur = 380;
+        const tick = () => {
+          const t = performance.now() - start;
+          const kk = Math.min(1, t / dur);
+          try {
+            // Fast initial pop, then long tail.
+            const tail = Math.pow(1 - kk, 1.6);
+            mat.alpha = 0.95 * tail;
+            flash.scaling.setAll(1.0 + kk * 0.55);
+          } catch {}
+          try {
+            if (flash2 && mat2) {
+              const tail2 = Math.pow(1 - kk, 1.9);
+              mat2.alpha = 0.85 * tail2;
+              flash2.scaling.setAll(1.0 + kk * 0.85);
+            }
+          } catch {}
+
+          if (kk < 1) requestAnimationFrame(tick);
+          else {
+            try { flash.dispose(); } catch {}
+            try { mat.dispose(); } catch {}
+            try { if (flash2) flash2.dispose(); } catch {}
+            try { if (mat2) mat2.dispose(); } catch {}
+            if (window.__lastTankHullFlash === flash) window.__lastTankHullFlash = null;
+          }
+        };
+        requestAnimationFrame(tick);
+      } catch {}
+    }
+
+
+    // ── Task #13: TANK destruction (visual only) ──
+    // Big readable boom + lingering smoke when a tank is actually destroyed.
+    // Kept client-side so it doesn't change gameplay/authoritative state.
+    function spawnTankDestruction(pos, intensity = 1) {
+      try {
+        if (!scene || !pos) return;
+
+        // Cap to one active destruction effect so we don't stack smoke balls.
+        if (window.__lastTankDestruction) {
+          try { window.__lastTankDestruction.dispose?.(); } catch {}
+          window.__lastTankDestruction = null;
+        }
+
+        const k = Math.max(0.8, Math.min(2.4, +intensity || 1));
+
+        // Bright flash sphere
+        const flash = BABYLON.MeshBuilder.CreateSphere('tankBoomFlash', { diameter: 1.0 * k, segments: 10 }, scene);
+        flash.position = pos.clone();
+        flash.position.y += 0.15;
+        flash.isPickable = false;
+
+        const fmat = new BABYLON.StandardMaterial('tankBoomFlashMat', scene);
+        fmat.diffuseColor = new BABYLON.Color3(1, 1, 1);
+        fmat.emissiveColor = new BABYLON.Color3(1.0, 0.86, 0.45);
+        fmat.specularColor = new BABYLON.Color3(0, 0, 0);
+        fmat.alpha = 0.95;
+        fmat.disableLighting = true;
+        flash.material = fmat;
+
+        // Smoke puffs (billboard spheres)
+        const smokes = [];
+        const puffCount = 10;
+        for (let i = 0; i < puffCount; i++) {
+          const puff = BABYLON.MeshBuilder.CreateSphere('tankBoomSmoke', { diameter: (0.55 + Math.random() * 0.35) * k, segments: 8 }, scene);
+          puff.isPickable = false;
+          puff.position = pos.clone();
+          puff.position.y += 0.20 + Math.random() * 0.35;
+          puff.position.x += (Math.random() - 0.5) * 0.95 * k;
+          puff.position.z += (Math.random() - 0.5) * 0.95 * k;
+
+          const sm = new BABYLON.StandardMaterial('tankBoomSmokeMat', scene);
+          sm.diffuseColor = new BABYLON.Color3(0.12, 0.12, 0.13);
+          sm.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+          sm.specularColor = new BABYLON.Color3(0, 0, 0);
+          sm.alpha = 0.45;
+          sm.disableLighting = true;
+          puff.material = sm;
+          smokes.push({ puff, sm, dx: (Math.random() - 0.5) * 0.9, dz: (Math.random() - 0.5) * 0.9, dy: 0.55 + Math.random() * 0.35 });
+        }
+
+        // Shrapnel streaks (short-lived emissive lines)
+        const streaks = [];
+        for (let i = 0; i < 10; i++) {
+          const ang = Math.random() * Math.PI * 2;
+          const len = (0.8 + Math.random() * 1.25) * k;
+          const p1 = new BABYLON.Vector3(pos.x, pos.y + 0.18, pos.z);
+          const p2 = new BABYLON.Vector3(pos.x + Math.cos(ang) * len, pos.y + (Math.random() - 0.15) * 0.65 * k, pos.z + Math.sin(ang) * len);
+          const line = BABYLON.MeshBuilder.CreateLines('tankBoomLine', { points: [p1, p2] }, scene);
+          line.isPickable = false;
+          line.color = new BABYLON.Color3(1.0, 0.78, 0.25);
+          line.alpha = 0.85;
+          streaks.push(line);
+        }
+
+        // Optional sound hook (if present)
+        try {
+          if (SFX && typeof SFX.tankBoom === 'function') SFX.tankBoom(k);
+        } catch {}
+
+        // Animate + clean up
+        const start = performance.now();
+        const dur = 1400;
+
+        // A tiny container object so we can dispose all via one reference.
+        window.__lastTankDestruction = {
+          dispose: () => {
+            try { flash.dispose(); } catch {}
+            try { fmat.dispose(); } catch {}
+            for (const s of smokes) {
+              try { s.puff.dispose(); } catch {}
+              try { s.sm.dispose(); } catch {}
+            }
+            for (const l of streaks) { try { l.dispose(); } catch {} }
+          },
+        };
+
+        const tick = () => {
+          const t = performance.now() - start;
+          const a = Math.min(1, t / dur);
+
+          try {
+            // Flash: fast pop then vanish.
+            const flashA = Math.max(0, 1 - a * 4.0);
+            fmat.alpha = 0.95 * flashA;
+            flash.scaling.setAll(1.0 + a * 4.0);
+          } catch {}
+
+          try {
+            // Smoke rises + slowly expands.
+            for (const s of smokes) {
+              s.puff.position.y += s.dy * 0.010;
+              s.puff.position.x += s.dx * 0.008;
+              s.puff.position.z += s.dz * 0.008;
+              const sc = 1.0 + a * 2.4;
+              s.puff.scaling.setAll(sc);
+              s.sm.alpha = 0.45 * (1 - a);
+            }
+          } catch {}
+
+          try {
+            // Streaks fade quickly.
+            for (const l of streaks) {
+              l.alpha = Math.max(0, 0.85 * (1 - a * 2.5));
+            }
+          } catch {}
+
+          if (a < 1) requestAnimationFrame(tick);
+          else {
+            try { window.__lastTankDestruction?.dispose?.(); } catch {}
+            window.__lastTankDestruction = null;
+          }
+        };
+        requestAnimationFrame(tick);
+        setTimeout(() => {
+          try { window.__lastTankDestruction?.dispose?.(); } catch {}
+          window.__lastTankDestruction = null;
+        }, dur + 200);
+      } catch {}
+    }
+
 
     function clearDents() {
       try {
@@ -571,7 +787,36 @@ function spawnDent(pos, normal, size, kind) {
         // Knife: no tracer/lines. We'll animate the in-hand knife swing instead.
       }
 
-      // Bullet marks disabled (no dents). Keep sparks for feedback.
+      // ── Task #12: TANK hull impact sparks + clang ──
+      // If we hit a tank player, show a bigger metallic spark flash and play a clang.
+      // (Still client-side only; server damage/logic unchanged.)
+      if (s.hit) {
+        try {
+          const hitId = String(s.hit);
+          const st = window.__lastState;
+          const victim = st && Array.isArray(st.players) ? st.players.find(p => String(p.id) === hitId) : null;
+          if (victim && victim.vehicle === 'tank') {
+            const raw = new BABYLON.Vector3(s.ex, (s.ey || (s.sy || 1.8) - 0.05), s.ez);
+            // No world pick: we want the flash right on the "hit" point, not on nearby walls.
+            const intensity = ((s.weapon || 'rifle') === 'tank' || (s.weapon || 'rifle') === 'rocket') ? 1.9 : 1.25;
+            spawnTankHullSparks(raw, intensity);
+            try {
+              if (SFX && typeof SFX.tankClang === 'function') SFX.tankClang(intensity);
+            } catch {}
+
+            // If the hit actually DESTROYED the tank, play a much bigger destruction boom.
+            // Task #13: TANK destruction
+            try {
+              const hp = (typeof s.hitHp === 'number') ? s.hitHp : null;
+              if (hp !== null && hp <= 0) {
+                spawnTankDestruction(raw, (s.weapon || 'rifle') === 'tank' ? 2.1 : 1.6);
+              }
+            } catch {}
+          }
+        } catch {}
+      }
+
+      // Bullet marks disabled (no dents). Keep sparks for misses/near-misses feedback.
       if (!s.hit) {
         try {
           const wpn = (s.weapon || 'rifle');
