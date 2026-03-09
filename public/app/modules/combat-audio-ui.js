@@ -938,6 +938,63 @@
 
           // Nudge a seed so consecutive shots don't look identical.
           window.__hbGunShakeSeed = ((window.__hbGunShakeSeed || 0) + 1) % 997;
+
+          // Task #2 (screen shake): add a quick "motion smear" overlay so the jolt
+          // is unmistakable in a single still iPhone screenshot.
+          // This is UI-only (no aim impact) and fades quickly.
+          try {
+            const id = '__hbShakeSmear';
+            let el = document.getElementById(id);
+            if (!el) {
+              el = document.createElement('div');
+              el.id = id;
+              el.style.position = 'fixed';
+              el.style.left = '0';
+              el.style.top = '0';
+              el.style.right = '0';
+              el.style.bottom = '0';
+              el.style.pointerEvents = 'none';
+              el.style.zIndex = '99995';
+              el.style.opacity = '0';
+              el.style.willChange = 'opacity, transform, filter';
+              el.style.mixBlendMode = 'screen';
+              // Subtle diagonal streaks (feels like camera vibration/motion blur).
+              el.style.background = 'repeating-linear-gradient(100deg, rgba(255,240,120,0.00) 0px, rgba(255,240,120,0.00) 10px, rgba(255,240,120,0.05) 12px, rgba(255,240,120,0.00) 18px)';
+              document.body.appendChild(el);
+            }
+
+            const base = (weapon === 'tank') ? 1.35
+              : (weapon === 'rocket') ? 1.20
+              : (weapon === 'shotgun') ? 1.05
+              : (weapon === 'sniper') ? 0.95
+              : (weapon === 'minigun') ? 0.55
+              : (weapon === 'fart') ? 0.35
+              : 0.85; // rifle
+            const mag = Math.max(0.35, Math.min(1.55, base * (0.92 + Math.min(0.35, (mult - 1.0) * 0.24))));
+
+            if (el._t1) { clearTimeout(el._t1); el._t1 = null; }
+            if (el._t2) { clearTimeout(el._t2); el._t2 = null; }
+
+            el.style.transition = 'none';
+            el.style.opacity = String(Math.min(0.66, 0.22 * mag));
+            // Start with a small offset, then slide back (reads as shake).
+            const sx = (Math.random() * 2 - 1) * 10 * mag;
+            const sy = (Math.random() * 2 - 1) * 7 * mag;
+            el.style.transform = `translate(${sx.toFixed(2)}px, ${sy.toFixed(2)}px) scale(${(1.0 + 0.010 * mag).toFixed(4)})`;
+            el.style.filter = `blur(${(0.35 * mag).toFixed(2)}px)`;
+
+            requestAnimationFrame(() => {
+              el.style.transition = 'opacity 520ms ease-out, transform 180ms cubic-bezier(0.20,0.85,0.25,1), filter 520ms ease-out';
+              el.style.opacity = '0';
+              el.style.transform = 'translate(0px, 0px) scale(1.0)';
+              el.style.filter = 'blur(0px)';
+            });
+
+            // Long-ish tail so our automated capture reliably catches it.
+            el._t1 = setTimeout(() => {
+              try { el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = 'translate(0,0) scale(1.0)'; el.style.filter = 'none'; } catch {}
+            }, 650);
+          } catch {}
         } catch {}
 
         // ── FOV punch (visual-only) ──
