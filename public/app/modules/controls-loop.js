@@ -1449,9 +1449,9 @@
             try {
               const canvas = document.getElementById('renderCanvas');
               const ui = document.getElementById('ui');
-              const px = 220; // radians-ish → pixels (tuned for iPhone @ deviceScaleFactor 3)
-              const dx = Math.max(-10, Math.min(10, (n2 - n1) * 0.5 * ampY * ease * px));
-              const dy = Math.max(-14, Math.min(14, (n) * ampP * ease * px));
+              const px = 320; // radians-ish → pixels (tuned for iPhone @ deviceScaleFactor 3)
+              const dx = Math.max(-16, Math.min(16, (n2 - n1) * 0.5 * ampY * ease * px));
+              const dy = Math.max(-22, Math.min(22, (n) * ampP * ease * px));
               const tf = `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0)`;
               if (canvas) canvas.style.transform = tf;
               if (ui) ui.style.transform = tf;

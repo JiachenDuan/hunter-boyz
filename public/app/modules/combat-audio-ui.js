@@ -553,7 +553,9 @@
           window.__hbGunShakeYaw   = Math.min(0.040, window.__hbGunShakeYaw + add * 0.65);
 
           const now3 = performance.now();
-          window.__hbGunShakeUntil = Math.max(window.__hbGunShakeUntil || 0, now3 + 140);
+          // Keep shake alive a bit longer so it reads clearly on iPhone (and our automated capture
+          // which screenshots shortly after firing).
+          window.__hbGunShakeUntil = Math.max(window.__hbGunShakeUntil || 0, now3 + 220);
 
           // Nudge a seed so consecutive shots don't look identical.
           window.__hbGunShakeSeed = ((window.__hbGunShakeSeed || 0) + 1) % 997;
