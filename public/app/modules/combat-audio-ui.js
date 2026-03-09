@@ -375,6 +375,29 @@
         flashScale: (r0.flashScale || 1),
       };
 
+      // ── Task #1: Camera FOV recoil (visual only; NOT screen shake) ──
+      // A small, snappy "zoom-out" pulse makes each shot feel punchier on iPhone,
+      // without introducing jitter (screen shake is task #2).
+      try {
+        const base = (weapon === 'tank') ? 0.070
+          : (weapon === 'rocket') ? 0.055
+          : (weapon === 'shotgun') ? 0.050
+          : (weapon === 'sniper') ? 0.040
+          : (weapon === 'minigun') ? 0.018
+          : (weapon === 'fart') ? 0.030
+          : 0.036; // rifle
+
+        // Scale with streak, but clamp so it never becomes disorienting.
+        const k = Math.min(1.45, Math.max(0.85, mult));
+        const fovKick = base * k;
+
+        if (typeof window.__hbRecoilFovOff !== 'number') window.__hbRecoilFovOff = 0;
+        if (typeof window.__hbRecoilFovVel !== 'number') window.__hbRecoilFovVel = 0;
+
+        window.__hbRecoilFovOff += fovKick;
+        window.__hbRecoilFovVel += fovKick * 18.0;
+      } catch {}
+
       // ── Gun model recoil (kick + torque) ──
       // Make the viewmodel *move* (not just rotate) so recoil is obvious on mobile.
       // IMPORTANT: we apply recoil as spring-driven offsets (metadata), NOT by directly

@@ -1374,6 +1374,38 @@
           g.rotation.y = md._baseRotY + md._rRotY + rlRotY;
           g.rotation.z = md._baseRotZ + md._rRotZ + rlRotZ;
 
+          // ── Task #1: Camera FOV recoil (visual only) ──
+          // Spring the camera's FOV back to its base value. This is a "kick" (zoom-out pulse),
+          // not jitter (screen shake is task #2).
+          try {
+            if (camera) {
+              camera.metadata = camera.metadata || {};
+              const cm = camera.metadata;
+              if (typeof cm._baseFov !== 'number') cm._baseFov = camera.fov;
+              if (typeof window.__hbRecoilFovOff !== 'number') window.__hbRecoilFovOff = 0;
+              if (typeof window.__hbRecoilFovVel !== 'number') window.__hbRecoilFovVel = 0;
+
+              const dtF = dt;
+              // A tight spring so it feels snappy and doesn't linger.
+              const kF = 70.0;
+              const cF = 16.0;
+              window.__hbRecoilFovVel += (-kF * window.__hbRecoilFovOff - cF * window.__hbRecoilFovVel) * dtF;
+              window.__hbRecoilFovOff += window.__hbRecoilFovVel * dtF;
+
+              // Clamp to avoid discomfort.
+              const maxOff = 0.11;
+              if (window.__hbRecoilFovOff > maxOff) { window.__hbRecoilFovOff = maxOff; window.__hbRecoilFovVel *= 0.35; }
+              if (window.__hbRecoilFovOff < -maxOff) { window.__hbRecoilFovOff = -maxOff; window.__hbRecoilFovVel *= 0.35; }
+
+              if (Math.abs(window.__hbRecoilFovOff) < 0.00005 && Math.abs(window.__hbRecoilFovVel) < 0.00005) {
+                window.__hbRecoilFovOff = 0;
+                window.__hbRecoilFovVel = 0;
+              }
+
+              camera.fov = cm._baseFov + window.__hbRecoilFovOff;
+            }
+          } catch {}
+
           // ── Task #9: TANK turret rotation inertia (visual only) ──
           // When in the tank, give the visible turret/cannon a springy "weight" when
           // flick-aiming left/right *and* up/down. This is purely cockpit feel (server aim stays 1:1).
