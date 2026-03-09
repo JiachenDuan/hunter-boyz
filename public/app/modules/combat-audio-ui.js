@@ -444,13 +444,14 @@
                 el.style.position = 'fixed';
                 el.style.left = '50%';
                 el.style.top = '50%';
-                el.style.width = '72px';
-                el.style.height = '72px';
-                el.style.marginLeft = '-36px';
-                el.style.marginTop = '-36px';
+                // Bigger + thicker so recoil reads instantly on iPhone.
+                el.style.width = '120px';
+                el.style.height = '120px';
+                el.style.marginLeft = '-60px';
+                el.style.marginTop = '-60px';
                 el.style.borderRadius = '999px';
-                el.style.border = '3px solid rgba(255,240,120,0.85)';
-                el.style.boxShadow = '0 0 18px rgba(255,240,120,0.35)';
+                el.style.border = '4px solid rgba(255,240,120,0.92)';
+                el.style.boxShadow = '0 0 26px rgba(255,240,120,0.40), 0 0 52px rgba(255,120,80,0.18)';
                 el.style.pointerEvents = 'none';
                 el.style.zIndex = '99997';
                 el.style.opacity = '0';
@@ -460,15 +461,72 @@
               if (el._t) { clearTimeout(el._t); el._t = null; }
               el.style.transition = 'none';
               el.style.opacity = '1';
-              el.style.transform = 'translate(-50%,-50%) scale(0.72)';
+              el.style.transform = 'translate(-50%,-50%) scale(0.65)';
               requestAnimationFrame(() => {
-                el.style.transition = 'transform 520ms cubic-bezier(0.2,0.9,0.2,1), opacity 520ms ease-out';
-                el.style.transform = 'translate(-50%,-50%) scale(1.20)';
+                el.style.transition = 'transform 560ms cubic-bezier(0.15,0.9,0.2,1), opacity 560ms ease-out';
+                el.style.transform = 'translate(-50%,-50%) scale(1.18)';
                 el.style.opacity = '0';
               });
               el._t = setTimeout(() => {
                 try { el.style.transition = 'none'; el.style.opacity = '0'; } catch {}
-              }, 580);
+              }, 620);
+            } catch {}
+
+            // NEW (Task #1 recoil): "chevron" recoil brackets around the crosshair.
+            // Extremely readable in a still iPhone screenshot while still feeling like game juice.
+            try {
+              const id2 = '__hbRecoilBrackets';
+              let box = document.getElementById(id2);
+              if (!box) {
+                box = document.createElement('div');
+                box.id = id2;
+                box.style.position = 'fixed';
+                box.style.left = '50%';
+                box.style.top = '50%';
+                box.style.width = '140px';
+                box.style.height = '140px';
+                box.style.marginLeft = '-70px';
+                box.style.marginTop = '-70px';
+                box.style.pointerEvents = 'none';
+                box.style.zIndex = '99998';
+                box.style.opacity = '0';
+                box.style.transform = 'translate(-50%,-50%) scale(0.9)';
+
+                const mk = (x, y, rot) => {
+                  const d = document.createElement('div');
+                  d.style.position = 'absolute';
+                  d.style.left = x;
+                  d.style.top = y;
+                  d.style.width = '34px';
+                  d.style.height = '6px';
+                  d.style.borderRadius = '6px';
+                  d.style.background = 'rgba(255,240,120,0.92)';
+                  d.style.boxShadow = '0 0 16px rgba(255,240,120,0.38), 0 0 36px rgba(255,80,80,0.18)';
+                  d.style.transform = `rotate(${rot}deg)`;
+                  return d;
+                };
+
+                // 4 slanted brackets to imply "kick".
+                box.appendChild(mk('0px', '18px', -25));
+                box.appendChild(mk('104px', '18px', 25));
+                box.appendChild(mk('0px', '116px', 25));
+                box.appendChild(mk('104px', '116px', -25));
+
+                document.body.appendChild(box);
+              }
+
+              if (box._t) { clearTimeout(box._t); box._t = null; }
+              box.style.transition = 'none';
+              box.style.opacity = '1';
+              box.style.transform = 'translate(-50%,-50%) scale(0.78)';
+              requestAnimationFrame(() => {
+                box.style.transition = 'transform 560ms cubic-bezier(0.15,0.9,0.2,1), opacity 560ms ease-out';
+                box.style.transform = 'translate(-50%,-50%) scale(1.05)';
+                box.style.opacity = '0';
+              });
+              box._t = setTimeout(() => {
+                try { box.style.transition = 'none'; box.style.opacity = '0'; } catch {}
+              }, 620);
             } catch {}
           }
         } catch {}
