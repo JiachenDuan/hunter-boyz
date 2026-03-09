@@ -442,7 +442,7 @@
       // NOTE: Values are tuned to the actual scale of our fpRig (small offsets).
       // The previous values were effectively "mega" units and could push the viewmodel out of frame.
       // These are punchy on iPhone while staying readable + controlled.
-      rifle:   { gunKick: 0.140, gunLift: 0.040, gunSide: 0.022, rollKick: 0.065, pitchKick: 0.075, yawKick: 0.0130, flashScale: 1.05, holdMs: 620 },
+      rifle:   { gunKick: 0.180, gunLift: 0.055, gunSide: 0.028, rollKick: 0.080, pitchKick: 0.095, yawKick: 0.0160, flashScale: 1.05, holdMs: 700 },
       shotgun: { gunKick: 0.165, gunLift: 0.050, gunSide: 0.016, rollKick: 0.070, pitchKick: 0.070, yawKick: 0.0100, flashScale: 1.90, holdMs: 300 },
       sniper:  { gunKick: 0.095, gunLift: 0.028, gunSide: 0.010, rollKick: 0.028, pitchKick: 0.052, yawKick: 0.0055, flashScale: 1.55, holdMs: 280 },
       fart:    { gunKick: 0.042, gunLift: 0.018, gunSide: 0.010, rollKick: 0.020, pitchKick: 0.020, yawKick: 0.0060, flashScale: 0.75, holdMs: 150 },
