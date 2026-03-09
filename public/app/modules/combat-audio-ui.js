@@ -209,7 +209,7 @@
       // gunLift: lift viewmodel up (y)
       // gunSide: small sideways shove (x)
       // rollKick: tiny roll torque so the gun feels like it twists in your hands
-      rifle:   { gunKick: 0.520, gunLift: 0.092, gunSide: 0.020, rollKick: 0.070, pitchKick: 0.340, yawKick: 0.0280, flashScale: 1.05, holdMs: 180 },
+      rifle:   { gunKick: 0.600, gunLift: 0.110, gunSide: 0.022, rollKick: 0.080, pitchKick: 0.400, yawKick: 0.0300, flashScale: 1.05, holdMs: 320 },
       shotgun: { gunKick: 0.410, gunLift: 0.084, gunSide: 0.024, rollKick: 0.105, pitchKick: 0.230, yawKick: 0.0205, flashScale: 1.90, holdMs: 220 },
       sniper:  { gunKick: 0.370, gunLift: 0.060, gunSide: 0.007, rollKick: 0.032, pitchKick: 0.235, yawKick: 0.0052, flashScale: 1.55, holdMs: 240 },
       fart:    { gunKick: 0.070, gunLift: 0.020, gunSide: 0.007, rollKick: 0.016, pitchKick: 0.028, yawKick: 0.0070, flashScale: 0.75, holdMs: 140 },
@@ -353,12 +353,12 @@
 
         // Convert radians-ish kick into pixels. Keep it subtle enough that it doesn't feel
         // like a permanent offset, but strong enough to be obvious in a screenshot.
-        const pxPerRad = 280;
-        const addY = Math.min(70, (r.pitchKick || 0) * pxPerRad);
-        const addX = Math.max(-35, Math.min(35, (yawKick || 0) * pxPerRad));
+        const pxPerRad = 420;
+        const addY = Math.min(92, (r.pitchKick || 0) * pxPerRad * 1.05);
+        const addX = Math.max(-48, Math.min(48, (yawKick || 0) * pxPerRad));
 
-        window.__hbReticleKickY = Math.min(95, window.__hbReticleKickY + addY);
-        window.__hbReticleKickX = Math.max(-95, Math.min(95, window.__hbReticleKickX + addX));
+        window.__hbReticleKickY = Math.min(130, window.__hbReticleKickY + addY);
+        window.__hbReticleKickX = Math.max(-130, Math.min(130, window.__hbReticleKickX + addX));
       } catch {}
 
       // ── Screen shake impulse (visual only) ──
