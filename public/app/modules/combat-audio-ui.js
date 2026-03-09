@@ -172,8 +172,33 @@
     // ── Combat feel: hitmarker, recoil, screen-shake ──
     const _hitmarkerEl = document.getElementById('hitmarker');
     const _hitPulseEl = document.getElementById('hitPulse');
+    // Task #1 (recoil): a center pulse that reads in a still frame (separate from hit feedback).
+    const _recoilPulseEl = document.getElementById('recoilPulse') || (() => {
+      try {
+        const d = document.createElement('div');
+        d.id = 'recoilPulse';
+        d.style.position = 'fixed';
+        d.style.left = '50%';
+        d.style.top = '50%';
+        d.style.transform = 'translate(-50%,-50%) scale(0.85)';
+        d.style.width = '118px';
+        d.style.height = '118px';
+        d.style.borderRadius = '999px';
+        d.style.border = '2px solid rgba(255,255,255,0.28)';
+        d.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.18), 0 0 26px rgba(255,240,120,0.12)';
+        d.style.pointerEvents = 'none';
+        d.style.zIndex = '9997';
+        d.style.opacity = '0';
+        document.body.appendChild(d);
+        return d;
+      } catch {
+        return null;
+      }
+    })();
+
     let _hitmarkerTimer = 0;
     let _hitPulseTimer = 0;
+    let _recoilPulseTimer = 0;
 
     function showHitPulse() {
       if (!_hitPulseEl) return;
@@ -195,6 +220,43 @@
       setTimeout(() => {
         try { _hitPulseEl.style.transition = 'none'; } catch {}
       }, 820);
+    }
+
+    function showRecoilPulse(weapon = 'rifle') {
+      if (!_recoilPulseEl) return;
+      clearTimeout(_recoilPulseTimer);
+
+      // Weapon weight: bigger ring for heavier guns so the punch reads instantly.
+      const w = String(weapon || 'rifle');
+      const scale = (w === 'tank') ? 1.18
+        : (w === 'rocket') ? 1.14
+        : (w === 'shotgun') ? 1.10
+        : (w === 'sniper') ? 1.08
+        : (w === 'minigun') ? 0.98
+        : (w === 'fart') ? 0.92
+        : 1.05;
+
+      try {
+        _recoilPulseEl.style.transition = 'none';
+        _recoilPulseEl.style.opacity = '1';
+        _recoilPulseEl.style.transform = `translate(-50%,-50%) scale(${(0.82 * scale).toFixed(3)})`;
+        _recoilPulseEl.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.20), 0 0 30px rgba(255,240,120,0.14)';
+        _recoilPulseEl.style.borderColor = 'rgba(255,255,255,0.30)';
+      } catch {}
+
+      // Quick expand + fade (with enough tail to catch in an automated iPhone snap).
+      _recoilPulseTimer = setTimeout(() => {
+        try {
+          _recoilPulseEl.style.transition = 'opacity 520ms ease-out 0ms, transform 520ms ease-out 0ms, box-shadow 520ms ease-out 0ms';
+          _recoilPulseEl.style.opacity = '0';
+          _recoilPulseEl.style.transform = `translate(-50%,-50%) scale(${(1.48 * scale).toFixed(3)})`;
+          _recoilPulseEl.style.boxShadow = '0 0 0 2px rgba(255,240,120,0.06), 0 0 14px rgba(255,240,120,0.06)';
+        } catch {}
+      }, 95);
+
+      setTimeout(() => {
+        try { _recoilPulseEl.style.transition = 'none'; } catch {}
+      }, 700);
     }
 
     function showHitmarker() {
@@ -264,6 +326,9 @@
       // Remember last weapon that generated recoil so the render loop can tune spring recovery.
       try { window.__hbRecoilWeapon = weapon; } catch {}
       const r0 = RECOIL[weapon] || RECOIL.rifle;
+
+      // Task #1 (recoil): add a UI-visible pulse so recoil is unmistakable on iPhone.
+      try { showRecoilPulse(weapon); } catch {}
 
       // Recoil ramp: consecutive shots feel punchier (especially on auto weapons),
       // but resets quickly after you pause. This is visual only.
