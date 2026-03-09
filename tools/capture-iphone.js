@@ -183,15 +183,15 @@ async function main(){
         });
 
         // Flat courtyard lane (mansion). Shooter looks toward +Z.
-        await post('/debug/teleport', { id: fromId, x: 0.0, y: 2.0, z: -2.0, yaw: 0, pitch: 0, hp: 100 });
-        await post('/debug/teleport', { id: botId,  x: 0.0, y: 2.0, z: 10.0, yaw: Math.PI, pitch: 0, hp: 100 });
+        // Use a longer lane so bullet tracers are clearly visible in a still iPhone capture.
+        await post('/debug/teleport', { id: fromId, x: 0.0, y: 2.0, z: -18.0, yaw: 0, pitch: -0.04, hp: 100 });
+        await post('/debug/teleport', { id: botId,  x: 0.0, y: 2.0, z: 18.0, yaw: Math.PI, pitch: 0, hp: 100 });
       }, shooterId, botId);
     } catch {}
 
     await sleep(140);
 
-    // Fire once. The client applies recoil + reticle bloom instantly on the local
-    // shooter when it receives the server shot event.
+    // Fire once.
     try {
       await page.evaluate(async (fromId) => {
         await fetch('/debug/shoot', {
@@ -202,8 +202,9 @@ async function main(){
       }, shooterId);
     } catch {}
 
-    // Give it a beat so the recoil "hold" window is active when we capture.
-    await sleep(90);
+    // Task #7: GUN bullet tracers
+    // Give it a beat so the tracer tube exists when we screenshot.
+    await sleep(120);
 
     // Make the bottom log readable + leave a proof line.
     try {
@@ -212,7 +213,7 @@ async function main(){
         if (hud) hud.style.display = 'block';
         const log = document.getElementById('log');
         if (!log) return;
-        log.textContent = '🔫 GUN RECOIL: reticle blooms + kick/settle spring active (visual only)';
+        log.textContent = '✨ BULLET TRACERS: now thick + emissive (iPhone-readable)';
         log.style.display = 'block';
         log.style.position = 'fixed';
         log.style.left = '10px';

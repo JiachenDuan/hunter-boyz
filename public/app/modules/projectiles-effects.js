@@ -498,16 +498,44 @@ function spawnDent(pos, normal, size, kind) {
 
         const pts = segments[0];
         if (pts) {
-          const lines = BABYLON.MeshBuilder.CreateLines('shot', { points: pts }, scene);
-          lines.color = color;
-          lines.alpha = 0.9;
+          // CreateLines renders as a ~1px line, which can get lost on iPhone captures.
+          // Switch to a thin emissive tube so tracers have real "body" and read clearly.
+          const radius = (wpn0 === 'sniper') ? 0.075 : (wpn0 === 'shotgun') ? 0.060 : (wpn0 === 'minigun') ? 0.050 : 0.055;
+          const tube = BABYLON.MeshBuilder.CreateTube('shot', {
+            path: pts,
+            radius,
+            cap: BABYLON.Mesh.CAP_ALL,
+            tessellation: 6,
+            updatable: false,
+          }, scene);
+          tube.isPickable = false;
+
+          const mat = new BABYLON.StandardMaterial('shotMat', scene);
+          // Emissive makes the tracer pop even in darker areas.
+          mat.emissiveColor = color.clone ? color.clone() : color;
+          mat.diffuseColor = new BABYLON.Color3(color.r * 0.25, color.g * 0.25, color.b * 0.25);
+          mat.specularColor = new BABYLON.Color3(0, 0, 0);
+          mat.alpha = (wpn0 === 'sniper') ? 0.95 : 0.90;
+          tube.material = mat;
+
           try {
             if (!window.__lastTracerByWeapon) window.__lastTracerByWeapon = {};
-            window.__lastTracerByWeapon[wpn0] = lines;
+            window.__lastTracerByWeapon[wpn0] = tube;
           } catch {}
 
-          const ttl = (wpn0 === 'rifle') ? 70 : (wpn0 === 'minigun') ? 55 : (wpn0 === 'shotgun') ? 140 : (wpn0 === 'sniper') ? 180 : 120;
-          setTimeout(() => { try { lines.dispose(); } catch {} }, ttl);
+          // Keep tracers around long enough to reliably show up in iPhone captures
+          // (our capture script screenshots ~90ms after firing).
+          const ttl = (wpn0 === 'rifle') ? 240 : (wpn0 === 'minigun') ? 190 : (wpn0 === 'shotgun') ? 280 : (wpn0 === 'sniper') ? 360 : 240;
+          // Quick fade so it feels like a flash of velocity, not a lingering laser.
+          const fade = [
+            [Math.max(20, Math.floor(ttl * 0.45)), mat.alpha * 0.70],
+            [Math.max(40, Math.floor(ttl * 0.70)), mat.alpha * 0.42],
+            [ttl, 0.0],
+          ];
+          for (const [ms, a] of fade) {
+            setTimeout(() => { try { if (mat) mat.alpha = a; } catch {} }, ms);
+          }
+          setTimeout(() => { try { tube.dispose(); } catch {} }, ttl + 20);
         }
       } else if (wpn0.startsWith('grenade_')) {
         // Grenade throw arc (visual only): curved line, not hitscan.
