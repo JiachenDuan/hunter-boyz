@@ -218,7 +218,7 @@
       fart:    { gunKick: 0.090, gunLift: 0.024, gunSide: 0.008, rollKick: 0.018, pitchKick: 0.034, yawKick: 0.0080, flashScale: 0.75, holdMs: 150 },
       minigun: { gunKick: 0.245, gunLift: 0.056, gunSide: 0.020, rollKick: 0.090, pitchKick: 0.090, yawKick: 0.0160, flashScale: 2.10, holdMs: 140 },
       rocket:  { gunKick: 0.380, gunLift: 0.086, gunSide: 0.028, rollKick: 0.105, pitchKick: 0.160, yawKick: 0.0200, flashScale: 2.20, holdMs: 280 },
-      tank:    { gunKick: 0.470, gunLift: 0.092, gunSide: 0.036, rollKick: 0.118, pitchKick: 0.175, yawKick: 0.0220, flashScale: 4.50, holdMs: 300 },
+      tank:    { gunKick: 0.820, gunLift: 0.150, gunSide: 0.060, rollKick: 0.220, pitchKick: 0.260, yawKick: 0.0300, flashScale: 4.50, holdMs: 520 },
     };
 
     // Recoil is rendered client-side only (does NOT affect server aim/look).
