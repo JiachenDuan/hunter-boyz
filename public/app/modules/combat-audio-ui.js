@@ -371,6 +371,32 @@
 
         window.__camKickVelPitch += (r.pitchKick || 0) * velMultPitch;
         window.__camKickVelYaw   += (yawKick || 0) * velMultYaw;
+
+        // ── FOV punch (visual-only) ──
+        // A tiny "lens punch" makes recoil feel weightier on mobile without needing
+        // extra screen shake. This does not affect server aim.
+        try {
+          if (typeof window.__hbFovKick !== 'number') window.__hbFovKick = 0;
+          if (typeof window.__hbFovKickVel !== 'number') window.__hbFovKickVel = 0;
+
+          const base = (weapon === 'shotgun') ? 0.020
+            : (weapon === 'sniper') ? 0.016
+            : (weapon === 'rocket' || weapon === 'tank') ? 0.030
+            : (weapon === 'minigun') ? 0.007
+            : (weapon === 'fart') ? 0.004
+            : 0.015; // rifle
+
+          // Scale a bit with mult so bursts feel heavier.
+          const add = Math.min(0.045, base * (0.75 + (mult - 1.0) * 0.45));
+          window.__hbFovKick = Math.min(0.060, window.__hbFovKick + add);
+
+          const now2 = performance.now();
+          const holdMs2 = (r0 && typeof r0.holdMs === 'number') ? r0.holdMs : 160;
+          window.__hbFovKickHoldUntil = Math.max(window.__hbFovKickHoldUntil || 0, now2 + Math.min(260, holdMs2));
+
+          // Velocity impulse so it reads instantly.
+          window.__hbFovKickVel += add * 22.0;
+        } catch {}
       } catch {}
 
       // ── Reticle recoil (screen-space, visual only) ──

@@ -1393,6 +1393,35 @@
         camera.rotation.y = baseYaw + window.__camKickYaw;
       } catch {}
 
+      // FOV recoil punch: apply a tiny springy widen-and-return on top of whatever
+      // the current weapon/scope FOV is. Visual-only.
+      try {
+        if (typeof window.__hbFovKick !== 'number') window.__hbFovKick = 0;
+        if (typeof window.__hbFovKickVel !== 'number') window.__hbFovKickVel = 0;
+
+        const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
+        const now = performance.now();
+        const holdActive = (typeof window.__hbFovKickHoldUntil === 'number') && (now < window.__hbFovKickHoldUntil);
+
+        // Spring toward 0.
+        const k = holdActive ? 18 : 42;
+        const c = holdActive ? 9 : 13;
+        window.__hbFovKickVel += (-k * window.__hbFovKick - c * window.__hbFovKickVel) * dt;
+        window.__hbFovKick += window.__hbFovKickVel * dt;
+
+        if (Math.abs(window.__hbFovKick) < 0.00005 && Math.abs(window.__hbFovKickVel) < 0.00005) {
+          window.__hbFovKick = 0;
+          window.__hbFovKickVel = 0;
+        }
+
+        // Apply without drift: subtract last applied, then add current.
+        const prevApplied = (typeof window.__hbAppliedFovKick === 'number') ? window.__hbAppliedFovKick : 0;
+        const baseFov = camera.fov - prevApplied;
+        const applied = window.__hbFovKick;
+        camera.fov = baseFov + applied;
+        window.__hbAppliedFovKick = applied;
+      } catch {}
+
       // ── Reticle recoil (screen-space, visual only) ──
       // Apply the kick written by applyRecoil() so recoil reads clearly even on mobile.
       try {
