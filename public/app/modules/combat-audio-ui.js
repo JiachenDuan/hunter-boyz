@@ -849,9 +849,18 @@
 
         // Convert radians-ish kick into pixels. Keep it subtle enough that it doesn't feel
         // like a permanent offset, but strong enough to be obvious in a screenshot.
-        const pxPerRad = 560;
-        const addY = Math.min(92, (r.pitchKick || 0) * pxPerRad * 1.05);
-        const addX = Math.max(-48, Math.min(48, (yawKick || 0) * pxPerRad));
+        //
+        // Task #1 (recoil): make rifle recoil *read* like a CS-ish climb (clear up-kick),
+        // while keeping minigun micro-kicks readable without yanking the crosshair.
+        const pxPerRad = (weapon === 'rifle') ? 760
+          : (weapon === 'shotgun') ? 640
+          : (weapon === 'sniper') ? 600
+          : (weapon === 'rocket' || weapon === 'tank') ? 700
+          : (weapon === 'minigun') ? 520
+          : (weapon === 'fart') ? 420
+          : 620;
+        const addY = Math.min(118, (r.pitchKick || 0) * pxPerRad * ((weapon === 'rifle') ? 1.18 : 1.05));
+        const addX = Math.max(-58, Math.min(58, (yawKick || 0) * pxPerRad));
 
         window.__hbReticleKickY = Math.min(130, window.__hbReticleKickY + addY);
         window.__hbReticleKickX = Math.max(-130, Math.min(130, window.__hbReticleKickX + addX));
