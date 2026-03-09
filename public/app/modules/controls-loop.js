@@ -1375,11 +1375,14 @@
         const dt = Math.min(0.05, (now - window.__hbShakeLastT) / 1000);
         window.__hbShakeLastT = now;
 
-        // Base camera position should track gameplay camera updates (teleports, respawns, etc).
-        // So we refresh it whenever shake is idle / nearly idle.
+        // Base camera pose should track gameplay camera updates (teleports, respawns, etc).
+        // The shake MUST be non-drifting: we apply offsets around this base pose.
         if (typeof window.__hbShakeBasePosX !== 'number') window.__hbShakeBasePosX = camera.position.x;
         if (typeof window.__hbShakeBasePosY !== 'number') window.__hbShakeBasePosY = camera.position.y;
         if (typeof window.__hbShakeBasePosZ !== 'number') window.__hbShakeBasePosZ = camera.position.z;
+        if (typeof window.__hbShakeBaseRotX !== 'number') window.__hbShakeBaseRotX = camera.rotation.x;
+        if (typeof window.__hbShakeBaseRotY !== 'number') window.__hbShakeBaseRotY = camera.rotation.y;
+        if (typeof window.__hbShakeBaseRotZ !== 'number') window.__hbShakeBaseRotZ = camera.rotation.z;
 
         let trauma = (typeof window.__hbShakeTrauma === 'number') ? window.__hbShakeTrauma : 0;
         const kickAt = (typeof window.__hbShakeKickAt === 'number') ? window.__hbShakeKickAt : 0;
@@ -1389,16 +1392,19 @@
         const kickAge = (kickAt > 0) ? (now - kickAt) : 999999;
         const kickActive = (kickAge < 260) && (Math.abs(kickPitch) + Math.abs(kickRoll) > 0.00001);
 
-        // Update base position while we're basically not shaking.
+        // Update base pose while we're basically not shaking.
         if (!kickActive && trauma < 0.02) {
           window.__hbShakeBasePosX = camera.position.x;
           window.__hbShakeBasePosY = camera.position.y;
           window.__hbShakeBasePosZ = camera.position.z;
+          window.__hbShakeBaseRotX = camera.rotation.x;
+          window.__hbShakeBaseRotY = camera.rotation.y;
+          window.__hbShakeBaseRotZ = camera.rotation.z;
         }
 
         if (trauma > 0 || kickActive) {
-          // Slightly slower decay so it reads as a "jolt" into early reload pose.
-          trauma = Math.max(0, trauma - dt * 2.2);
+          // Slower trauma decay so it reads as a shot "thump" instead of a 1-frame twitch.
+          trauma = Math.max(0, trauma - dt * 2.0);
           window.__hbShakeTrauma = trauma;
 
           // Directional kick decays quickly (impulse feeling).
@@ -1412,28 +1418,35 @@
           const seed = (typeof window.__hbShakeSeed === 'number') ? window.__hbShakeSeed : 0;
 
           // Two-frequency noise bed for crisp shake + tiny after-jitter.
-          const t1 = (now * 0.028) + seed * 0.37;
-          const t2 = (now * 0.061) + seed * 0.91;
+          const t1 = (now * 0.030) + seed * 0.37;
+          const t2 = (now * 0.067) + seed * 0.91;
 
           const nx = Math.sin(t1) * 0.65 + Math.sin(t2) * 0.35;
           const ny = Math.cos(t1 * 1.07) * 0.60 + Math.cos(t2 * 0.93) * 0.40;
           const nr = Math.sin(t1 * 0.83 + 1.7) * 0.70 + Math.cos(t2 * 1.11 + 0.4) * 0.30;
 
-          // Rotation shake (radians): use directional kick + noise.
-          camera.rotation.x += kickPitch + nx * s * 0.030;
-          camera.rotation.y += ny * s * 0.028;
-          camera.rotation.z += kickRoll + nr * s * 0.024;
+          // Rotation shake (radians): apply offsets around base (NO drift).
+          const rotX = kickPitch + nx * s * 0.060;
+          const rotY = ny * s * 0.050;
+          const rotZ = kickRoll + nr * s * 0.050;
+
+          camera.rotation.x = window.__hbShakeBaseRotX + rotX;
+          camera.rotation.y = window.__hbShakeBaseRotY + rotY;
+          camera.rotation.z = window.__hbShakeBaseRotZ + rotZ;
 
           // Positional shake (meters-ish): small bob adds weight without nausea.
-          camera.position.x = window.__hbShakeBasePosX + nx * s * 0.045;
-          camera.position.y = window.__hbShakeBasePosY + Math.abs(ny) * s * 0.060;
-          camera.position.z = window.__hbShakeBasePosZ + nr * s * 0.008;
+          camera.position.x = window.__hbShakeBasePosX + nx * s * 0.055;
+          camera.position.y = window.__hbShakeBasePosY + Math.abs(ny) * s * 0.075;
+          camera.position.z = window.__hbShakeBasePosZ + nr * s * 0.010;
         } else {
-          // Restore camera position (avoid drift).
+          // Restore camera pose (avoid drift).
           if (trauma !== 0) window.__hbShakeTrauma = 0;
           camera.position.x = window.__hbShakeBasePosX;
           camera.position.y = window.__hbShakeBasePosY;
           camera.position.z = window.__hbShakeBasePosZ;
+          camera.rotation.x = window.__hbShakeBaseRotX;
+          camera.rotation.y = window.__hbShakeBaseRotY;
+          camera.rotation.z = window.__hbShakeBaseRotZ;
         }
       } catch {}
 
