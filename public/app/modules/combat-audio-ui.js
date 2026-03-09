@@ -1047,6 +1047,34 @@
             mech.stop(t0 + 0.032);
           } catch {}
 
+
+
+          // Shot body: a short mid-body burst that makes the gun feel like it has
+          // mass (not just a click + noise). This is most noticeable on iPhone
+          // speakers where pure transients can feel thin.
+          try {
+            const body = c.createBufferSource();
+            body.buffer = noiseBuffer(c, (w === 'minigun') ? 0.030 : 0.055);
+
+            const bp2 = c.createBiquadFilter();
+            bp2.type = 'bandpass';
+            bp2.frequency.setValueAtTime((cfg.bodyBpHz || ((w === 'shotgun') ? 620 : (w === 'sniper') ? 760 : (w === 'rocket' || w === 'tank') ? 520 : 700)), t0);
+            bp2.Q.setValueAtTime((cfg.bodyBpQ || 0.85), t0);
+
+            const lp2 = c.createBiquadFilter();
+            lp2.type = 'lowpass';
+            lp2.frequency.setValueAtTime((cfg.bodyLpHz || ((w === 'shotgun') ? 2200 : (w === 'sniper') ? 3200 : 2600)), t0);
+
+            const bg = c.createGain();
+            const bodyGain = (typeof cfg.bodyGain === 'number') ? cfg.bodyGain : ((w === 'shotgun') ? 0.030 : (w === 'sniper') ? 0.022 : (w === 'rocket' || w === 'tank') ? 0.034 : (w === 'minigun') ? 0.012 : 0.026);
+            bg.gain.setValueAtTime(0.0001, t0);
+            bg.gain.exponentialRampToValueAtTime(bodyGain, t0 + 0.004);
+            bg.gain.exponentialRampToValueAtTime(0.0001, t0 + ((w === 'minigun') ? 0.040 : 0.095));
+
+            body.connect(bp2).connect(lp2).connect(bg).connect(mix);
+            body.start(t0);
+            body.stop(t0 + ((w === 'minigun') ? 0.050 : 0.120));
+          } catch {}
           try {
             // Micro-tail: quick delay+feedback to add a hint of space (esp. shotgun/sniper/rocket).
             // We intentionally keep this "too short" to avoid obvious echo.

@@ -39,6 +39,15 @@ async function main(){
       document.getElementById('settingsPanel').style.display = 'block';
       document.getElementById('name').value = 'iPhoneTest';
     });
+
+
+    // Enable sound so the gunshot SFX path runs (and logs layering proof).
+    await page.evaluate(() => {
+      const sb = document.getElementById('soundBtn');
+      if (!sb) return;
+      sb.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      sb.dispatchEvent(new Event('click', { bubbles: true }));
+    });
     await page.evaluate(() => {
       const b = document.getElementById('joinBtn');
       if (!b) return;
@@ -105,8 +114,7 @@ async function main(){
       if (rt && (rt.textContent || '').trim() === 'LOBBY') rt.style.display = 'none';
     });
 
-    // Line up: put the iPhone player close to a wall and fire, so the dynamic muzzle light
-    // visibly warms/brightens the surface (easy to prove in a still screenshot).
+    // Prep: unlock audio, then fire so the on-screen log shows the layering proof (visible in still screenshot).
     await page.evaluate(async (viewerId) => {
       const post = (p, body) => fetch(p, {
         method: 'POST',
@@ -128,7 +136,7 @@ async function main(){
       const badge = document.getElementById('__captureBadge') || (() => {
         const d = document.createElement('div');
         d.id = '__captureBadge';
-        d.textContent = 'MUZZLE LIGHT PROOF';
+        d.textContent = 'SOUND LAYERING PROOF';
         d.style.position = 'fixed';
         d.style.left = '10px';
         d.style.bottom = '10px';
@@ -148,7 +156,7 @@ async function main(){
 
       const log = document.getElementById('log');
       if (log) {
-        log.textContent = '🔦 TASK #3: third-person muzzle flash now emits a warm dynamic light + visible flash source';
+        log.textContent = '🔊 TASK #4: gunshots are now layered (crack + thump + clack + body + micro-tail)';
         log.style.display = 'block';
         log.style.position = 'fixed';
         log.style.left = '10px';
@@ -165,8 +173,7 @@ async function main(){
       }
     });
 
-    // Fire a short 2-shot burst from the iPhone player; screenshot while the muzzle light
-    // afterglow is still lighting the wall.
+    // Fire a short 2-shot burst from the iPhone player; screenshot while the log proof is still visible.
     await page.evaluate(async (viewerId) => {
       const shoot = () => fetch('/debug/shoot', {
         method: 'POST',
@@ -180,7 +187,7 @@ async function main(){
       } catch {}
     }, viewerId);
 
-    // Capture while the flash sprite is still visible, plus the light afterglow.
+    // Capture shortly after firing so the proof text is on-screen.
     await sleep(80);
 
     const ts = Date.now();
