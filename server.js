@@ -1192,8 +1192,32 @@ if (msg.t === 'input') {
       if (!collides(p.x, zTry)) p.z = zTry; else p.vz = 0;
 
       // look
-      p.yaw = yaw;
-      p.pitch = clamp(Number(msg.look?.pitch ?? p.pitch), -1.2, 1.5);
+      // Task #1: GUN recoil (server-authoritative)
+      // Keep a separate aim (player input) vs recoil offsets so recoil affects
+      // *real* shot direction, and only recovers when you counter-pull.
+      p.aimYaw = yaw;
+      p.aimPitch = clamp(Number(msg.look?.pitch ?? (typeof p.aimPitch === 'number' ? p.aimPitch : p.pitch)), -1.2, 1.5);
+
+      if (typeof p.recoilYawOff !== 'number') p.recoilYawOff = 0;
+      if (typeof p.recoilPitchOff !== 'number') p.recoilPitchOff = 0;
+      if (typeof p.recoilYawVel !== 'number') p.recoilYawVel = 0;
+      if (typeof p.recoilPitchVel !== 'number') p.recoilPitchVel = 0;
+
+      // Spring recoil back toward 0 each tick.
+      try {
+        const k = 46.0;
+        const c = 14.0;
+        p.recoilYawVel += (-k * p.recoilYawOff - c * p.recoilYawVel) * dt;
+        p.recoilPitchVel += (-k * p.recoilPitchOff - c * p.recoilPitchVel) * dt;
+        p.recoilYawOff += p.recoilYawVel * dt;
+        p.recoilPitchOff += p.recoilPitchVel * dt;
+
+        if (Math.abs(p.recoilYawOff) < 0.00002 && Math.abs(p.recoilYawVel) < 0.00002) { p.recoilYawOff = 0; p.recoilYawVel = 0; }
+        if (Math.abs(p.recoilPitchOff) < 0.00002 && Math.abs(p.recoilPitchVel) < 0.00002) { p.recoilPitchOff = 0; p.recoilPitchVel = 0; }
+      } catch {}
+
+      p.yaw = p.aimYaw + p.recoilYawOff;
+      p.pitch = clamp(p.aimPitch + p.recoilPitchOff, -1.2, 1.5);
 
       // jump/gravity
       const gravity = -18;
@@ -1265,6 +1289,45 @@ if (msg.t === 'input') {
           }
 
           p.lastShotAt = t;
+
+          // Task #1: GUN recoil (server-authoritative)
+          // Apply an actual aim climb impulse on fire. This affects hit direction on the server
+          // and is replicated to other clients via state updates.
+          try {
+            // Default pattern: up + small alternating left/right yaw.
+            const w = weapon;
+            let pitchUp = 0;
+            let yawSide = 0;
+
+            if (w === 'rifle')   { pitchUp = 0.055; yawSide = 0.010; }
+            if (w === 'shotgun') { pitchUp = 0.065; yawSide = 0.012; }
+            if (w === 'sniper')  { pitchUp = 0.045; yawSide = 0.006; }
+            if (w === 'minigun') { pitchUp = 0.018; yawSide = 0.004; }
+            if (w === 'rocket')  { pitchUp = 0.050; yawSide = 0.010; }
+            if (w === 'fart')    { pitchUp = 0.016; yawSide = 0.004; }
+            if (w === 'tank')    { pitchUp = 0.040; yawSide = 0.008; }
+
+            if (pitchUp || yawSide) {
+              // A deterministic alternating sway (no RNG) so recoil feels learnable.
+              if (typeof p._recoilSgn !== 'number') p._recoilSgn = 1;
+              p._recoilSgn = -p._recoilSgn;
+
+              // Pitch convention: negative pitch aims UP.
+              p.recoilPitchVel += (-pitchUp) * 18.0;
+              p.recoilPitchOff += (-pitchUp) * 0.75;
+
+              p.recoilYawVel += (yawSide * p._recoilSgn) * 18.0;
+              p.recoilYawOff += (yawSide * p._recoilSgn) * 0.75;
+
+              // Clamp so it doesn't get silly on full-auto.
+              p.recoilPitchOff = clamp(p.recoilPitchOff, -0.55, 0.55);
+              p.recoilYawOff = clamp(p.recoilYawOff, -0.35, 0.35);
+
+              // Recompute final yaw/pitch now so this shot uses the kicked aim.
+              p.yaw = (typeof p.aimYaw === 'number' ? p.aimYaw : p.yaw) + (p.recoilYawOff || 0);
+              p.pitch = clamp((typeof p.aimPitch === 'number' ? p.aimPitch : p.pitch) + (p.recoilPitchOff || 0), -1.2, 1.5);
+            }
+          } catch {}
 
           // Ammo model: only apply mag ammo for classic guns; melee/grenades/power weapons use custom logic.
           if (wDef && typeof wDef.mag === 'number') {
