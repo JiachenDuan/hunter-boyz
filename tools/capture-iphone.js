@@ -159,8 +159,8 @@ async function main(){
     // Let state + camera settle
     await sleep(450);
 
-    // Proof capture: fire once and screenshot immediately so the still image catches
-    // the peak of the screen-shake jolt (task #2).
+    // Proof capture: fire once, trigger a reload, and screenshot during the reload pose.
+    // (The reload pose is task #5; we keep the shot so we're in a realistic combat state.)
     try {
       await page.evaluate(async (fromId) => {
         await fetch('/debug/shoot', {
@@ -171,6 +171,25 @@ async function main(){
       }, shooterId);
       // Let the client process the shot + apply shake before we screenshot.
       await sleep(28);
+    } catch {}
+
+    // Trigger reload so the screenshot captures the reload animation pose.
+    try {
+      await page.evaluate(() => {
+        try {
+          if (window.__socket && window.__socket.readyState === 1) window.__socket.send(JSON.stringify({ t:'reload' }));
+        } catch {}
+        // Also poke the button in case the client-side handler adds local affordances.
+        try {
+          const b = document.getElementById('btnReload');
+          if (b) {
+            b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+            b.dispatchEvent(new Event('click', { bubbles: true }));
+          }
+        } catch {}
+      });
+      // Give the reload pose time to hit its peak (~mid-reload).
+      await sleep(420);
     } catch {}
 
     const ts = Date.now();

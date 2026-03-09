@@ -1239,13 +1239,58 @@
           if (Math.abs(md._rRotY) < 0.00005 && Math.abs(md._rVelRotY) < 0.00005) { md._rRotY = 0; md._rVelRotY = 0; }
           if (Math.abs(md._rRotZ) < 0.00005 && Math.abs(md._rVelRotZ) < 0.00005) { md._rRotZ = 0; md._rVelRotZ = 0; }
 
-          // Apply base pose + recoil offsets.
-          g.position.x = md._basePosX + md._rPosX;
-          g.position.y = md._basePosY + md._rPosY;
-          g.position.z = md._basePosZ + md._rPosZ;
-          g.rotation.x = md._baseRotX + md._rRotX;
-          g.rotation.y = md._baseRotY + md._rRotY;
-          g.rotation.z = md._baseRotZ + md._rRotZ;
+          // ── Task #5: Reload animation pose (visual only) ──
+          // Drive a simple, readable viewmodel animation while server says we're reloading.
+          // Uses the server's reloadInMs countdown + a cached start value from core-state-network.
+          let rlPosX = 0, rlPosY = 0, rlPosZ = 0;
+          let rlRotX = 0, rlRotY = 0, rlRotZ = 0;
+          try {
+            const rel = (typeof window.__hbReloadInMs === 'number') ? window.__hbReloadInMs : 0;
+            const start = (typeof window.__hbReloadStartInMs === 'number') ? window.__hbReloadStartInMs : 0;
+            if (rel > 0 && start > 0) {
+              // 0 -> 1 over the reload.
+              let t = 1 - (rel / start);
+              if (!Number.isFinite(t)) t = 0;
+              t = Math.max(0, Math.min(1, t));
+
+              // Main arc (down + tilt)
+              const s = Math.sin(Math.PI * t);
+
+              // Mid-reload "mag" emphasis bump
+              const mid = Math.exp(-Math.pow((t - 0.52) / 0.12, 2));
+
+              // Weapon-specific weight (minigun reload shouldn't exist; keep small if it ever triggers)
+              const w = String(window.__hbReloadWeapon || 'rifle');
+              const weight = (w === 'shotgun') ? 1.05
+                : (w === 'sniper') ? 0.95
+                : (w === 'rocket') ? 1.10
+                : (w === 'fart') ? 0.75
+                : (w === 'minigun') ? 0.35
+                : 1.0;
+
+              // Pose offsets (meters-ish / radians)
+              rlPosY = (-0.105 * s - 0.035 * mid) * weight;
+              rlPosZ = (-0.070 * s) * weight;
+              rlPosX = (0.020 * s) * ((w === 'sniper') ? 0.6 : 1.0);
+
+              rlRotX = (0.62 * s + 0.22 * mid) * weight;      // tilt gun downward
+              rlRotZ = (0.32 * s) * weight;                   // roll sideways a bit
+              rlRotY = (Math.sin(Math.PI * t * 2) * 0.08 * s) * weight; // subtle wrist sway
+
+              // Extra snappy "click" near the end so it feels like the mag seats.
+              const seat = Math.exp(-Math.pow((t - 0.92) / 0.05, 2));
+              rlRotX += (-0.20 * seat) * weight;
+              rlPosZ += (0.035 * seat) * weight;
+            }
+          } catch {}
+
+          // Apply base pose + recoil + reload offsets.
+          g.position.x = md._basePosX + md._rPosX + rlPosX;
+          g.position.y = md._basePosY + md._rPosY + rlPosY;
+          g.position.z = md._basePosZ + md._rPosZ + rlPosZ;
+          g.rotation.x = md._baseRotX + md._rRotX + rlRotX;
+          g.rotation.y = md._baseRotY + md._rRotY + rlRotY;
+          g.rotation.z = md._baseRotZ + md._rRotZ + rlRotZ;
         }
       } catch {}
 

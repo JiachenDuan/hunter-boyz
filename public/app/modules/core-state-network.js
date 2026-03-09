@@ -522,6 +522,25 @@
 
         const ammo = (typeof meP.ammo === 'number') ? meP.ammo : 0;
         const rel = (meP.reloadInMs || 0);
+
+        // ── Task #5: Gun reload animations (client-side viewmodel only) ──
+        // Track reload start so the render loop can drive a deterministic reload pose
+        // based on server-provided reloadInMs countdown.
+        try {
+          const prev = (typeof window.__hbPrevReloadInMs === 'number') ? window.__hbPrevReloadInMs : 0;
+          if (prev <= 0 && rel > 0) {
+            window.__hbReloadStartInMs = rel;
+            window.__hbReloadWeapon = (meP.powerWeapon === 'minigun') ? 'minigun' : (document.getElementById('weapon')?.value || 'rifle');
+            window.__hbReloadStartedAt = performance.now();
+          }
+          if (rel <= 0) {
+            window.__hbReloadStartInMs = 0;
+            window.__hbReloadWeapon = null;
+            window.__hbReloadStartedAt = 0;
+          }
+          window.__hbPrevReloadInMs = rel;
+          window.__hbReloadInMs = rel;
+        } catch {}
         if (rel > 0) {
           const relSecs = Math.max(0.1, Math.ceil(rel / 100) / 10);
           document.getElementById('ammoText').textContent = `Reloading… ${relSecs.toFixed(1)}s`;
