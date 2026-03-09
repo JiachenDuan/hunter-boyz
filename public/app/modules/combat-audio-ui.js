@@ -475,8 +475,10 @@
       try {
         if (typeof window.__camKickPitch !== 'number') window.__camKickPitch = 0;
         if (typeof window.__camKickYaw !== 'number') window.__camKickYaw = 0;
+        if (typeof window.__camKickRoll !== 'number') window.__camKickRoll = 0;
         if (typeof window.__camKickVelPitch !== 'number') window.__camKickVelPitch = 0;
         if (typeof window.__camKickVelYaw !== 'number') window.__camKickVelYaw = 0;
+        if (typeof window.__camKickVelRoll !== 'number') window.__camKickVelRoll = 0;
 
         // NEW (Task #1: recoil): also kick camera *position* slightly so the punch reads
         // even when the server is frequently updating authoritative look.
@@ -511,6 +513,12 @@
         // Slightly higher cap now that recoil ramps per-shot.
         window.__camKickPitch = Math.min(0.62, window.__camKickPitch + r.pitchKick);
         window.__camKickYaw   = Math.max(-0.28, Math.min(0.28, window.__camKickYaw + yawKick));
+
+        // Task #1 (recoil): subtle camera roll torque. This makes each shot feel
+        // like it twists in your hands, and reads clearly on iPhone without
+        // being "screen shake" (task #2).
+        const rollKick = (r.rollKick || 0) * ((weapon === 'rocket' || weapon === 'tank') ? 0.55 : (weapon === 'shotgun') ? 0.65 : 0.45);
+        window.__camKickRoll = Math.max(-0.18, Math.min(0.18, window.__camKickRoll + rollKick));
 
         // Camera position punch (visual only): a tiny backward + upward jolt.
         // Tuned so it reads in a still iPhone capture but doesn't feel like nausea.
@@ -548,6 +556,7 @@
 
         window.__camKickVelPitch += (r.pitchKick || 0) * velMultPitch;
         window.__camKickVelYaw   += (yawKick || 0) * velMultYaw;
+        window.__camKickVelRoll  += (rollKick || 0) * ((weapon === 'rocket' || weapon === 'tank') ? 16 : (weapon === 'shotgun') ? 14 : 10);
 
         // Task #1 (recoil): reticle bloom pulse so recoil reads even in a still frame.
         // IMPORTANT: controls-loop owns reticle sizing every frame, so we drive the

@@ -1503,8 +1503,10 @@
         const basePitch = (typeof window.__hbBasePitch === 'number') ? window.__hbBasePitch : camera.rotation.x;
         if (typeof window.__camKickPitch !== 'number') window.__camKickPitch = 0;
         if (typeof window.__camKickYaw !== 'number') window.__camKickYaw = 0;
+        if (typeof window.__camKickRoll !== 'number') window.__camKickRoll = 0;
         if (typeof window.__camKickVelPitch !== 'number') window.__camKickVelPitch = 0;
         if (typeof window.__camKickVelYaw !== 'number') window.__camKickVelYaw = 0;
+        if (typeof window.__camKickVelRoll !== 'number') window.__camKickVelRoll = 0;
 
         // Integrate spring toward 0 (recovery). Clamp dt so tab hitches don't explode.
         const dt = Math.min(0.05, (engine.getDeltaTime ? (engine.getDeltaTime() / 1000) : 0.016));
@@ -1520,8 +1522,14 @@
 
         window.__camKickVelPitch += (-kPitch * window.__camKickPitch - cPitch * window.__camKickVelPitch) * dt;
         window.__camKickVelYaw   += (-kYaw   * window.__camKickYaw   - cYaw   * window.__camKickVelYaw)   * dt;
+        // Roll is slightly tighter so it reads as torque, not wobble.
+        const kRoll = holdActive ? 18 : 38;
+        const cRoll = holdActive ? 9 : 12;
+        window.__camKickVelRoll  += (-kRoll  * window.__camKickRoll  - cRoll  * window.__camKickVelRoll)  * dt;
+
         window.__camKickPitch    += window.__camKickVelPitch * dt;
         window.__camKickYaw      += window.__camKickVelYaw   * dt;
+        window.__camKickRoll     += window.__camKickVelRoll  * dt;
 
         // Snap tiny values to 0 (prevents micro-jitter when nearly settled).
         if (Math.abs(window.__camKickPitch) < 0.00006 && Math.abs(window.__camKickVelPitch) < 0.00006) {
@@ -1532,9 +1540,14 @@
           window.__camKickYaw = 0;
           window.__camKickVelYaw = 0;
         }
+        if (Math.abs(window.__camKickRoll) < 0.00006 && Math.abs(window.__camKickVelRoll) < 0.00006) {
+          window.__camKickRoll = 0;
+          window.__camKickVelRoll = 0;
+        }
 
         camera.rotation.x = basePitch + window.__camKickPitch;
         camera.rotation.y = baseYaw + window.__camKickYaw;
+        camera.rotation.z = (0) + window.__camKickRoll;
 
         // Camera position recoil (visual only): apply a small spring kick in/out so recoil
         // reads as a "punch" even in a single still screenshot.
