@@ -1302,6 +1302,53 @@
           g.rotation.x = md._baseRotX + md._rRotX + rlRotX;
           g.rotation.y = md._baseRotY + md._rRotY + rlRotY;
           g.rotation.z = md._baseRotZ + md._rRotZ + rlRotZ;
+
+          // ── Task #9: TANK turret rotation inertia (visual only) ──
+          // When in the tank, give the visible turret/cannon a springy "weight" when
+          // flick-aiming left/right. This is purely cockpit feel (server aim stays 1:1).
+          try {
+            const meVehicle = lastServerState?.players?.find(p => p.id === myId)?.vehicle;
+            const tankGun = fpRig?.guns?.tank;
+            const pivot = tankGun?.metadata?._tankTurretPivot;
+            if (meVehicle === 'tank' && pivot) {
+              const s = pivot.metadata || (pivot.metadata = {});
+              if (typeof s._prevYaw !== 'number') s._prevYaw = state.look?.yaw || 0;
+              if (typeof s._off !== 'number') s._off = 0;
+              if (typeof s._vel !== 'number') s._vel = 0;
+
+              const yawNow = state.look?.yaw || 0;
+              let dy = yawNow - s._prevYaw;
+              while (dy > Math.PI) dy -= Math.PI * 2;
+              while (dy < -Math.PI) dy += Math.PI * 2;
+              s._prevYaw = yawNow;
+
+              // Convert yaw delta into an inertial offset impulse.
+              // Negative sign = turret lags behind your camera turn.
+              const impulse = -dy * 0.85;
+              s._vel += impulse * 24.0;
+
+              // Spring back to center (0) with damping.
+              const k = 58.0;
+              const c = 12.5;
+              s._vel += (-k * s._off - c * s._vel) * dt;
+              s._off += s._vel * dt;
+
+              // Clamp so it reads but never gets silly.
+              const maxOff = 0.22;
+              if (s._off > maxOff) { s._off = maxOff; s._vel *= 0.35; }
+              if (s._off < -maxOff) { s._off = -maxOff; s._vel *= 0.35; }
+
+              pivot.rotation.y = s._off;
+            } else if (pivot) {
+              // Ensure we don't carry offset when leaving the tank.
+              pivot.rotation.y = 0;
+              try {
+                const s = pivot.metadata || (pivot.metadata = {});
+                s._off = 0; s._vel = 0;
+                s._prevYaw = state.look?.yaw || 0;
+              } catch {}
+            }
+          } catch {}
         }
       } catch {}
 

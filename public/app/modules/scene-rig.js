@@ -1199,63 +1199,73 @@
           tkGreenMat.specularColor = new BABYLON.Color3(0.03, 0.04, 0.02);
           tkGreenMat.specularPower = 18;
 
+          // Turret inertia hook: build tank cockpit geometry under a pivot so we can
+          // apply a subtle springy lag on quick left/right aim changes.
+          const tkPivot = new BABYLON.TransformNode(`tk_pivot_${kind}`, scene);
+          tkPivot.parent = g;
+          tkPivot.rotation.y = 0;
+
           // Barrel body (thick smooth-bore)
           const barrelMain = BABYLON.MeshBuilder.CreateCylinder(`tk_barrel_${kind}`, { diameter: 0.19, height: 0.75, tessellation: 14 }, scene);
           barrelMain.material = tkDarkMat;
-          barrelMain.parent = g;
+          barrelMain.parent = tkPivot;
           barrelMain.rotation.x = Math.PI / 2;
           barrelMain.position.set(0, -0.02, 0.42);
 
           // Bore evacuator ring (mid-barrel)
           const evacuator = BABYLON.MeshBuilder.CreateCylinder(`tk_evac_${kind}`, { diameter: 0.27, height: 0.11, tessellation: 14 }, scene);
           evacuator.material = tkGreenMat;
-          evacuator.parent = g;
+          evacuator.parent = tkPivot;
           evacuator.rotation.x = Math.PI / 2;
           evacuator.position.set(0, -0.02, 0.20);
 
           // Thermal sleeve
           const sleeve = BABYLON.MeshBuilder.CreateCylinder(`tk_sleeve_${kind}`, { diameter: 0.23, height: 0.34, tessellation: 14 }, scene);
           sleeve.material = tkGreenMat;
-          sleeve.parent = g;
+          sleeve.parent = tkPivot;
           sleeve.rotation.x = Math.PI / 2;
           sleeve.position.set(0, -0.02, 0.56);
 
           // Muzzle brake face
           const muzzle = BABYLON.MeshBuilder.CreateCylinder(`tk_muzzle_${kind}`, { diameter: 0.24, height: 0.06, tessellation: 14 }, scene);
           muzzle.material = tkDarkMat;
-          muzzle.parent = g;
+          muzzle.parent = tkPivot;
           muzzle.rotation.x = Math.PI / 2;
           muzzle.position.set(0, -0.02, 0.80);
 
           // Hatch ring (the circular opening player's head pokes through)
           const hatchRing = BABYLON.MeshBuilder.CreateTorus(`tk_hatchring_${kind}`, { diameter: 0.54, thickness: 0.09, tessellation: 18 }, scene);
           hatchRing.material = tkDarkMat;
-          hatchRing.parent = g;
+          hatchRing.parent = tkPivot;
           hatchRing.position.set(0, -0.26, 0.18);
 
           // Left turret side wall (visible at left screen edge)
           const lWall = BABYLON.MeshBuilder.CreateBox(`tk_lwall_${kind}`, { width: 0.09, height: 0.38, depth: 0.62 }, scene);
           lWall.material = tkGreenMat;
-          lWall.parent = g;
+          lWall.parent = tkPivot;
           lWall.position.set(-0.38, -0.10, 0.30);
 
           // Right turret side wall
           const rWall = BABYLON.MeshBuilder.CreateBox(`tk_rwall_${kind}`, { width: 0.09, height: 0.38, depth: 0.62 }, scene);
           rWall.material = tkGreenMat;
-          rWall.parent = g;
+          rWall.parent = tkPivot;
           rWall.position.set(0.38, -0.10, 0.30);
 
           // Gun mantlet block at barrel base (where barrel meets turret)
           const mantlet = BABYLON.MeshBuilder.CreateBox(`tk_mantlet_${kind}`, { width: 0.30, height: 0.22, depth: 0.16 }, scene);
           mantlet.material = tkDarkMat;
-          mantlet.parent = g;
+          mantlet.parent = tkPivot;
           mantlet.position.set(0, -0.04, 0.10);
 
           // Bottom hull plate (visible at lower screen edge)
           const bottomPlate = BABYLON.MeshBuilder.CreateBox(`tk_bottom_${kind}`, { width: 0.62, height: 0.08, depth: 0.30 }, scene);
           bottomPlate.material = tkGreenMat;
-          bottomPlate.parent = g;
+          bottomPlate.parent = tkPivot;
           bottomPlate.position.set(0, -0.32, 0.28);
+
+          // Expose pivot so controls loop can apply turret rotation inertia.
+          g.metadata = g.metadata || {};
+          g.metadata._tankTurretPivot = tkPivot;
 
           return g;
         }
