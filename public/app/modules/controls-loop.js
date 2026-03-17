@@ -1381,11 +1381,17 @@
             if (camera) {
               camera.metadata = camera.metadata || {};
               const cm = camera.metadata;
+              if (typeof cm._normalFov !== 'number') cm._normalFov = camera.fov;
               if (typeof cm._baseFov !== 'number') cm._baseFov = camera.fov;
               if (typeof window.__hbRecoilFovOff !== 'number') window.__hbRecoilFovOff = 0;
               if (typeof window.__hbRecoilFovVel !== 'number') window.__hbRecoilFovVel = 0;
 
               const dtF = dt;
+
+              // Scope zoom: smoothly spring _baseFov toward zoomed or normal target.
+              const _scopeZoomed = (weaponEl.value === 'sniper') && state.scope;
+              const _targetBaseFov = _scopeZoomed ? cm._normalFov * 0.32 : cm._normalFov;
+              cm._baseFov += (_targetBaseFov - cm._baseFov) * Math.min(1, dtF * 14);
               // A tight spring so it feels snappy and doesn't linger.
               const kF = 70.0;
               const cF = 16.0;
