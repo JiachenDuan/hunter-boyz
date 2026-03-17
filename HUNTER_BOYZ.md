@@ -42,6 +42,12 @@ This file exists so future changes don’t regress prior fixes or violate design
   - If `meP.powerWeapon === 'minigun'` ⇒ effective weapon is `minigun`
   - Else effective weapon is dropdown `#weapon` (with allowlist + fallback to `rifle`)
 
+### Sniper
+- Scope button (sniper-only) toggles `state.scope`.
+- Scope zoom: camera FOV springs from normal to `normalFov * 0.32` (~3× zoom) via `cm._baseFov` lerp in the FOV-recoil block of `controls-loop.js` (render loop, not a one-shot handler).
+- `cm._normalFov` is captured once at first render; `cm._baseFov` tracks toward the scoped/unscoped target each frame (`dtF * 14` blend rate ≈ 70ms transition).
+- Switching away from sniper forces `state.scope = false`, which also unzooms.
+
 ### Knife
 - Melee only. **No tracers/lines**.
 - Uses in-hand stab/thrust animation.
